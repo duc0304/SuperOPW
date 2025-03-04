@@ -11,17 +11,23 @@ import { Customer, DEFAULT_FORM_DATA } from './mock_customers';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import {
   fetchCustomers,
+  preloadNextPage,
   addCustomer as addCustomerAction,
   updateCustomer as updateCustomerAction,
   deleteCustomer as deleteCustomerAction,
   setSearchQuery,
   setStatusFilter,
   setCurrentPage,
+  invalidateCache,
   selectFilteredCustomers,
   selectPagination,
   selectFilters,
   selectLoading,
-  selectError
+  selectError,
+  selectIsPageLoaded,
+  selectIsPageLoading,
+  selectPageError,
+  selectIsInitialized
 } from '@/redux/slices/customerSlice';
 
 export default function CustomersPage() {
@@ -32,7 +38,13 @@ export default function CustomersPage() {
   const { currentPage, totalPages, totalItems, itemsPerPage } = useAppSelector(selectPagination);
   const { searchQuery, statusFilter } = useAppSelector(selectFilters);
   const isLoading = useAppSelector(selectLoading);
-  const error = useAppSelector(selectError);
+  const globalError = useAppSelector(selectError);
+  
+  // Thông tin về trang hiện tại
+  const isPageLoaded = useAppSelector(state => selectIsPageLoaded(state, currentPage));
+  const isPageLoading = useAppSelector(state => selectIsPageLoading(state, currentPage));
+  const pageError = useAppSelector(state => selectPageError(state, currentPage));
+  const isInitialized = useAppSelector(selectIsInitialized);
 
   // Local state cho modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -41,10 +53,25 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState<Omit<Customer, 'id'>>(DEFAULT_FORM_DATA);
 
-  // Fetch customers khi component mount
+  // Fetch customers khi component mount hoặc khi currentPage, searchQuery, statusFilter thay đổi
   useEffect(() => {
-    dispatch(fetchCustomers());
-  }, [dispatch]);
+    // Chỉ fetch khi trang chưa được tải hoặc khi có thay đổi về filter
+    if (!isPageLoaded || !isInitialized) {
+      dispatch(fetchCustomers(currentPage));
+    }
+  }, [dispatch, currentPage, searchQuery, statusFilter, isPageLoaded, isInitialized]);
+
+  // Preload trang tiếp theo khi trang hiện tại đã tải xong
+  useEffect(() => {
+    if (isPageLoaded && currentPage < totalPages) {
+      dispatch(preloadNextPage());
+    }
+  }, [dispatch, isPageLoaded, currentPage, totalPages]);
+
+  // Thêm useEffect để log thông tin phân trang để debug
+  useEffect(() => {
+    console.log('Pagination info:', { currentPage, totalPages, totalItems, itemsPerPage });
+  }, [currentPage, totalPages, totalItems, itemsPerPage]);
 
   // Handlers
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,6 +84,17 @@ export default function CustomersPage() {
 
   const handlePageChange = (page: number) => {
     dispatch(setCurrentPage(page));
+  };
+
+  // Xử lý thử lại khi tải trang thất bại
+  const handleRetryLoad = () => {
+    dispatch(fetchCustomers(currentPage));
+  };
+
+  // Xử lý làm mới cache
+  const handleRefreshData = () => {
+    dispatch(invalidateCache());
+    dispatch(fetchCustomers(currentPage));
   };
 
   const handleAddCustomer = async (e: React.FormEvent) => {
@@ -112,8 +150,8 @@ export default function CustomersPage() {
     setIsEditModalOpen(true);
   };
 
-  // Loading state
-  if (isLoading && filteredCustomers.length === 0) {
+  // Loading state cho toàn bộ trang khi chưa khởi tạo
+  if (isLoading && filteredCustomers.length === 0 && !isInitialized) {
     return (
       <div className="p-4 pt-20 min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
@@ -121,11 +159,17 @@ export default function CustomersPage() {
     );
   }
 
-  // Error state
-  if (error && filteredCustomers.length === 0) {
+  // Error state cho toàn bộ trang khi chưa khởi tạo
+  if (globalError && filteredCustomers.length === 0 && !isInitialized) {
     return (
-      <div className="p-4 pt-20 min-h-screen flex items-center justify-center">
-        <div className="text-red-500 dark:text-red-400">Error: {error}</div>
+      <div className="p-4 pt-20 min-h-screen flex items-center justify-center flex-col">
+        <div className="text-red-500 dark:text-red-400 mb-4">Error: {globalError}</div>
+        <button 
+          onClick={handleRetryLoad}
+          className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md"
+        >
+          Retry Loading
+        </button>
       </div>
     );
   }
@@ -142,20 +186,73 @@ export default function CustomersPage() {
           onStatusFilterChange={handleStatusFilterChange}
         />
 
+        {/* Refresh Data Button */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={handleRefreshData}
+            className="flex items-center text-sm text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh Data
+          </button>
+        </div>
+
+        {/* Hiển thị lỗi trang cụ thể nếu có */}
+        {pageError && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">
+                  Error loading page {currentPage}: {pageError}
+                </p>
+                <div className="mt-2">
+                  <button
+                    onClick={handleRetryLoad}
+                    className="text-sm font-medium text-red-700 hover:text-red-600 underline"
+                  >
+                    Retry
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Table */}
-        <CustomerTable
-          customers={filteredCustomers}
-          onEdit={openEditModal}
-          onDelete={(customer) => {
-            setSelectedCustomer(customer);
-            setIsDeleteModalOpen(true);
-          }}
-        />
+        <div className="bg-white dark:bg-gray-800/90 dark:border dark:border-indigo-900/30 rounded-xl shadow-soft dark:shadow-indigo-900/10 overflow-hidden">
+          {isPageLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+            </div>
+          ) : filteredCustomers.length > 0 ? (
+            <div className="overflow-x-auto">
+              <CustomerTable
+                customers={filteredCustomers}
+                onEdit={openEditModal}
+                onDelete={(customer) => {
+                  setSelectedCustomer(customer);
+                  setIsDeleteModalOpen(true);
+                }}
+              />
+            </div>
+          ) : (
+            <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+              No customers found. Try adjusting your search or filters.
+            </div>
+          )}
+        </div>
 
         {/* Pagination */}
         <Pagination
           currentPage={currentPage}
-          totalPages={totalPages}
+          totalPages={totalPages || Math.ceil(totalItems / itemsPerPage)}
           totalItems={totalItems}
           itemsPerPage={itemsPerPage}
           onPageChange={handlePageChange}

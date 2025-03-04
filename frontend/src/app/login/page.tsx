@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { RiUserLine, RiLockLine, RiEyeLine, RiEyeOffLine } from 'react-icons/ri';
 import Image from 'next/image';
@@ -24,30 +25,22 @@ export default function LoginPage() {
       // Gọi API login
       const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
+      
       const data = await response.json();
       
       if (response.ok) {
-        // Lưu token vào localStorage
-        localStorage.setItem('token', data.token);
-        
-        // Lưu thông tin user vào context
-        login(data.user, data.token);
-        
-        // Chuyển hướng về trang chính
+        // Đăng nhập thành công
+        login(data.data.token, data.data.user);
         router.push('/dashboard');
       } else {
-        // Hiển thị lỗi từ server
-        setError(data.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+        // Đăng nhập thất bại
+        setError(data.message || 'Đăng nhập thất bại');
       }
     } catch (err) {
-      setError('Có lỗi xảy ra khi kết nối đến server. Vui lòng thử lại sau.');
-      console.error(err);
+      setError('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
     } finally {
       setIsLoading(false);
     }

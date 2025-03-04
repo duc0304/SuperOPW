@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Customer, DEFAULT_FORM_DATA } from '../mock_customers';
 import Modal from '@/components/Modal';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 interface AddCustomerModalProps {
   isOpen: boolean;
@@ -22,6 +24,7 @@ interface ValidationErrors {
   branch?: string;
   clientCategory?: string;
   productCategory?: string;
+  phoneNumber?: string;
 }
 
 // Định nghĩa các quy tắc validation cho từng trường
@@ -41,7 +44,8 @@ const validationRules: Record<string, {
   institutionCode: { required: true, exactLength: 5, alphanumeric: true },
   branch: { required: true, maxLength: 30 },
   clientCategory: { required: true, maxLength: 30 },
-  productCategory: { required: true, maxLength: 30 }
+  productCategory: { required: true, maxLength: 30 },
+  phoneNumber: { required: false, numbersOnly: true, maxLength: 15 }
 };
 
 export default function AddCustomerModal({ 
@@ -54,9 +58,15 @@ export default function AddCustomerModal({
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isFormValid, setIsFormValid] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
 
   // Validation functions
   const validateField = (name: string, value: string): string => {
+    // Xử lý đặc biệt cho phoneNumber
+    if (name === 'phoneNumber') {
+      return validatePhoneNumber(value);
+    }
+    
     // Trim value to check if it's empty after trimming
     const trimmedValue = value.trim();
     
@@ -92,6 +102,9 @@ export default function AddCustomerModal({
     
     // Validate each field
     Object.keys(validationRules).forEach(field => {
+      // Bỏ qua phoneNumber vì nó được xử lý riêng
+      if (field === 'phoneNumber') return;
+      
       const key = field as keyof Omit<Customer, 'id'>;
       const error = validateField(field, data[key] as string);
       if (error) {
@@ -100,7 +113,36 @@ export default function AddCustomerModal({
       }
     });
     
+    // Validate phoneNumber riêng biệt
+    const phoneError = validatePhoneNumber(phoneNumber);
+    if (phoneError) {
+      newErrors.phoneNumber = phoneError;
+    }
+    
     return newErrors;
+  };
+
+  // Hàm validatePhoneNumber riêng biệt
+  const validatePhoneNumber = (value: string): string => {
+    if (!value) return '';
+    
+    // Không cần trim vì số điện thoại có thể có khoảng trắng giữa các phần
+    if (!/^[+\d\s-()]*$/.test(value)) {
+      return 'Phone number can only contain digits, spaces, and +()-';
+    }
+    
+    // Loại bỏ tất cả ký tự không phải số để đếm độ dài thực
+    const digitsOnly = value.replace(/\D/g, '');
+    
+    if (digitsOnly.length < 6) {
+      return 'Phone number is too short';
+    }
+    
+    if (digitsOnly.length > 15) {
+      return 'Phone number is too long';
+    }
+    
+    return '';
   };
 
   // Handle form changes
@@ -129,6 +171,20 @@ export default function AddCustomerModal({
     // Check if form is valid
     const newErrors = validateForm(formData);
     setIsFormValid(Object.keys(newErrors).length === 0);
+  };
+
+  // Handle phone number change
+  const handlePhoneChange = (value: string) => {
+    setPhoneNumber(value);
+    if (touched.phoneNumber) {
+      const error = validatePhoneNumber(value);
+      setErrors(prev => ({ ...prev, phoneNumber: error }));
+      
+      // Cập nhật isFormValid
+      const newErrors = { ...errors, phoneNumber: error };
+      const hasErrors = Object.values(newErrors).some(error => !!error);
+      setIsFormValid(!hasErrors);
+    }
   };
 
   // Validate form on initial load and when formData changes
@@ -271,7 +327,43 @@ export default function AddCustomerModal({
                 )}
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              {/* Phone Number with react-phone-input-2 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Phone Number
+                </label>
+                <div className="phone-input-container">
+                  <PhoneInput
+                    country={'vn'}
+                    value={phoneNumber}
+                    onChange={handlePhoneChange}
+                    onBlur={() => {
+                      setTouched(prev => ({ ...prev, phoneNumber: true }));
+                      const error = validatePhoneNumber(phoneNumber);
+                      setErrors(prev => ({ ...prev, phoneNumber: error }));
+                      
+                      // Cập nhật isFormValid
+                      const newErrors = { ...errors, phoneNumber: error };
+                      const hasErrors = Object.values(newErrors).some(error => !!error);
+                      setIsFormValid(!hasErrors);
+                    }}
+                    containerClass="w-full"
+                    inputClass={errors.phoneNumber && touched.phoneNumber 
+                      ? 'border-red-500 dark:border-red-700' 
+                      : ''}
+                    buttonClass={errors.phoneNumber && touched.phoneNumber 
+                      ? 'border-red-500 dark:border-red-700' 
+                      : ''}
+                    enableSearch={true}
+                    disableSearchIcon={false}
+                    searchPlaceholder="Search country..."
+                  />
+                </div>
+                {errors.phoneNumber && touched.phoneNumber && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.phoneNumber}</p>
+                )}
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   Institution Code*

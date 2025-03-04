@@ -1,207 +1,155 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { RiUserLine, RiMailLine, RiLockLine, RiEyeLine, RiEyeOffLine } from 'react-icons/ri';
-import Image from 'next/image';
-import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { authService } from '@/services/auth.service';
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const { login } = useAuth();
-  const [showPassword, setShowPassword] = useState(false);
-  const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  const { login } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    
+    // Kiểm tra mật khẩu khớp nhau
+    if (password !== confirmPassword) {
+      setError('Mật khẩu không khớp');
+      return;
+    }
+    
     setIsLoading(true);
+    setError('');
     
     try {
-      if (password.length < 6) {
-        setError('Mật khẩu phải có ít nhất 6 ký tự');
-        setIsLoading(false);
-        return;
-      }
-      
-      // Gọi API register
-      const response = await fetch('http://localhost:5000/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, email, password }),
+      const authResponse = await authService.register({
+        username: name,
+        email,
+        password
       });
-
-      const data = await response.json();
       
-      if (response.ok) {
-        // Lưu token vào localStorage
-        localStorage.setItem('token', data.token);
-        
-        // Lưu thông tin user vào context
-        login(data.user, data.token);
-        
-        // Chuyển hướng về trang chính
-        router.push('/');
-      } else {
-        // Hiển thị lỗi từ server
-        setError(data.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.');
-      }
+      login(authResponse.token, authResponse.user);
+      router.push('/dashboard');
     } catch (err) {
-      setError('Có lỗi xảy ra khi kết nối đến server. Vui lòng thử lại sau.');
-      console.error(err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Đăng ký thất bại. Vui lòng thử lại.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Giữ nguyên phần JSX của bạn
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4">
-      <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 overflow-hidden rounded-2xl shadow-2xl">
-        {/* Left Side - Image/Illustration */}
-        <div className="hidden lg:block relative bg-gradient-to-br from-primary-500 to-indigo-600 p-12">
-          <div className="relative h-full flex flex-col justify-center">
-            <Image
-              src="/login_ill.jpg"
-              alt="Register Illustration"
-              width={500}
-              height={400}
-              className="mb-8 rounded-xl"
-            />
-            <h2 className="text-3xl font-bold text-white mb-4">
-              Join Our Business Platform
-            </h2>
-            <p className="text-white/80">
-              Create an account to access powerful tools for managing contracts, customers, and transactions.
-            </p>
-          </div>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-soft">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Đăng ký tài khoản mới
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Hoặc{' '}
+            <Link href="/login" className="font-medium text-primary-600 hover:text-primary-500">
+              đăng nhập với tài khoản hiện có
+            </Link>
+          </p>
         </div>
-
-        {/* Right Side - Register Form */}
-        <div className="bg-white p-8 md:p-12 lg:p-16 flex flex-col justify-center relative overflow-hidden">
-          {/* Decorative Elements */}
-          <div className="absolute top-0 left-0 w-32 h-32 bg-blue-50 rounded-full -translate-x-16 -translate-y-16"></div>
-          <div className="absolute bottom-0 right-0 w-32 h-32 bg-indigo-50 rounded-full translate-x-16 translate-y-16"></div>
+        
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+              <p className="text-red-700">{error}</p>
+            </div>
+          )}
           
-          <div className="relative">
-            <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-primary-600 to-indigo-600 bg-clip-text text-transparent">
-              Create Account
-            </h1>
-            <p className="text-gray-500 mb-8">Please fill in your details to register</p>
-
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Username Input */}
-              <div className="relative">
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                  Username
-                </label>
-                <div className="relative">
-                  <RiUserLine className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    id="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
-                    placeholder="Enter your username"
-                    required
-                  />
-                </div>
-              </div>
-              
-              {/* Email Input */}
-              <div className="relative">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <RiMailLine className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
-                    placeholder="Enter your email"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Password Input */}
-              <div className="relative">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
-                <div className="relative">
-                  <RiLockLine className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    id="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-12 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all outline-none"
-                    placeholder="Create a password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <RiEyeOffLine /> : <RiEyeLine />}
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">Password must be at least 6 characters</p>
-              </div>
-
-              {/* Terms & Conditions */}
-              <div className="flex items-center space-x-2 text-sm">
-                <input 
-                  type="checkbox" 
-                  id="terms" 
-                  className="rounded border-gray-300 text-primary-600 focus:ring-primary-500" 
-                  required
-                />
-                <label htmlFor="terms" className="text-gray-600">
-                  I agree to the <a href="#" className="text-primary-600 hover:text-primary-700 font-medium">Terms of Service</a> and <a href="#" className="text-primary-600 hover:text-primary-700 font-medium">Privacy Policy</a>
-                </label>
-              </div>
-
-              {/* Register Button */}
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-3 px-4 bg-gradient-to-r from-primary-600 to-indigo-600 text-white rounded-xl hover:opacity-90 transition-opacity focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-70"
-              >
-                {isLoading ? 'Creating Account...' : 'Create Account'}
-              </button>
-            </form>
-
-            {/* Already have account */}
-            <div className="mt-8 text-center">
-              <p className="text-gray-600">
-                Already have an account?{' '}
-                <Link href="/login" className="text-primary-600 hover:text-primary-700 font-medium">
-                  Sign In
-                </Link>
-              </p>
+          <div className="rounded-md shadow-sm -space-y-px">
+            <div>
+              <label htmlFor="name" className="sr-only">Họ tên</label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                autoComplete="name"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                placeholder="Họ tên"
+              />
+            </div>
+            <div>
+              <label htmlFor="email-address" className="sr-only">Email</label>
+              <input
+                id="email-address"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                placeholder="Email"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="sr-only">Mật khẩu</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                placeholder="Mật khẩu"
+              />
+            </div>
+            <div>
+              <label htmlFor="confirm-password" className="sr-only">Xác nhận mật khẩu</label>
+              <input
+                id="confirm-password"
+                name="confirm-password"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
+                placeholder="Xác nhận mật khẩu"
+              />
             </div>
           </div>
-        </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              {isLoading ? (
+                <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </span>
+              ) : null}
+              {isLoading ? 'Đang đăng ký...' : 'Đăng ký'}
+            </button>
+          </div>
+        </form>
       </div>
-    </main>
+    </div>
   );
 }

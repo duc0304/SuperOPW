@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Provider } from 'react-redux';
 import { store } from '@/redux/store';
 import { AuthProvider } from '@/context/AuthContext';
+import RouteGuard from '@/components/RouteGuard';
 import { Suspense } from 'react';
 
 const inter = Inter({ subsets: ["latin"] });
@@ -34,11 +35,13 @@ export default function RootLayout({
         <Provider store={store}>
           <Suspense fallback={<Loading />}>
             <AuthProvider>
-              {isPublicPage ? (
-                children
-              ) : (
-                <MainLayout>{children}</MainLayout>
-              )}
+              <RouteGuard>
+                {isPublicPage ? (
+                  children
+                ) : (
+                  <MainLayout>{children}</MainLayout>
+                )}
+              </RouteGuard>
             </AuthProvider>
           </Suspense>
         </Provider>
