@@ -81,14 +81,12 @@ export default function CustomerHeader({
         rounded-3xl p-6 pb-24 relative overflow-hidden shadow-xl transition-all duration-700 ease-out
         ${animateBackground ? 'opacity-100 transform-none' : 'opacity-0 transform -translate-y-4'}`}>
         
-        {/* Animated background elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse-slow"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24 blur-3xl animate-float"></div>
-        <div className="absolute top-1/2 left-1/4 w-32 h-32 bg-primary-300/20 rounded-full blur-2xl animate-float-slow"></div>
+        {/* Simplified background elements - removed corner shadows */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/3 right-1/4 w-32 h-32 bg-primary-300/20 rounded-full blur-2xl animate-float-slow"></div>
         
-        {/* Decorative elements */}
+        {/* Decorative elements - simplified */}
         <div className="absolute right-10 bottom-10 w-20 h-20 border-4 border-primary-300/30 rounded-xl rotate-12"></div>
-        <div className="absolute left-1/3 top-10 w-6 h-6 bg-primary-300/40 rounded-full"></div>
         
         <div className="flex flex-col md:flex-row md:items-center md:justify-between relative z-10">
           <div className="flex items-center">
@@ -112,16 +110,13 @@ export default function CustomerHeader({
         </div>
       </div>
       
-      {/* Search and filters card with enhanced 3D effect and modern color scheme */}
-      <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:from-gray-800 dark:via-purple-900/20 dark:to-indigo-900/30 rounded-2xl shadow-2xl mx-6 -mt-16 p-5 relative z-20 border-2 border-purple-200/60 dark:border-purple-500/30 transition-all duration-500 hover:shadow-xl">
-        {/* Decorative elements for search card - Made more visible with purple tones */}
-        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-purple-300/30 to-indigo-400/30 rounded-full -mr-10 -mt-10 blur-xl"></div>
-        <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-gradient-to-br from-indigo-300/30 to-purple-400/30 rounded-full -mb-10 blur-xl"></div>
-        <div className="absolute top-1/2 right-1/4 w-24 h-24 bg-gradient-to-br from-purple-300/20 to-indigo-400/20 rounded-full blur-lg"></div>
+      {/* Search and filters card with improved 3D effect */}
+      <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:from-gray-800 dark:via-purple-900/20 dark:to-indigo-900/30 rounded-2xl shadow-lg mx-6 -mt-16 p-5 relative z-20 border-2 border-purple-200/60 dark:border-purple-500/30 transition-all duration-500 hover:shadow-xl">
+        {/* Simplified decorative elements */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-300/10 to-indigo-400/10 rounded-2xl"></div>
         
         <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4 relative z-10">
           <div className="relative flex-1">
-            {/* Điều chỉnh vị trí kính lúp và padding của input */}
             <div className="relative">
               <RiSearchLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none z-30" />
               <Input

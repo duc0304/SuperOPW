@@ -7,6 +7,7 @@ import Pagination from './components/Pagination';
 import AddCustomerModal from './components/AddCustomerModal';
 import EditCustomerModal from './components/EditCustomerModal';
 import DeleteCustomerModal from './components/DeleteCustomerModal';
+import Button from '@/components/ui/Button';
 import { Customer, DEFAULT_FORM_DATA } from './mock_customers';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import {
@@ -29,6 +30,7 @@ import {
   selectPageError,
   selectIsInitialized
 } from '@/redux/slices/customerSlice';
+import { RiRefreshLine } from 'react-icons/ri';
 
 export default function CustomersPage() {
   const dispatch = useAppDispatch();
@@ -186,17 +188,16 @@ export default function CustomersPage() {
           onStatusFilterChange={handleStatusFilterChange}
         />
 
-        {/* Refresh Data Button */}
+        {/* Refresh Data Button - Áp dụng style giống hệt với các nút trong CustomerHeader */}
         <div className="flex justify-end mb-4">
-          <button
+          <Button
             onClick={handleRefreshData}
-            className="flex items-center text-sm text-gray-600 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400"
+            variant="secondary"
+            className="transition-all duration-300 hover:shadow-md bg-white/80 backdrop-blur-sm dark:bg-gray-700/80 border-purple-200 dark:border-purple-700/50"
+            icon={RiRefreshLine}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
             Refresh Data
-          </button>
+          </Button>
         </div>
 
         {/* Hiển thị lỗi trang cụ thể nếu có */}
