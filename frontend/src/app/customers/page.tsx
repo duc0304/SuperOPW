@@ -188,16 +188,16 @@ export default function CustomersPage() {
           onStatusFilterChange={handleStatusFilterChange}
         />
 
-        {/* Refresh Data Button - Áp dụng style giống hệt với các nút trong CustomerHeader */}
-        <div className="flex justify-end mb-4">
-          <Button
+        {/* Refresh Data Button */}
+        <div className="flex justify-end mb-4 relative z-10">
+          <button
             onClick={handleRefreshData}
-            variant="secondary"
-            className="transition-all duration-300 hover:shadow-md bg-white/80 backdrop-blur-sm dark:bg-gray-700/80 border-purple-200 dark:border-purple-700/50"
-            icon={RiRefreshLine}
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-white/80 backdrop-blur-sm dark:bg-gray-700/80 border border-purple-200 dark:border-purple-700/50 text-primary-600 dark:text-primary-400 font-medium transition-all duration-300 hover:shadow-md"
+            aria-label="Refresh data"
           >
-            Refresh Data
-          </Button>
+            <RiRefreshLine className="h-5 w-5" />
+            <span>Refresh Data</span>
+          </button>
         </div>
 
         {/* Hiển thị lỗi trang cụ thể nếu có */}

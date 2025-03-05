@@ -463,19 +463,19 @@ export default function AddCustomerModal({
                       {/* Search input */}
                       <div className="p-2 border-b border-gray-200 dark:border-gray-700">
                       <div className="relative">
-  <input
-    type="text"
-    value={searchQuery}
-    onChange={handleSearchCountry}
-    placeholder="Search for country"
-    className="pl-8 pr-2 py-1 w-full border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 text-sm"
-  />
-  <div className="absolute inset-y-0 left-2 flex items-center pointer-events-none">
-    <svg className="h-4 w-4 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-    </svg>
-  </div>
-</div>
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={handleSearchCountry}
+                          placeholder="Search for country"
+                          className="pl-8 pr-2 py-1 w-full border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 text-sm"
+                        />
+                        <div className="absolute inset-y-0 left-2 flex items-center pointer-events-none">
+                          <svg className="h-4 w-4 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </div>
+                      </div>
                       </div>
                       
                       {/* Country list */}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RiAddLine, RiSearchLine, RiFilterLine, RiCloseLine, RiCheckLine, RiUserLine } from 'react-icons/ri';
+import { RiAddLine, RiSearchLine, RiFilterLine, RiCloseLine, RiUserLine } from 'react-icons/ri';
 import { StatusFilter } from '../mock_customers';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -74,19 +74,31 @@ export default function CustomerHeader({
     }
   };
 
+  // Function to toggle dropdowns ensuring only one is open at a time
+  const toggleStatusDropdown = () => {
+    setShowStatusDropdown(!showStatusDropdown);
+    if (showFilters) setShowFilters(false);
+  };
+
+  const toggleFiltersDropdown = () => {
+    setShowFilters(!showFilters);
+    if (showStatusDropdown) setShowStatusDropdown(false);
+  };
+
   return (
-    <div className="mb-6 overflow-hidden">
+    <div className="mb-6 overflow-visible">
       {/* Enhanced 3D background with gradient from dark to light (left to right) */}
       <div className={`bg-gradient-to-r from-primary-700 via-primary-600 to-primary-400 dark:from-primary-900 dark:via-primary-800 dark:to-primary-600 
         rounded-3xl p-6 pb-24 relative overflow-hidden shadow-xl transition-all duration-700 ease-out
         ${animateBackground ? 'opacity-100 transform-none' : 'opacity-0 transform -translate-y-4'}`}>
+          {/* Animated background elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse-slow"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24 blur-3xl animate-float"></div>
+        <div className="absolute top-1/2 left-1/4 w-32 h-32 bg-primary-300/20 rounded-full blur-2xl animate-float-slow"></div>
         
-        {/* Simplified background elements - removed corner shadows */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/3 right-1/4 w-32 h-32 bg-primary-300/20 rounded-full blur-2xl animate-float-slow"></div>
-        
-        {/* Decorative elements - simplified */}
+        {/* Decorative elements */}
         <div className="absolute right-10 bottom-10 w-20 h-20 border-4 border-primary-300/30 rounded-xl rotate-12"></div>
+        <div className="absolute left-1/3 top-10 w-6 h-6 bg-primary-300/40 rounded-full"></div>
         
         <div className="flex flex-col md:flex-row md:items-center md:justify-between relative z-10">
           <div className="flex items-center">
@@ -110,28 +122,30 @@ export default function CustomerHeader({
         </div>
       </div>
       
-      {/* Search and filters card with improved 3D effect */}
-      <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:from-gray-800 dark:via-purple-900/20 dark:to-indigo-900/30 rounded-2xl shadow-lg mx-6 -mt-16 p-5 relative z-20 border-2 border-purple-200/60 dark:border-purple-500/30 transition-all duration-500 hover:shadow-xl">
-        {/* Simplified decorative elements */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-300/10 to-indigo-400/10 rounded-2xl"></div>
+      {/* Search and filters card with enhanced 3D effect and modern color scheme */}
+      <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:from-gray-800 dark:via-purple-900/20 dark:to-indigo-900/30 rounded-2xl shadow-2xl mx-6 -mt-16 p-5 relative z-20 border-2 border-purple-200/60 dark:border-purple-500/30 transition-all duration-500 hover:shadow-xl overflow-visible">
+        {/* Decorative elements for search card - Made more visible with purple tones */}
+        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-purple-300/30 to-indigo-400/30 rounded-full -mr-10 -mt-10 blur-xl"></div>
+        <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-gradient-to-br from-indigo-300/30 to-purple-400/30 rounded-full -mb-10 blur-xl"></div>
+        <div className="absolute top-1/2 right-1/4 w-24 h-24 bg-gradient-to-br from-purple-300/20 to-indigo-400/20 rounded-full blur-lg"></div>
         
         <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4 relative z-10">
           <div className="relative flex-1">
             <div className="relative">
-              <RiSearchLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none z-30" />
+              <RiSearchLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
               <Input
                 type="text"
                 value={searchQuery}
                 onChange={onSearchChange}
                 placeholder="Search customers..."
-                className="py-2.5 pl-12 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                className="py-2.5 pl-10 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
               />
             </div>
           </div>
           <div className="flex space-x-3">
             <div className="relative">
               <Button 
-                onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                onClick={toggleStatusDropdown}
                 variant="secondary"
                 className={`relative transition-all duration-300 hover:shadow-md bg-white/80 backdrop-blur-sm dark:bg-gray-700/80 border-purple-200 dark:border-purple-700/50 ${
                   statusFilter === 'active' 
@@ -148,7 +162,7 @@ export default function CustomerHeader({
               </Button>
               
               {showStatusDropdown && (
-                <div className="absolute left-0 mt-1 w-40 rounded-xl shadow-lg bg-white/90 backdrop-blur-sm dark:bg-gray-800/95 z-50 overflow-hidden border-2 border-purple-200/50 dark:border-purple-700/30 p-1.5 animate-fadeIn">
+                <div className="absolute left-0 mt-1 w-40 rounded-xl shadow-lg bg-white/90 backdrop-blur-sm dark:bg-gray-800/95 z-[9999] overflow-visible border-2 border-purple-200/50 dark:border-purple-700/30 p-1.5 animate-fadeIn">
                   <div className="space-y-1">
                     <button
                       className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors duration-200 
@@ -202,7 +216,7 @@ export default function CustomerHeader({
                 </div>
               ) : (
                 <Button 
-                  onClick={() => setShowFilters(!showFilters)}
+                  onClick={toggleFiltersDropdown}
                   variant="secondary"
                   className="transition-all duration-300 hover:shadow-md bg-white/80 backdrop-blur-sm dark:bg-gray-700/80 border-purple-200 dark:border-purple-700/50"
                   icon={RiFilterLine}
@@ -212,25 +226,31 @@ export default function CustomerHeader({
               )}
               
               {showFilters && !advancedFilter && (
-                <div className="absolute right-0 mt-1 w-48 rounded-xl shadow-lg bg-white/90 backdrop-blur-sm dark:bg-gray-800/95 z-50 overflow-hidden border-2 border-purple-200/50 dark:border-purple-700/30 p-1.5 animate-fadeIn">
+                <div className="absolute right-0 mt-1 w-48 rounded-xl shadow-lg bg-white/90 backdrop-blur-sm dark:bg-gray-800/95 z-[9999] overflow-visible border-2 border-purple-200/50 dark:border-purple-700/30 p-1.5 animate-fadeIn">
                   <div className="space-y-1">
                     <button
-                      className="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors duration-200 hover:bg-purple-50/70 dark:hover:bg-purple-900/20 hover:shadow-inner"
+                      className="w-full text-left px-3 py-2 text-sm rounded-lg flex items-center transition-all duration-200 
+                        bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 hover:shadow-inner transform hover:scale-[1.02]"
                       onClick={() => applyFilter('mostContracts')}
                     >
-                      Most Contracts
+                      <span className="flex-shrink-0 mr-2 text-blue-500 dark:text-blue-400">📊</span>
+                      <span>Most Contracts</span>
                     </button>
                     <button
-                      className="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors duration-200 hover:bg-purple-50/70 dark:hover:bg-purple-900/20 hover:shadow-inner"
+                      className="w-full text-left px-3 py-2 text-sm rounded-lg flex items-center transition-all duration-200 
+                        bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:shadow-inner transform hover:scale-[1.02]"
                       onClick={() => applyFilter('latestCustomers')}
                     >
-                      Latest Customers
+                      <span className="flex-shrink-0 mr-2 text-purple-500 dark:text-purple-400">🆕</span>
+                      <span>Latest Customers</span>
                     </button>
                     <button
-                      className="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors duration-200 hover:bg-purple-50/70 dark:hover:bg-purple-900/20 hover:shadow-inner"
+                      className="w-full text-left px-3 py-2 text-sm rounded-lg flex items-center transition-all duration-200 
+                        bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:shadow-inner transform hover:scale-[1.02]"
                       onClick={() => applyFilter('oldestCustomers')}
                     >
-                      Oldest Customers
+                      <span className="flex-shrink-0 mr-2 text-amber-500 dark:text-amber-400">🕰️</span>
+                      <span>Oldest Customers</span>
                     </button>
                   </div>
                 </div>
