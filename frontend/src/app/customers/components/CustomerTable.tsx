@@ -10,7 +10,8 @@ interface CustomerTableProps {
 
 export default function CustomerTable({ customers, onEdit, onDelete }: CustomerTableProps) {
   // Function to get the first letter of company name for avatar
-  const getInitial = (name: string) => {
+  const getInitial = (name: string | undefined) => {
+    if (!name) return '?'; // Trả về ký tự mặc định nếu name là null hoặc undefined
     return name.charAt(0).toUpperCase();
   };
 
@@ -47,51 +48,67 @@ export default function CustomerTable({ customers, onEdit, onDelete }: CustomerT
             <td className="table-cell">
               <div className="flex items-center">
                 <div className="flex-shrink-0 h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center text-purple-600 dark:text-purple-300 font-medium transition-colors duration-200">
-                  {getInitial(customer.companyName)}
+                  {getInitial(customer?.companyName)}
                 </div>
                 <div className="ml-4">
-                  <div className="text-sm font-medium text-gray-900 dark:text-white transition-colors duration-200">{customer.companyName}</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-200">{customer.shortName}</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-white transition-colors duration-200">{customer?.companyName || 'N/A'}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-200">{customer?.shortName || 'N/A'}</div>
                 </div>
               </div>
             </td>
             <td className="table-cell">
-              {customer.clientNumber}
+              {customer?.clientNumber || 'N/A'}
             </td>
             <td className="table-cell">
-              {customer.branch}
+              {customer?.branch || 'N/A'}
             </td>
             <td className="table-cell">
-              {customer.clientCategory}
+              {customer?.clientCategory || 'N/A'}
             </td>
             <td className="table-cell">
-              {customer.contractsCount}
+              {customer?.contractsCount || 0}
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
               <span className={`${
-                customer.status === 'active' 
+                customer?.status === 'active' 
                   ? 'badge badge-success' 
                   : 'badge badge-danger'
               }`}>
-                {customer.status}
+                {customer?.status || 'N/A'}
               </span>
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
               <div className="flex justify-end space-x-2 items-center">
-                <Link href={`/customers/${customer.id}`}>
-                  <button className="text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 flex items-center justify-center w-8 h-8 transition-colors duration-200">
+                {customer?.id ? (
+                  <Link href={`/customers/${customer.id}`}>
+                    <button className="text-purple-600 dark:text-purple-400 hover:text-purple-900 dark:hover:text-purple-300 flex items-center justify-center w-8 h-8 transition-colors duration-200">
+                      <RiEyeLine className="h-5 w-5" />
+                    </button>
+                  </Link>
+                ) : (
+                  <button disabled className="text-gray-400 cursor-not-allowed flex items-center justify-center w-8 h-8">
                     <RiEyeLine className="h-5 w-5" />
                   </button>
-                </Link>
+                )}
                 <button 
-                  onClick={() => onEdit(customer)}
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 flex items-center justify-center w-8 h-8 transition-colors duration-200"
+                  onClick={() => customer && onEdit(customer)}
+                  disabled={!customer}
+                  className={`${
+                    customer 
+                      ? "text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300" 
+                      : "text-gray-400 cursor-not-allowed"
+                  } flex items-center justify-center w-8 h-8 transition-colors duration-200`}
                 >
                   <RiEditLine className="h-5 w-5" />
                 </button>
                 <button 
-                  onClick={() => onDelete(customer)}
-                  className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 flex items-center justify-center w-8 h-8 transition-colors duration-200"
+                  onClick={() => customer && onDelete(customer)}
+                  disabled={!customer}
+                  className={`${
+                    customer 
+                      ? "text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300" 
+                      : "text-gray-400 cursor-not-allowed"
+                  } flex items-center justify-center w-8 h-8 transition-colors duration-200`}
                 >
                   <RiDeleteBinLine className="h-5 w-5" />
                 </button>

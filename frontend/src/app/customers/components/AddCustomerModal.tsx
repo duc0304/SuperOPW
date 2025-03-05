@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Customer, DEFAULT_FORM_DATA } from '../mock_customers';
 import Modal from '@/components/Modal';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import 'flag-icons/css/flag-icons.min.css';
 
 interface AddCustomerModalProps {
   isOpen: boolean;
@@ -48,6 +49,22 @@ const validationRules: Record<string, {
   phoneNumber: { required: false, numbersOnly: true, maxLength: 15 }
 };
 
+// Cập nhật mảng quốc gia với thêm thông tin tìm kiếm
+const countries = [
+  { code: 'vn', name: 'Vietnam', dialCode: '+84', searchTerms: 'vietnam viet nam' },
+  { code: 'gb', name: 'United Kingdom', dialCode: '+44', searchTerms: 'uk england great britain' },
+  { code: 'cn', name: 'China', dialCode: '+86', searchTerms: 'china chinese' },
+  { code: 'jp', name: 'Japan', dialCode: '+81', searchTerms: 'japan japanese' },
+  { code: 'np', name: 'Nepal', dialCode: '+977', searchTerms: 'nepal' },
+  { code: 'nl', name: 'Netherlands', dialCode: '+31', searchTerms: 'netherlands holland dutch' },
+  { code: 'nc', name: 'New Caledonia', dialCode: '+687', searchTerms: 'new caledonia' },
+  { code: 'nz', name: 'New Zealand', dialCode: '+64', searchTerms: 'new zealand' },
+  { code: 'ar', name: 'Argentina', dialCode: '+54', searchTerms: 'argentina' },
+  { code: 'be', name: 'Belgium', dialCode: '+32', searchTerms: 'belgium' },
+  { code: 'ca', name: 'Canada', dialCode: '+1', searchTerms: 'canada' },
+  { code: 'dk', name: 'Denmark', dialCode: '+45', searchTerms: 'denmark danish' }
+];
+
 export default function AddCustomerModal({ 
   isOpen, 
   onClose, 
@@ -58,7 +75,16 @@ export default function AddCustomerModal({
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isFormValid, setIsFormValid] = useState(false);
+  
+  // Thay đổi state cho phone number
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState(countries[0]);
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredCountries, setFilteredCountries] = useState(countries);
+  
+  // Ref để xử lý click outside dropdown
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Validation functions
   const validateField = (name: string, value: string): string => {
@@ -122,23 +148,20 @@ export default function AddCustomerModal({
     return newErrors;
   };
 
-  // Hàm validatePhoneNumber riêng biệt
+  // Cập nhật hàm validatePhoneNumber
   const validatePhoneNumber = (value: string): string => {
     if (!value) return '';
     
-    // Không cần trim vì số điện thoại có thể có khoảng trắng giữa các phần
-    if (!/^[+\d\s-()]*$/.test(value)) {
-      return 'Phone number can only contain digits, spaces, and +()-';
+    // Chỉ kiểm tra số điện thoại (không bao gồm mã quốc gia)
+    if (!/^\d*$/.test(value)) {
+      return 'Phone number can only contain digits';
     }
     
-    // Loại bỏ tất cả ký tự không phải số để đếm độ dài thực
-    const digitsOnly = value.replace(/\D/g, '');
-    
-    if (digitsOnly.length < 6) {
+    if (value.length < 6) {
       return 'Phone number is too short';
     }
     
-    if (digitsOnly.length > 15) {
+    if (value.length > 12) {
       return 'Phone number is too long';
     }
     
@@ -173,19 +196,72 @@ export default function AddCustomerModal({
     setIsFormValid(Object.keys(newErrors).length === 0);
   };
 
-  // Handle phone number change
-  const handlePhoneChange = (value: string) => {
-    setPhoneNumber(value);
-    if (touched.phoneNumber) {
-      const error = validatePhoneNumber(value);
-      setErrors(prev => ({ ...prev, phoneNumber: error }));
+  // Cập nhật handlePhoneChange
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Chỉ cho phép nhập số
+    if (/^\d*$/.test(value)) {
+      setPhoneNumber(value);
       
-      // Cập nhật isFormValid
-      const newErrors = { ...errors, phoneNumber: error };
-      const hasErrors = Object.values(newErrors).some(error => !!error);
-      setIsFormValid(!hasErrors);
+      if (touched.phoneNumber) {
+        const error = validatePhoneNumber(value);
+        setErrors(prev => ({ ...prev, phoneNumber: error }));
+        
+        // Cập nhật isFormValid
+        const newErrors = { ...errors, phoneNumber: error };
+        const hasErrors = Object.values(newErrors).some(error => !!error);
+        setIsFormValid(!hasErrors);
+      }
     }
   };
+
+  // Thêm hàm xử lý chọn quốc gia
+  const handleSelectCountry = (country: typeof countries[0]) => {
+    setSelectedCountry(country);
+    setShowCountryDropdown(false);
+    setSearchQuery('');
+  };
+  
+  // Hàm xử lý tìm kiếm quốc gia
+  const handleSearchCountry = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
+    
+    if (!query) {
+      setFilteredCountries(countries);
+      return;
+    }
+    
+    const filtered = countries.filter(country => 
+      country.name.toLowerCase().includes(query) || 
+      country.dialCode.includes(query) ||
+      country.searchTerms.includes(query)
+    );
+    
+    setFilteredCountries(filtered);
+  };
+  
+  // Xử lý click outside để đóng dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowCountryDropdown(false);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownRef]);
+  
+  // Reset filtered countries khi đóng dropdown
+  useEffect(() => {
+    if (!showCountryDropdown) {
+      setFilteredCountries(countries);
+      setSearchQuery('');
+    }
+  }, [showCountryDropdown]);
 
   // Validate form on initial load and when formData changes
   useEffect(() => {
@@ -328,38 +404,106 @@ export default function AddCustomerModal({
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              {/* Phone Number with react-phone-input-2 */}
+              {/* Cập nhật Phone Number input với thiết kế mới */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                   Phone Number
                 </label>
-                <div className="phone-input-container">
-                  <PhoneInput
-                    country={'vn'}
-                    value={phoneNumber}
-                    onChange={handlePhoneChange}
-                    onBlur={() => {
-                      setTouched(prev => ({ ...prev, phoneNumber: true }));
-                      const error = validatePhoneNumber(phoneNumber);
-                      setErrors(prev => ({ ...prev, phoneNumber: error }));
+                <div className="relative" ref={dropdownRef}>
+                  {/* Phone input container */}
+                  <div className={`flex rounded-md overflow-hidden ${
+                    errors.phoneNumber && touched.phoneNumber 
+                      ? 'border border-red-500 dark:border-red-700' 
+                      : 'border border-indigo-500 dark:border-indigo-400'
+                  }`}>
+                    {/* Country selector - thu nhỏ width */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          console.log("Toggling dropdown");
+                          setShowCountryDropdown(!showCountryDropdown);
+                        }}
+                        className="flex items-center h-full px-2 py-2 bg-white dark:bg-gray-700 border-r border-gray-300 dark:border-gray-600 w-[90px] justify-between"
+                      >
+                        <span className={`fi fi-${selectedCountry.code} mr-1`}></span>
+                        <span className="text-gray-700 dark:text-gray-200 text-sm">{selectedCountry.dialCode}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 ml-1 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    {/* Phone number input - tăng độ rộng */}
+                    <input
+                      type="text"
+                      value={phoneNumber}
+                      onChange={handlePhoneChange}
+                      onBlur={() => {
+                        setTouched(prev => ({ ...prev, phoneNumber: true }));
+                        const error = validatePhoneNumber(phoneNumber);
+                        setErrors(prev => ({ ...prev, phoneNumber: error }));
+                        
+                        // Cập nhật isFormValid
+                        const newErrors = { ...errors, phoneNumber: error };
+                        const hasErrors = Object.values(newErrors).some(error => !!error);
+                        setIsFormValid(!hasErrors);
+                      }}
+                      placeholder="Enter phone number"
+                      className="flex-1 py-2 px-3 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 outline-none border-none focus:ring-0 w-full"
+                    />
+                  </div>
+                  
+                  {/* Dropdown menu - tách ra khỏi button để tránh bị ẩn */}
+                  {showCountryDropdown && (
+                    <div 
+                      className="absolute z-[1000] mt-1 w-60 bg-white dark:bg-gray-800 shadow-lg rounded-md border border-gray-200 dark:border-gray-700 left-0"
+                      style={{ top: "100%" }}
+                    >
+                      {/* Search input */}
+                      <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+                      <div className="relative">
+  <input
+    type="text"
+    value={searchQuery}
+    onChange={handleSearchCountry}
+    placeholder="Search for country"
+    className="pl-8 pr-2 py-1 w-full border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 text-sm"
+  />
+  <div className="absolute inset-y-0 left-2 flex items-center pointer-events-none">
+    <svg className="h-4 w-4 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+  </div>
+</div>
+                      </div>
                       
-                      // Cập nhật isFormValid
-                      const newErrors = { ...errors, phoneNumber: error };
-                      const hasErrors = Object.values(newErrors).some(error => !!error);
-                      setIsFormValid(!hasErrors);
-                    }}
-                    containerClass="w-full"
-                    inputClass={errors.phoneNumber && touched.phoneNumber 
-                      ? 'border-red-500 dark:border-red-700' 
-                      : ''}
-                    buttonClass={errors.phoneNumber && touched.phoneNumber 
-                      ? 'border-red-500 dark:border-red-700' 
-                      : ''}
-                    enableSearch={true}
-                    disableSearchIcon={false}
-                    searchPlaceholder="Search country..."
-                  />
+                      {/* Country list */}
+                      <ul className="py-1 max-h-60 overflow-auto">
+                        {filteredCountries.map((country) => (
+                          <li key={country.code}>
+                            <button
+                              type="button"
+                              onClick={() => handleSelectCountry(country)}
+                              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between"
+                            >
+                              <div className="flex items-center">
+                                <span className={`fi fi-${country.code} mr-2`}></span>
+                                <span>{country.name}</span>
+                              </div>
+                              <span className="text-gray-500 dark:text-gray-400">{country.dialCode}</span>
+                            </button>
+                          </li>
+                        ))}
+                        {filteredCountries.length === 0 && (
+                          <li className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">No countries found</li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
                 </div>
+                
+                {/* Error message */}
                 {errors.phoneNumber && touched.phoneNumber && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.phoneNumber}</p>
                 )}

@@ -466,14 +466,15 @@ export const selectCustomers = (state: { customers: CustomerState }) => state.cu
 export const selectFilteredCustomers = (state: { customers: CustomerState }) => {
   const { filteredCustomers, currentPage, itemsPerPage, pageData } = state.customers;
   
-  // Nếu có dữ liệu trang trong pageData, sử dụng nó
+  // Nếu có dữ liệu trang trong pageData, sử dụng nó và lọc ra các phần tử null
   if (pageData[currentPage] && pageData[currentPage].length > 0) {
-    return pageData[currentPage];
+    return pageData[currentPage].filter(customer => customer !== null);
   }
   
-  // Nếu không, sử dụng cách tính toán cũ
+  // Nếu không, sử dụng cách tính toán cũ và lọc ra các phần tử null
   const startIndex = (currentPage - 1) * itemsPerPage;
-  return filteredCustomers.slice(startIndex, startIndex + itemsPerPage);
+  const result = filteredCustomers.slice(startIndex, startIndex + itemsPerPage);
+  return result.filter(customer => customer !== null);
 };
 
 export const selectPagination = (state: { customers: CustomerState }) => {

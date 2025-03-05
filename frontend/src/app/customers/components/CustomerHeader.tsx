@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { RiAddLine, RiSearchLine, RiFilterLine, RiCloseLine } from 'react-icons/ri';
+import { useState, useEffect } from 'react';
+import { RiAddLine, RiSearchLine, RiFilterLine, RiCloseLine, RiCheckLine, RiUserLine } from 'react-icons/ri';
 import { StatusFilter } from '../mock_customers';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 
 interface CustomerHeaderProps {
   onAddClick: () => void;
@@ -21,6 +23,13 @@ export default function CustomerHeader({
 }: CustomerHeaderProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [advancedFilter, setAdvancedFilter] = useState<AdvancedFilter>(null);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [animateBackground, setAnimateBackground] = useState(false);
+
+  // Animation effect on mount
+  useEffect(() => {
+    setAnimateBackground(true);
+  }, []);
 
   // Function to get the display text for the selected filter
   const getFilterText = (filter: AdvancedFilter): string => {
@@ -51,50 +60,142 @@ export default function CustomerHeader({
     // For example: onAdvancedFilterChange(null);
   };
 
+  // Get status display text
+  const getStatusText = (status: StatusFilter): string => {
+    switch (status) {
+      case 'all':
+        return 'All Status';
+      case 'active':
+        return 'Active';
+      case 'inactive':
+        return 'Inactive';
+      default:
+        return 'All Status';
+    }
+  };
+
   return (
-    <div className="card mb-6 bg-white dark:bg-gray-800/90 dark:border dark:border-indigo-900/30 dark:shadow-lg dark:shadow-indigo-900/10">
-      <div className="p-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-indigo-100">Customers</h1>
-            <p className="text-gray-500 dark:text-indigo-300/70">Manage your customer relationships</p>
-          </div>
-          <button
-            onClick={onAddClick}
-            className="mt-4 md:mt-0 px-4 py-3 text-base font-medium text-white bg-primary-500 hover:bg-primary-600 dark:bg-indigo-600 dark:hover:bg-indigo-700 rounded-lg shadow-sm dark:shadow-indigo-900/30 inline-flex items-center justify-center whitespace-nowrap transition-colors duration-200"
-          >
-            <RiAddLine className="h-5 w-5 mr-2" />
-            Add Customer
-          </button>
-        </div>
+    <div className="mb-6 overflow-hidden">
+      {/* Enhanced 3D background with gradient from dark to light (left to right) */}
+      <div className={`bg-gradient-to-r from-primary-700 via-primary-600 to-primary-400 dark:from-primary-900 dark:via-primary-800 dark:to-primary-600 
+        rounded-3xl p-6 pb-24 relative overflow-hidden shadow-xl transition-all duration-700 ease-out
+        ${animateBackground ? 'opacity-100 transform-none' : 'opacity-0 transform -translate-y-4'}`}>
         
-        <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <RiSearchLine className="h-5 w-5 text-gray-400 dark:text-indigo-300" />
+        {/* Animated background elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse-slow"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24 blur-3xl animate-float"></div>
+        <div className="absolute top-1/2 left-1/4 w-32 h-32 bg-primary-300/20 rounded-full blur-2xl animate-float-slow"></div>
+        
+        {/* Decorative elements */}
+        <div className="absolute right-10 bottom-10 w-20 h-20 border-4 border-primary-300/30 rounded-xl rotate-12"></div>
+        <div className="absolute left-1/3 top-10 w-6 h-6 bg-primary-300/40 rounded-full"></div>
+        
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between relative z-10">
+          <div className="flex items-center">
+            <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl mr-4 shadow-lg transform transition-transform hover:scale-105 duration-300">
+              <RiUserLine className="h-7 w-7 text-white" />
             </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={onSearchChange}
-              className="input pl-10 dark:bg-gray-700/70 dark:border-gray-600 dark:text-white dark:placeholder-indigo-300/50 dark:focus:border-indigo-500 dark:focus:ring-indigo-500/30"
-              placeholder="Search customers..."
-            />
+            <div>
+              <h1 className="text-3xl font-bold text-white drop-shadow-md">Customers</h1>
+              <p className="text-primary-100 dark:text-primary-200">Manage your customer relationships</p>
+            </div>
+          </div>
+          
+          <Button 
+            onClick={onAddClick}
+            variant="primary"
+            className="mt-4 md:mt-0 px-5 py-3 text-base shadow-lg hover:shadow-xl bg-primary-800 text-white hover:bg-primary-700 dark:bg-primary-900 dark:hover:bg-primary-800 transition-all duration-300 transform hover:-translate-y-1 border-2 border-primary-300/20"
+            icon={RiAddLine}
+          >
+            Add Customer
+          </Button>
+        </div>
+      </div>
+      
+      {/* Search and filters card with enhanced 3D effect and modern color scheme */}
+      <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:from-gray-800 dark:via-purple-900/20 dark:to-indigo-900/30 rounded-2xl shadow-2xl mx-6 -mt-16 p-5 relative z-20 border-2 border-purple-200/60 dark:border-purple-500/30 transition-all duration-500 hover:shadow-xl">
+        {/* Decorative elements for search card - Made more visible with purple tones */}
+        <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-purple-300/30 to-indigo-400/30 rounded-full -mr-10 -mt-10 blur-xl"></div>
+        <div className="absolute bottom-0 left-1/4 w-32 h-32 bg-gradient-to-br from-indigo-300/30 to-purple-400/30 rounded-full -mb-10 blur-xl"></div>
+        <div className="absolute top-1/2 right-1/4 w-24 h-24 bg-gradient-to-br from-purple-300/20 to-indigo-400/20 rounded-full blur-lg"></div>
+        
+        <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4 relative z-10">
+          <div className="relative flex-1">
+            {/* Điều chỉnh vị trí kính lúp và padding của input */}
+            <div className="relative">
+              <RiSearchLine className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none z-30" />
+              <Input
+                type="text"
+                value={searchQuery}
+                onChange={onSearchChange}
+                placeholder="Search customers..."
+                className="py-2.5 pl-12 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+              />
+            </div>
           </div>
           <div className="flex space-x-3">
-            <select
-              value={statusFilter}
-              onChange={(e) => onStatusFilterChange(e.target.value as StatusFilter)}
-              className="px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-300 dark:focus:ring-indigo-500/50 transition-all duration-200 cursor-pointer bg-white dark:bg-gray-700/70 text-gray-900 dark:text-white"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+            <div className="relative">
+              <Button 
+                onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+                variant="secondary"
+                className={`relative transition-all duration-300 hover:shadow-md bg-white/80 backdrop-blur-sm dark:bg-gray-700/80 border-purple-200 dark:border-purple-700/50 ${
+                  statusFilter === 'active' 
+                    ? 'text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/70' 
+                    : statusFilter === 'inactive'
+                      ? 'text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-700/70'
+                      : ''
+                }`}
+              >
+                {getStatusText(statusFilter)}
+                <svg className="ml-2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </Button>
+              
+              {showStatusDropdown && (
+                <div className="absolute left-0 mt-1 w-40 rounded-xl shadow-lg bg-white/90 backdrop-blur-sm dark:bg-gray-800/95 z-50 overflow-hidden border-2 border-purple-200/50 dark:border-purple-700/30 p-1.5 animate-fadeIn">
+                  <div className="space-y-1">
+                    <button
+                      className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors duration-200 
+                        ${statusFilter === 'all' ? 'font-medium' : ''} 
+                        bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:shadow-inner`}
+                      onClick={() => {
+                        onStatusFilterChange('all');
+                        setShowStatusDropdown(false);
+                      }}
+                    >
+                      All Status
+                    </button>
+                    <button
+                      className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors duration-200 
+                        ${statusFilter === 'active' ? 'font-medium' : ''} 
+                        bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 hover:shadow-inner`}
+                      onClick={() => {
+                        onStatusFilterChange('active');
+                        setShowStatusDropdown(false);
+                      }}
+                    >
+                      Active
+                    </button>
+                    <button
+                      className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors duration-200 
+                        ${statusFilter === 'inactive' ? 'font-medium' : ''} 
+                        bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 hover:shadow-inner`}
+                      onClick={() => {
+                        onStatusFilterChange('inactive');
+                        setShowStatusDropdown(false);
+                      }}
+                    >
+                      Inactive
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             
             <div className="relative">
               {advancedFilter ? (
-                <div className="flex items-center px-4 py-2 bg-primary-50 dark:bg-indigo-900/50 text-primary-700 dark:text-indigo-200 border border-primary-300 dark:border-indigo-700 rounded-lg transition-colors duration-200">
+                <div className="btn-filter-active transition-all duration-300 hover:shadow-md bg-white/80 backdrop-blur-sm dark:bg-gray-700/80 border-purple-200 dark:border-purple-700/50">
                   <span>{getFilterText(advancedFilter)}</span>
                   <button 
                     onClick={clearFilter}
@@ -105,36 +206,33 @@ export default function CustomerHeader({
                   </button>
                 </div>
               ) : (
-                <button 
+                <Button 
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`px-4 py-2 border rounded-lg flex items-center transition-colors duration-200 ${
-                    showFilters 
-                      ? 'bg-primary-50 dark:bg-indigo-900/50 text-primary-700 dark:text-indigo-200 border-primary-300 dark:border-indigo-700 hover:bg-primary-100 dark:hover:bg-indigo-800/70' 
-                      : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
-                  }`}
+                  variant="secondary"
+                  className="transition-all duration-300 hover:shadow-md bg-white/80 backdrop-blur-sm dark:bg-gray-700/80 border-purple-200 dark:border-purple-700/50"
+                  icon={RiFilterLine}
                 >
-                  <RiFilterLine className={`h-5 w-5 mr-2 ${showFilters ? 'text-primary-600 dark:text-indigo-300' : 'text-gray-400 dark:text-gray-300'}`} />
                   More Filters
-                </button>
+                </Button>
               )}
               
               {showFilters && !advancedFilter && (
-                <div className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 dark:ring-indigo-900/50 dark:shadow-indigo-900/20 z-10 overflow-hidden border border-gray-100 dark:border-gray-700 transition-colors duration-200">
-                  <div className="py-1">
+                <div className="absolute right-0 mt-1 w-48 rounded-xl shadow-lg bg-white/90 backdrop-blur-sm dark:bg-gray-800/95 z-50 overflow-hidden border-2 border-purple-200/50 dark:border-purple-700/30 p-1.5 animate-fadeIn">
+                  <div className="space-y-1">
                     <button
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-indigo-900/30 hover:text-primary-700 dark:hover:text-indigo-200 w-full text-left transition-colors duration-200"
+                      className="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors duration-200 hover:bg-purple-50/70 dark:hover:bg-purple-900/20 hover:shadow-inner"
                       onClick={() => applyFilter('mostContracts')}
                     >
                       Most Contracts
                     </button>
                     <button
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-indigo-900/30 hover:text-primary-700 dark:hover:text-indigo-200 w-full text-left transition-colors duration-200"
+                      className="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors duration-200 hover:bg-purple-50/70 dark:hover:bg-purple-900/20 hover:shadow-inner"
                       onClick={() => applyFilter('latestCustomers')}
                     >
                       Latest Customers
                     </button>
                     <button
-                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-indigo-900/30 hover:text-primary-700 dark:hover:text-indigo-200 w-full text-left transition-colors duration-200"
+                      className="w-full text-left px-3 py-2 text-sm rounded-lg transition-colors duration-200 hover:bg-purple-50/70 dark:hover:bg-purple-900/20 hover:shadow-inner"
                       onClick={() => applyFilter('oldestCustomers')}
                     >
                       Oldest Customers
