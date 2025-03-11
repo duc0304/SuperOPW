@@ -11,7 +11,7 @@ db.sequelize.sync({ force: false }) // Set force: true to drop and recreate tabl
     console.log('Database synchronized');
     
     app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+      console.log(`Server running on port ${PORT}`);
     });
   })
   .catch(err => {

@@ -266,9 +266,6 @@ export default function CustomersPage() {
             setIsAddModalOpen(false);
             setFormData(DEFAULT_FORM_DATA);
           }}
-          formData={formData}
-          setFormData={setFormData}
-          onSubmit={handleAddCustomer}
         />
 
         <EditCustomerModal
