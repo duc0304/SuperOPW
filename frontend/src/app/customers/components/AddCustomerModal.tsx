@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
-import { Customer, DEFAULT_FORM_DATA } from '../mock_customers';
+import { useState, useEffect } from 'react';
 import Modal from '@/components/Modal';
-import PhoneInput from 'react-phone-input-2';
-import 'react-phone-input-2/lib/style.css';
-import 'flag-icons/css/flag-icons.min.css';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { RiAddLine, RiBuilding2Line, RiUser3Line, RiFileList2Line, RiInformationLine } from 'react-icons/ri';
 
 interface AddCustomerModalProps {
   isOpen: boolean;
@@ -45,8 +44,8 @@ export default function AddCustomerModal({
   onClose
 }: AddCustomerModalProps) {
   const [soapClientData, setSoapClientData] = useState<SoapClientData>({
-    institutionCode: '0001',
-    branch: '0101',
+    institutionCode: '9999',
+    branch: '9999',
     clientTypeCode: 'PR',
     shortName: '',
     firstName: '',
@@ -127,30 +126,42 @@ export default function AddCustomerModal({
       
       console.log('Response from backend:', response.data);
       
-      // Hiển thị thông báo thành công rõ ràng hơn
-      setResponse("Tạo khách hàng thành công!");
-      toast.success('Tạo khách hàng thành công!', {
-        duration: 5000, // Hiển thị lâu hơn (5 giây)
-        position: 'top-center', // Hiển thị ở giữa màn hình
-        style: {
-          background: '#10B981',
-          color: '#fff',
-          fontSize: '16px',
-          padding: '16px'
-        },
-      });
-      
-      // Bỏ đoạn tự động đóng modal
-      // setTimeout(() => {
-      //   onClose();
-      // }, 1500);
+      // Kiểm tra success từ backend
+      if (response.data.success) {
+        // Thành công
+        setResponse("Tạo khách hàng thành công!");
+        toast.success('Tạo khách hàng thành công!', {
+          duration: 5000,
+          position: 'top-center',
+          style: {
+            background: '#10B981',
+            color: '#fff',
+            fontSize: '16px',
+            padding: '16px'
+          },
+        });
+      } else {
+        // Thất bại
+        const errorMessage = `Lỗi (${response.data.retCode}): ${response.data.message}`;
+        setResponse(errorMessage);
+        toast.error(errorMessage, {
+          duration: 5000,
+          position: 'top-center',
+          style: {
+            background: '#EF4444',
+            color: '#fff',
+            fontSize: '16px',
+            padding: '16px'
+          },
+        });
+      }
 
     } catch (error: any) {
       console.error('Error:', error);
       
-      // Hiển thị thông báo lỗi rõ ràng hơn
-      const errorMessage = error.response?.data?.error || 'Tạo khách hàng thất bại';
-      setResponse("Lỗi: " + errorMessage);
+      // Lỗi kết nối hoặc lỗi khác
+      const errorMessage = error.response?.data?.message || 'Không thể kết nối đến server';
+      setResponse(`Lỗi: ${errorMessage}`);
       toast.error(errorMessage, {
         duration: 5000,
         position: 'top-center',
@@ -170,8 +181,8 @@ export default function AddCustomerModal({
   useEffect(() => {
     if (isOpen) {
       setSoapClientData({
-        institutionCode: '0001',
-        branch: '0101',
+        institutionCode: '9999',
+        branch: '9999',
         clientTypeCode: 'PR',
         shortName: '',
         firstName: '',
@@ -206,247 +217,198 @@ export default function AddCustomerModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Add New Customer"
-      maxWidth="max-w-4xl"
+      maxWidth="max-w-5xl"
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse-slow"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24 blur-3xl animate-float"></div>
+        <div className="absolute top-1/2 left-1/4 w-32 h-32 bg-primary-300/20 rounded-full blur-2xl animate-float-slow"></div>
+        
         {/* Company Information */}
-        <div className="card">
-          <div className="card-header">
-            <h3 className="text-md font-medium text-purple-600 dark:text-purple-300">Company Information</h3>
+        <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:from-gray-800 dark:via-purple-900/20 dark:to-indigo-900/30 rounded-2xl shadow-xl border-2 border-purple-200/60 dark:border-purple-500/30 overflow-hidden transition-all duration-300 hover:shadow-xl">
+          <div className="bg-gradient-to-r from-primary-700 via-primary-600 to-primary-400 dark:from-primary-900 dark:via-primary-800 dark:to-primary-600 px-6 py-4 flex items-center">
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg mr-3 shadow-lg">
+              <RiBuilding2Line className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-white">Company Information</h3>
           </div>
-          <div className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Company Name*
-                </label>
-                <input
-                  type="text"
-                  value={soapClientData.companyName || ''}
-                  onChange={(e) => handleSoapDataChange('companyName', e.target.value)}
-                  className="input w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Short Name*
-                </label>
-                <input
-                  type="text"
-                  value={soapClientData.shortName}
-                  onChange={(e) => handleSoapDataChange('shortName', e.target.value)}
-                  className="input w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Client Number*
-                </label>
-                <input
-                  type="text"
-                  value={soapClientData.clientNumber}
-                  onChange={(e) => handleSoapDataChange('clientNumber', e.target.value)}
-                  className="input w-full"
-                />
-              </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Input
+                label="Company Name"
+                value={soapClientData.companyName || ''}
+                onChange={(e) => handleSoapDataChange('companyName', e.target.value)}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+              />
+              <Input
+                label="Short Name*"
+                value={soapClientData.shortName}
+                onChange={(e) => handleSoapDataChange('shortName', e.target.value)}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                required
+              />
+              <Input
+                label="Client Number*"
+                value={soapClientData.clientNumber}
+                onChange={(e) => handleSoapDataChange('clientNumber', e.target.value)}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                required
+              />
             </div>
           </div>
         </div>
 
         {/* Client Information */}
-        <div className="card">
-          <div className="card-header">
-            <h3 className="text-md font-medium text-purple-600 dark:text-purple-300">Client Information</h3>
+        <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:from-gray-800 dark:via-purple-900/20 dark:to-indigo-900/30 rounded-2xl shadow-xl border-2 border-purple-200/60 dark:border-purple-500/30 overflow-hidden transition-all duration-300 hover:shadow-xl">
+          <div className="bg-gradient-to-r from-primary-700 via-primary-600 to-primary-400 dark:from-primary-900 dark:via-primary-800 dark:to-primary-600 px-6 py-4 flex items-center">
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg mr-3 shadow-lg">
+              <RiUser3Line className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-white">Client Information</h3>
           </div>
-          <div className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  First Name*
-                </label>
-                <input
-                  type="text"
-                  value={soapClientData.firstName}
-                  onChange={(e) => handleSoapDataChange('firstName', e.target.value)}
-                  className="input w-full"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Middle Name
-                </label>
-                <input
-                  type="text"
-                  value={soapClientData.middleName}
-                  onChange={(e) => handleSoapDataChange('middleName', e.target.value)}
-                  className="input w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Last Name*
-                </label>
-                <input
-                  type="text"
-                  value={soapClientData.lastName}
-                  onChange={(e) => handleSoapDataChange('lastName', e.target.value)}
-                  className="input w-full"
-                  required
-                />
-              </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <Input
+                label="First Name*"
+                value={soapClientData.firstName}
+                onChange={(e) => handleSoapDataChange('firstName', e.target.value)}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                required
+              />
+              <Input
+                label="Middle Name"
+                value={soapClientData.middleName}
+                onChange={(e) => handleSoapDataChange('middleName', e.target.value)}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+              />
+              <Input
+                label="Last Name*"
+                value={soapClientData.lastName}
+                onChange={(e) => handleSoapDataChange('lastName', e.target.value)}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                required
+              />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Identity Card Number*
-                </label>
-                <input
-                  type="text"
-                  value={soapClientData.identityCardNumber}
-                  onChange={(e) => handleSoapDataChange('identityCardNumber', e.target.value)}
-                  className="input w-full"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Identity Card Details
-                </label>
-                <input
-                  type="text"
-                  value={soapClientData.identityCardDetails}
-                  onChange={(e) => handleSoapDataChange('identityCardDetails', e.target.value)}
-                  className="input w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Email*
-                </label>
-                <input
-                  type="email"
-                  value={soapClientData.email}
-                  onChange={(e) => handleSoapDataChange('email', e.target.value)}
-                  className="input w-full"
-                  required
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <Input
+                label="Identity Card Number*"
+                value={soapClientData.identityCardNumber}
+                onChange={(e) => handleSoapDataChange('identityCardNumber', e.target.value)}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                required
+              />
+              <Input
+                label="Identity Card Details"
+                value={soapClientData.identityCardDetails}
+                onChange={(e) => handleSoapDataChange('identityCardDetails', e.target.value)}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+              />
+              <Input
+                label="Email*"
+                type="email"
+                value={soapClientData.email}
+                onChange={(e) => handleSoapDataChange('email', e.target.value)}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                required
+              />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Address Line 1
-                </label>
-                <input
-                  type="text"
-                  value={soapClientData.addressLine1}
-                  onChange={(e) => handleSoapDataChange('addressLine1', e.target.value)}
-                  className="input w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  City
-                </label>
-                <input
-                  type="text"
-                  value={soapClientData.city}
-                  onChange={(e) => handleSoapDataChange('city', e.target.value)}
-                  className="input w-full"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Mobile Phone*
-                </label>
-                <input
-                  type="text"
-                  value={soapClientData.mobilePhone}
-                  onChange={(e) => handleSoapDataChange('mobilePhone', e.target.value)}
-                  className="input w-full"
-                  required
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Input
+                label="Address Line 1"
+                value={soapClientData.addressLine1}
+                onChange={(e) => handleSoapDataChange('addressLine1', e.target.value)}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+              />
+              <Input
+                label="City"
+                value={soapClientData.city}
+                onChange={(e) => handleSoapDataChange('city', e.target.value)}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+              />
+              <Input
+                label="Mobile Phone*"
+                value={soapClientData.mobilePhone}
+                onChange={(e) => handleSoapDataChange('mobilePhone', e.target.value)}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                required
+              />
             </div>
           </div>
         </div>
 
         {/* Custom Data */}
-        <div className="card">
-          <div className="card-header">
-            <h3 className="text-md font-medium text-purple-600 dark:text-purple-300">Custom Data</h3>
+        <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:from-gray-800 dark:via-purple-900/20 dark:to-indigo-900/30 rounded-2xl shadow-xl border-2 border-purple-200/60 dark:border-purple-500/30 overflow-hidden transition-all duration-300 hover:shadow-xl">
+          <div className="bg-gradient-to-r from-primary-700 via-primary-600 to-primary-400 dark:from-primary-900 dark:via-primary-800 dark:to-primary-600 px-6 py-4 flex items-center">
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg mr-3 shadow-lg">
+              <RiFileList2Line className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-white">Custom Data</h3>
           </div>
-          <div className="p-4">
+          <div className="p-6">
             {soapClientData.customData.map((item, index) => (
               <div key={index} className="grid grid-cols-1 md:grid-cols-7 gap-4 mb-4 items-end">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Add Info Type
-                  </label>
-                  <input
-                    type="text"
+                  <Input
+                    label="Add Info Type"
                     value={item.addInfoType}
                     onChange={(e) => handleCustomDataChange(index, 'addInfoType', e.target.value)}
-                    className="input w-full"
+                    className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Tag Name
-                  </label>
-                  <input
-                    type="text"
+                  <Input
+                    label="Tag Name"
                     value={item.tagName}
                     onChange={(e) => handleCustomDataChange(index, 'tagName', e.target.value)}
-                    className="input w-full"
+                    className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Tag Value
-                  </label>
-                  <input
-                    type="text"
+                  <Input
+                    label="Tag Value"
                     value={item.tagValue}
                     onChange={(e) => handleCustomDataChange(index, 'tagValue', e.target.value)}
-                    className="input w-full"
+                    className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
                   />
                 </div>
                 <div className="md:col-span-1">
-                  <button
-                    type="button"
+                  <Button
                     onClick={() => removeCustomData(index)}
                     disabled={soapClientData.customData.length <= 1}
-                    className={`w-full py-2 px-4 rounded-md ${
+                    variant="danger"
+                    className={`w-full ${
                       soapClientData.customData.length <= 1
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : 'bg-red-500 text-white hover:bg-red-600'
+                        ? 'opacity-50 cursor-not-allowed'
+                        : ''
                     }`}
                   >
                     Remove
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
-            <button
-              type="button"
+            <Button
               onClick={addCustomData}
-              className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
+              variant="secondary"
+              className="mt-2"
             >
               Add Custom Data
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Response Display */}
         {response && (
-          <div className="card">
-            <div className="card-header">
-              <h3 className="text-md font-medium text-purple-600 dark:text-purple-300">Kết quả</h3>
+          <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:from-gray-800 dark:via-purple-900/20 dark:to-indigo-900/30 rounded-2xl shadow-xl border-2 border-purple-200/60 dark:border-purple-500/30 overflow-hidden transition-all duration-300 hover:shadow-xl">
+            <div className="bg-gradient-to-r from-primary-700 via-primary-600 to-primary-400 dark:from-primary-900 dark:via-primary-800 dark:to-primary-600 px-6 py-4 flex items-center">
+              <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg mr-3 shadow-lg">
+                <RiInformationLine className="h-5 w-5 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-white">Kết quả</h3>
             </div>
-            <div className="p-4">
-              <div className={`p-4 rounded-md text-center text-lg font-medium ${
+            <div className="p-6">
+              <div className={`p-4 rounded-xl text-center text-lg font-medium shadow-inner ${
                 response.includes("Lỗi") 
                   ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" 
                   : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
@@ -458,23 +420,25 @@ export default function AddCustomerModal({
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-3 mt-6">
-          <button
-            type="button"
+        <div className="flex justify-end space-x-4 mt-8">
+          <Button
             onClick={onClose}
-            className="btn btn-secondary"
+            variant="secondary"
+            className="transition-all duration-300 hover:shadow-md bg-white/80 backdrop-blur-sm dark:bg-gray-700/80 border-purple-200 dark:border-purple-700/50"
           >
-            Hủy
-          </button>
-          <button
+            Cancel
+          </Button>
+          <Button
             type="submit"
+            variant="primary"
+            icon={RiAddLine}
             disabled={isSubmitting}
-            className={`btn btn-primary ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
+            className="px-5 py-3 text-base shadow-lg hover:shadow-xl bg-primary-800 text-white hover:bg-primary-700 dark:bg-primary-900 dark:hover:bg-primary-800 transition-all duration-300 transform hover:-translate-y-1 border-2 border-primary-300/20"
           >
-            {isSubmitting ? 'Đang xử lý...' : 'Tạo khách hàng'}
-          </button>
+            {isSubmitting ? 'Processing...' : 'Add customer'}
+          </Button>
         </div>
       </form>
     </Modal>
   );
-} 
+}

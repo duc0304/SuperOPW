@@ -1,0 +1,15 @@
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+   <s:Body>
+      <CreateCardV3Response xmlns="http://www.openwaygroup.com/wsint" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+         <CreateCardV3Result>
+            <CreatedCard>366270</CreatedCard>
+            <CardNumber>1000050145036151</CardNumber>
+            <ExpiryDate>2302</ExpiryDate>
+            <SequenceNumber>1</SequenceNumber>
+            <RetCode>0</RetCode>
+            <RetMsg>I Successfully Completed</RetMsg>
+            <ResultInfo>officer="WX_ADMIN"</ResultInfo>
+         </CreateCardV3Result>
+      </CreateCardV3Response>
+   </s:Body>
+</s:Envelope>

@@ -1,0 +1,23 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsin="http://www.openwaygroup.com/wsint">
+   <soapenv:Header>
+      <wsin:SessionContextStr>?</wsin:SessionContextStr>
+      <wsin:UserInfo>officer="WX_ADMIN"</wsin:UserInfo>
+      <wsin:CorrelationId>?</wsin:CorrelationId>
+   </soapenv:Header>
+   <soapenv:Body>
+      <wsin:CreateCardV3>
+         	<wsin:ContractSearchMethod>CONTRACT_NUMBER</wsin:ContractSearchMethod>
+         	<wsin:ContractIdentifier>001-MCR-65955952</wsin:ContractIdentifier>
+         	<wsin:ProductCode>MC_CR_GLD_M</wsin:ProductCode>
+         	<wsin:ProductCode2></wsin:ProductCode2>
+          <wsin:ProductCode3></wsin:ProductCode3>
+         <wsin:InObject>
+            <wsin:CardName>Card Contract</wsin:CardName>
+            <wsin:CBSNumber></wsin:CBSNumber>
+            <wsin:EmbossedFirstName>Phan</wsin:EmbossedFirstName>
+            <wsin:EmbossedLastName>Hong</wsin:EmbossedLastName>
+            <wsin:EmbossedCompanyName>OpenWay</wsin:EmbossedCompanyName>
+         </wsin:InObject>  
+      </wsin:CreateCardV3>
+   </soapenv:Body>
+</soapenv:Envelope>

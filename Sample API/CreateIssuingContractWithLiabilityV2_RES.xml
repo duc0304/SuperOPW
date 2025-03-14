@@ -1,0 +1,14 @@
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+   <s:Body>
+      <CreateIssuingContractWithLiabilityV2Response xmlns="http://www.openwaygroup.com/wsint" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+         <CreateIssuingContractWithLiabilityV2Result>
+            <CreatedContract>365860</CreatedContract>
+            <ContractNumber>001-MCR-65955952</ContractNumber>
+            <ApplicationNumber>13516122012040</ApplicationNumber>
+            <RetCode>0</RetCode>
+            <RetMsg>I Successfully Completed</RetMsg>
+            <ResultInfo>officer="WX_ADMIN"</ResultInfo>
+         </CreateIssuingContractWithLiabilityV2Result>
+      </CreateIssuingContractWithLiabilityV2Response>
+   </s:Body>
+</s:Envelope>

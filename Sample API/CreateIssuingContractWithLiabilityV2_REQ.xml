@@ -1,0 +1,27 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsin="http://www.openwaygroup.com/wsint">
+   <soapenv:Header>
+      <wsin:SessionContextStr>?</wsin:SessionContextStr>
+      <wsin:UserInfo>officer="WX_ADMIN"</wsin:UserInfo>
+      <wsin:CorrelationId>?</wsin:CorrelationId>
+   </soapenv:Header>
+   <soapenv:Body>
+      <wsin:CreateIssuingContractWithLiabilityV2>
+      	<wsin:LiabCategory>Y</wsin:LiabCategory>
+      	<wsin:LiabContractSearchMethod>CONTRACT_NUMBER</wsin:LiabContractSearchMethod>
+      	<wsin:LiabContractIdentifier>001-P-LIB-2810963869</wsin:LiabContractIdentifier>
+         	<wsin:ClientSearchMethod>CLIENT_NUMBER</wsin:ClientSearchMethod>
+         	<wsin:ClientIdentifier>099773245419</wsin:ClientIdentifier>
+         	<wsin:ProductCode>MC_CR_GLD</wsin:ProductCode>
+         	<wsin:ProductCode2></wsin:ProductCode2>
+          <wsin:ProductCode3></wsin:ProductCode3>
+         <wsin:InObject>
+            <wsin:Branch>001</wsin:Branch>
+            <wsin:InstitutionCode>0001</wsin:InstitutionCode>
+            <wsin:ContractName>Issuing Contract</wsin:ContractName>
+            <wsin:CBSNumber>213245566000</wsin:CBSNumber>
+            <wsin:AddInfo01>PAYMENT_OPTION=MTP;START_DATE=0123;BANK=A1;ACCOUNT=A2;BANK_CODE=A3;ACC_NAME=A4;</wsin:AddInfo01>
+            <wsin:AddInfo02>PAYMENT_OPTION=MTP;</wsin:AddInfo02>
+         </wsin:InObject>  
+      </wsin:CreateIssuingContractWithLiabilityV2>
+   </soapenv:Body>
+</soapenv:Envelope>

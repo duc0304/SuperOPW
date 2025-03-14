@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsin="http://www.openwaygroup.com/wsint">
+   <soapenv:Header>
+      <wsin:SessionContextStr>?</wsin:SessionContextStr>
+      <wsin:UserInfo>officer="WX_ADMIN"</wsin:UserInfo>
+      <wsin:CorrelationId>?</wsin:CorrelationId>
+   </soapenv:Header>
+   <soapenv:Body>
+      <wsin:CreateClientV4>
+         <wsin:Reason>Create client</wsin:Reason>        
+         <wsin:CreateClient_InObject>
+            <wsin:InstitutionCode>0001</wsin:InstitutionCode>
+            <wsin:Branch>001</wsin:Branch>
+            <wsin:ClientTypeCode>PR</wsin:ClientTypeCode>
+            <wsin:ClientCategory></wsin:ClientCategory>
+            <wsin:ServiceGroup></wsin:ServiceGroup>
+            <wsin:ProductCategory></wsin:ProductCategory>
+            <wsin:LanguageCode></wsin:LanguageCode>
+            <wsin:SalutationSuffix></wsin:SalutationSuffix>
+            <wsin:ShortName>Truong Ha Anh</wsin:ShortName>
+            <wsin:FirstName>Anh</wsin:FirstName>
+            <wsin:LastName>Truong</wsin:LastName>
+            <wsin:MiddleName>Ha</wsin:MiddleName>
+            <wsin:MaritalStatusCode>D</wsin:MaritalStatusCode>
+            <wsin:SocialSecurityNumber>234550004319</wsin:SocialSecurityNumber>
+            <wsin:SalutationCode>MR</wsin:SalutationCode>
+            <wsin:BirthDate>2000-12-12</wsin:BirthDate>
+            <wsin:Gender>F</wsin:Gender>
+            <wsin:BirthPlace></wsin:BirthPlace>
+            <wsin:BirthName></wsin:BirthName>
+            <wsin:Citizenship>VNM</wsin:Citizenship>
+            <wsin:TaxBracket></wsin:TaxBracket>
+            <wsin:IndividualTaxpayerNumber>43245665619</wsin:IndividualTaxpayerNumber>
+            <wsin:SecretPhrase></wsin:SecretPhrase>
+            <wsin:CompanyName>OPenWay</wsin:CompanyName>
+            <wsin:Trademark></wsin:Trademark>
+            <wsin:Department></wsin:Department>
+            <wsin:EmbossedTitleCode></wsin:EmbossedTitleCode>
+            <wsin:EmbossedFirstName></wsin:EmbossedFirstName>
+            <wsin:EmbossedLastName></wsin:EmbossedLastName>
+		  <wsin:EmbossedCompanyName></wsin:EmbossedCompanyName>
+            <wsin:IdentityCardType></wsin:IdentityCardType>
+            <wsin:IdentityCardNumber>0997765539</wsin:IdentityCardNumber>
+            <wsin:IdentityCardDetails>232445213hanoi</wsin:IdentityCardDetails>
+            <wsin:ClientNumber>099773245419</wsin:ClientNumber>
+            <wsin:Profession>Thu Ky</wsin:Profession>
+            <wsin:EMail>linhdt@gmail.com</wsin:EMail>
+            <wsin:AddressLine1>54 Lieu Giai Doi Can Ba Dinh</wsin:AddressLine1>
+            <wsin:AddressLine2></wsin:AddressLine2>
+            <wsin:AddressLine3></wsin:AddressLine3>
+            <wsin:AddressLine4></wsin:AddressLine4>
+            <wsin:City>HaNoi</wsin:City>
+            <wsin:HomePhone>0875433001</wsin:HomePhone>
+            <wsin:MobilePhone>087543002</wsin:MobilePhone>
+            <wsin:BusinessPhone></wsin:BusinessPhone>
+         </wsin:CreateClient_InObject>
+         <wsin:SetCustomData_InObject>
+         		<wsin:AddInfoType>AddInfo01</wsin:AddInfoType>
+         		<wsin:TagName>PrevID_01</wsin:TagName>
+         		<wsin:TagValue>A1</wsin:TagValue>
+         </wsin:SetCustomData_InObject>
+         <wsin:SetCustomData_InObject>
+         		<wsin:AddInfoType>AddInfo01</wsin:AddInfoType>
+         		<wsin:TagName>PrevID_02</wsin:TagName>
+         		<wsin:TagValue>A2</wsin:TagValue>
+         </wsin:SetCustomData_InObject>
+      </wsin:CreateClientV4>      
+   </soapenv:Body>
+</soapenv:Envelope>

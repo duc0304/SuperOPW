@@ -1,0 +1,13 @@
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+   <s:Body>
+      <CreateClientV4Response xmlns="http://www.openwaygroup.com/wsint" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+         <CreateClientV4Result>
+            <NewClient>84560</NewClient>
+            <ApplicationNumber>13516004811770</ApplicationNumber>
+            <RetCode>0</RetCode>
+            <RetMsg>I Successfully Completed</RetMsg>
+            <ResultInfo>officer="WX_ADMIN"</ResultInfo>
+         </CreateClientV4Result>
+      </CreateClientV4Response>
+   </s:Body>
+</s:Envelope>

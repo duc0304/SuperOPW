@@ -1,0 +1,25 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsin="http://www.openwaygroup.com/wsint">
+   <soapenv:Header>
+      <wsin:SessionContextStr>?</wsin:SessionContextStr>
+      <wsin:UserInfo>officer="WX_ADMIN"</wsin:UserInfo>
+      <wsin:CorrelationId>?</wsin:CorrelationId>
+   </soapenv:Header>
+   <soapenv:Body>
+      <wsin:CreateContractV4>
+         <wsin:ClientSearchMethod>CLIENT_NUMBER</wsin:ClientSearchMethod>
+         <wsin:ClientIdentifier>099773245419</wsin:ClientIdentifier>
+         <wsin:Reason>to test</wsin:Reason>
+         <wsin:CreateContract_InObject>
+            <wsin:Branch>0101</wsin:Branch>
+            <wsin:InstitutionCode>0001</wsin:InstitutionCode>
+            <wsin:ProductCode>ISS_CR_P_LIB</wsin:ProductCode>
+            <wsin:ProductCode2></wsin:ProductCode2>
+            <wsin:ProductCode3></wsin:ProductCode3>
+            <wsin:ContractName>Liability Contract</wsin:ContractName>
+            <wsin:CBSNumber>21324556600</wsin:CBSNumber>        
+         </wsin:CreateContract_InObject>
+         <wsin:SetCustomData_InObject>
+         </wsin:SetCustomData_InObject>      
+      </wsin:CreateContractV4>
+   </soapenv:Body>
+</soapenv:Envelope>

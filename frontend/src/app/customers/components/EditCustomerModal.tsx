@@ -1,5 +1,9 @@
+import { useState } from 'react';
 import { Customer } from '../mock_customers';
 import Modal from '@/components/Modal';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { RiSaveLine, RiBuilding2Line, RiUser3Line, RiFileList2Line, RiInformationLine } from 'react-icons/ri';
 
 interface EditCustomerModalProps {
   isOpen: boolean;
@@ -18,146 +22,143 @@ export default function EditCustomerModal({
   setFormData, 
   onSubmit 
 }: EditCustomerModalProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    setIsSubmitting(true);
+    await onSubmit(e);
+    setIsSubmitting(false);
+  };
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title="Edit Customer"
-      maxWidth="max-w-5xl" // Wider modal
+      maxWidth="max-w-5xl"
     >
-      <form onSubmit={onSubmit} className="space-y-6">
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-colors duration-200">
-          <div className="card-header">
-            <h3 className="text-lg font-medium text-purple-600 dark:text-purple-300 transition-colors duration-200">Company Information</h3>
+      <form onSubmit={handleFormSubmit} className="space-y-6">
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse-slow"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24 blur-3xl animate-float"></div>
+        <div className="absolute top-1/2 left-1/4 w-32 h-32 bg-primary-300/20 rounded-full blur-2xl animate-float-slow"></div>
+        
+        {/* Company Information */}
+        <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:from-gray-800 dark:via-purple-900/20 dark:to-indigo-900/30 rounded-2xl shadow-xl border-2 border-purple-200/60 dark:border-purple-500/30 overflow-hidden transition-all duration-300 hover:shadow-xl">
+          <div className="bg-gradient-to-r from-primary-700 via-primary-600 to-primary-400 dark:from-primary-900 dark:via-primary-800 dark:to-primary-600 px-6 py-4 flex items-center">
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg mr-3 shadow-lg">
+              <RiBuilding2Line className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-white">Company Information</h3>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">Company Name*</label>
-                <input
-                  type="text"
-                  value={formData.companyName}
-                  onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                  className="input"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">Short Name*</label>
-                <input
-                  type="text"
-                  value={formData.shortName}
-                  onChange={(e) => setFormData({ ...formData, shortName: e.target.value })}
-                  className="input"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">Client Number*</label>
-                <input
-                  type="text"
-                  value={formData.clientNumber}
-                  onChange={(e) => setFormData({ ...formData, clientNumber: e.target.value })}
-                  className="input"
-                  required
-                />
-              </div>
+              <Input
+                label="Company Name*"
+                value={formData.companyName}
+                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                required
+              />
+              <Input
+                label="Short Name*"
+                value={formData.shortName}
+                onChange={(e) => setFormData({ ...formData, shortName: e.target.value })}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                required
+              />
+              <Input
+                label="Client Number*"
+                value={formData.clientNumber}
+                onChange={(e) => setFormData({ ...formData, clientNumber: e.target.value })}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                required
+              />
             </div>
           </div>
         </div>
 
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-colors duration-200">
-          <div className="card-header">
-            <h3 className="text-lg font-medium text-purple-600 dark:text-purple-300 transition-colors duration-200">Client Information</h3>
+        {/* Client Information */}
+        <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:from-gray-800 dark:via-purple-900/20 dark:to-indigo-900/30 rounded-2xl shadow-xl border-2 border-purple-200/60 dark:border-purple-500/30 overflow-hidden transition-all duration-300 hover:shadow-xl">
+          <div className="bg-gradient-to-r from-primary-700 via-primary-600 to-primary-400 dark:from-primary-900 dark:via-primary-800 dark:to-primary-600 px-6 py-4 flex items-center">
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg mr-3 shadow-lg">
+              <RiUser3Line className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-white">Client Information</h3>
           </div>
           <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <Input
+                label="Client Type Code*"
+                value={formData.clientTypeCode}
+                onChange={(e) => setFormData({ ...formData, clientTypeCode: e.target.value })}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                required
+              />
+              <Input
+                label="Reason Code*"
+                value={formData.reasonCode}
+                onChange={(e) => setFormData({ ...formData, reasonCode: e.target.value })}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                required
+              />
+              <Input
+                label="Reason*"
+                value={formData.reason}
+                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                required
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">Client Type Code*</label>
-                <input
-                  type="text"
-                  value={formData.clientTypeCode}
-                  onChange={(e) => setFormData({ ...formData, clientTypeCode: e.target.value })}
-                  className="input"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">Reason Code*</label>
-                <input
-                  type="text"
-                  value={formData.reasonCode}
-                  onChange={(e) => setFormData({ ...formData, reasonCode: e.target.value })}
-                  className="input"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">Reason*</label>
-                <input
-                  type="text"
-                  value={formData.reason}
-                  onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                  className="input"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">Institution Code*</label>
-                <input
-                  type="text"
-                  value={formData.institutionCode}
-                  onChange={(e) => setFormData({ ...formData, institutionCode: e.target.value })}
-                  className="input"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">Branch*</label>
-                <input
-                  type="text"
-                  value={formData.branch}
-                  onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-                  className="input"
-                  required
-                />
-              </div>
+              <Input
+                label="Institution Code*"
+                value={formData.institutionCode}
+                onChange={(e) => setFormData({ ...formData, institutionCode: e.target.value })}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                required
+              />
+              <Input
+                label="Branch*"
+                value={formData.branch}
+                onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                required
+              />
             </div>
           </div>
         </div>
 
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden transition-colors duration-200">
-          <div className="card-header">
-            <h3 className="text-lg font-medium text-purple-600 dark:text-purple-300 transition-colors duration-200">Category Information</h3>
+        {/* Category Information */}
+        <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-100 dark:from-gray-800 dark:via-purple-900/20 dark:to-indigo-900/30 rounded-2xl shadow-xl border-2 border-purple-200/60 dark:border-purple-500/30 overflow-hidden transition-all duration-300 hover:shadow-xl">
+          <div className="bg-gradient-to-r from-primary-700 via-primary-600 to-primary-400 dark:from-primary-900 dark:via-primary-800 dark:to-primary-600 px-6 py-4 flex items-center">
+            <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg mr-3 shadow-lg">
+              <RiFileList2Line className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-lg font-semibold text-white">Category Information</h3>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">Client Category*</label>
-                <input
-                  type="text"
-                  value={formData.clientCategory}
-                  onChange={(e) => setFormData({ ...formData, clientCategory: e.target.value })}
-                  className="input"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">Product Category*</label>
-                <input
-                  type="text"
-                  value={formData.productCategory}
-                  onChange={(e) => setFormData({ ...formData, productCategory: e.target.value })}
-                  className="input"
-                  required
-                />
-              </div>
+              <Input
+                label="Client Category*"
+                value={formData.clientCategory}
+                onChange={(e) => setFormData({ ...formData, clientCategory: e.target.value })}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                required
+              />
+              <Input
+                label="Product Category*"
+                value={formData.productCategory}
+                onChange={(e) => setFormData({ ...formData, productCategory: e.target.value })}
+                className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                required
+              />
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 transition-colors duration-200">Status</label>
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
-                  className="input"
+                  className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border border-purple-200 dark:border-purple-700/50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300 focus:shadow-md"
                 >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
@@ -167,20 +168,24 @@ export default function EditCustomerModal({
           </div>
         </div>
 
-        <div className="flex justify-end space-x-3 pt-6 mt-6 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
-          <button
-            type="button"
+        {/* Action Buttons */}
+        <div className="flex justify-end space-x-4 mt-8">
+          <Button
             onClick={onClose}
-            className="btn btn-secondary"
+            variant="secondary"
+            className="transition-all duration-300 hover:shadow-md bg-white/80 backdrop-blur-sm dark:bg-gray-700/80 border-purple-200 dark:border-purple-700/50"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className="btn btn-primary"
+            variant="primary"
+            icon={RiSaveLine}
+            disabled={isSubmitting}
+            className="px-5 py-3 text-base shadow-lg hover:shadow-xl bg-primary-800 text-white hover:bg-primary-700 dark:bg-primary-900 dark:hover:bg-primary-800 transition-all duration-300 transform hover:-translate-y-1 border-2 border-primary-300/20"
           >
-            Save Changes
-          </button>
+            {isSubmitting ? 'Saving...' : 'Save Changes'}
+          </Button>
         </div>
       </form>
     </Modal>
