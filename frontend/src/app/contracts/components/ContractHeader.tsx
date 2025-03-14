@@ -69,15 +69,6 @@ export default function ContractHeader({ customerName, clearCustomerFilter, onAd
             )}
             
             <Button 
-              onClick={() => {}}
-              variant="secondary"
-              className="transition-all duration-300 hover:shadow-md bg-white/20 backdrop-blur-sm text-white border-white/30"
-              icon={RiFilterLine}
-            >
-              Filter
-            </Button>
-            
-            <Button 
               onClick={onAddContract}
               variant="primary"
               className="px-5 py-3 text-base shadow-lg hover:shadow-xl bg-primary-800 text-white hover:bg-primary-700 dark:bg-primary-900 dark:hover:bg-primary-800 transition-all duration-300 transform hover:-translate-y-1 border-2 border-primary-300/20"

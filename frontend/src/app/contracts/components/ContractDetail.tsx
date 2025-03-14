@@ -122,26 +122,29 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
     return (
       <div className="relative group">
         {isEditing ? (
-          <Input
-            value={value}
-            onChange={(e) => {
-              const newValue = e.target.value;
-              const newContract = JSON.parse(JSON.stringify(editedContract));
-              
-              if (section === 'segment' && newContract.segment) {
-                newContract.segment[field] = newValue;
-              } else if (section === 'liability' && newContract.liability) {
-                newContract.liability[field] = newValue;
-              } else if (section === 'financial' && newContract.financial) {
-                newContract.financial[field] = field === 'currency' ? newValue : parseFloat(newValue) || 0;
-              } else if (section === 'cardDetails' && newContract.cardDetails) {
-                newContract.cardDetails[field] = newValue;
-              }
-              
-              setEditedContract(newContract);
-            }}
-            className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-          />
+          <div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{label}</p>
+            <Input
+              value={value}
+              onChange={(e) => {
+                const newValue = e.target.value;
+                const newContract = JSON.parse(JSON.stringify(editedContract));
+                
+                if (section === 'segment' && newContract.segment) {
+                  newContract.segment[field] = newValue;
+                } else if (section === 'liability' && newContract.liability) {
+                  newContract.liability[field] = newValue;
+                } else if (section === 'financial' && newContract.financial) {
+                  newContract.financial[field] = field === 'currency' ? newValue : parseFloat(newValue) || 0;
+                } else if (section === 'cardDetails' && newContract.cardDetails) {
+                  newContract.cardDetails[field] = newValue;
+                }
+                
+                setEditedContract(newContract);
+              }}
+              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+            />
+          </div>
         ) : (
           <>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{label}</p>
@@ -232,18 +235,21 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                   <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
                     <div className="group">
                       {isEditing ? (
-                        <Input
-                          value={editedContract.segment?.institution || ''}
-                          onChange={(e) => {
-                            const newValue = e.target.value;
-                            const newContract = JSON.parse(JSON.stringify(editedContract));
-                            if (newContract.segment) {
-                              newContract.segment.institution = newValue;
-                              setEditedContract(newContract);
-                            }
-                          }}
-                          className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                        />
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Institution</p>
+                          <Input
+                            value={editedContract.segment?.institution || ''}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              const newContract = JSON.parse(JSON.stringify(editedContract));
+                              if (newContract.segment) {
+                                newContract.segment.institution = newValue;
+                                setEditedContract(newContract);
+                              }
+                            }}
+                            className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                          />
+                        </div>
                       ) : (
                         <>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Institution</p>
@@ -263,18 +269,21 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                   <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
                     <div className="group">
                       {isEditing ? (
-                        <Input
-                          value={editedContract.segment?.branch || ''}
-                          onChange={(e) => {
-                            const newValue = e.target.value;
-                            const newContract = JSON.parse(JSON.stringify(editedContract));
-                            if (newContract.segment) {
-                              newContract.segment.branch = newValue;
-                              setEditedContract(newContract);
-                            }
-                          }}
-                          className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                        />
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Branch</p>
+                          <Input
+                            value={editedContract.segment?.branch || ''}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              const newContract = JSON.parse(JSON.stringify(editedContract));
+                              if (newContract.segment) {
+                                newContract.segment.branch = newValue;
+                                setEditedContract(newContract);
+                              }
+                            }}
+                            className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                          />
+                        </div>
                       ) : (
                         <>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Branch</p>
@@ -294,18 +303,21 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                   <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
                     <div className="group">
                       {isEditing ? (
-                        <Input
-                          value={editedContract.segment?.product || ''}
-                          onChange={(e) => {
-                            const newValue = e.target.value;
-                            const newContract = JSON.parse(JSON.stringify(editedContract));
-                            if (newContract.segment) {
-                              newContract.segment.product = newValue;
-                              setEditedContract(newContract);
-                            }
-                          }}
-                          className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                        />
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Product</p>
+                          <Input
+                            value={editedContract.segment?.product || ''}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              const newContract = JSON.parse(JSON.stringify(editedContract));
+                              if (newContract.segment) {
+                                newContract.segment.product = newValue;
+                                setEditedContract(newContract);
+                              }
+                            }}
+                            className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                          />
+                        </div>
                       ) : (
                         <>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Product</p>
@@ -328,18 +340,21 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                   <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
                     <div className="group">
                       {isEditing ? (
-                        <Input
-                          value={editedContract.segment?.serviceGroup || ''}
-                          onChange={(e) => {
-                            const newValue = e.target.value;
-                            const newContract = JSON.parse(JSON.stringify(editedContract));
-                            if (newContract.segment) {
-                              newContract.segment.serviceGroup = newValue;
-                              setEditedContract(newContract);
-                            }
-                          }}
-                          className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                        />
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Service Group</p>
+                          <Input
+                            value={editedContract.segment?.serviceGroup || ''}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              const newContract = JSON.parse(JSON.stringify(editedContract));
+                              if (newContract.segment) {
+                                newContract.segment.serviceGroup = newValue;
+                                setEditedContract(newContract);
+                              }
+                            }}
+                            className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                          />
+                        </div>
                       ) : (
                         <>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Service Group</p>
@@ -359,18 +374,21 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                   <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
                     <div className="group">
                       {isEditing ? (
-                        <Input
-                          value={editedContract.segment?.reportType || ''}
-                          onChange={(e) => {
-                            const newValue = e.target.value;
-                            const newContract = JSON.parse(JSON.stringify(editedContract));
-                            if (newContract.segment) {
-                              newContract.segment.reportType = newValue;
-                              setEditedContract(newContract);
-                            }
-                          }}
-                          className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                        />
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Report Type</p>
+                          <Input
+                            value={editedContract.segment?.reportType || ''}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              const newContract = JSON.parse(JSON.stringify(editedContract));
+                              if (newContract.segment) {
+                                newContract.segment.reportType = newValue;
+                                setEditedContract(newContract);
+                              }
+                            }}
+                            className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                          />
+                        </div>
                       ) : (
                         <>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Report Type</p>
@@ -390,18 +408,21 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                   <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
                     <div className="group">
                       {isEditing ? (
-                        <Input
-                          value={editedContract.segment?.role || ''}
-                          onChange={(e) => {
-                            const newValue = e.target.value;
-                            const newContract = JSON.parse(JSON.stringify(editedContract));
-                            if (newContract.segment) {
-                              newContract.segment.role = newValue;
-                              setEditedContract(newContract);
-                            }
-                          }}
-                          className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                        />
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Role</p>
+                          <Input
+                            value={editedContract.segment?.role || ''}
+                            onChange={(e) => {
+                              const newValue = e.target.value;
+                              const newContract = JSON.parse(JSON.stringify(editedContract));
+                              if (newContract.segment) {
+                                newContract.segment.role = newValue;
+                                setEditedContract(newContract);
+                              }
+                            }}
+                            className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                          />
+                        </div>
                       ) : (
                         <>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Role</p>
@@ -433,18 +454,21 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                       <div className="bg-purple-50/50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800/30">
                         <div className="group">
                           {isEditing ? (
-                            <Input
-                              value={editedContract.liability?.category || ''}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.liability) {
-                                  newContract.liability.category = newValue;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                            />
+                            <div>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Category</p>
+                              <Input
+                                value={editedContract.liability?.category || ''}
+                                onChange={(e) => {
+                                  const newValue = e.target.value;
+                                  const newContract = JSON.parse(JSON.stringify(editedContract));
+                                  if (newContract.liability) {
+                                    newContract.liability.category = newValue;
+                                    setEditedContract(newContract);
+                                  }
+                                }}
+                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                              />
+                            </div>
                           ) : (
                             <>
                               <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Category</p>
@@ -464,18 +488,21 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                       <div className="bg-purple-50/50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800/30">
                         <div className="group">
                           {isEditing ? (
-                            <Input
-                              value={editedContract.liability?.contractNumber || ''}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.liability) {
-                                  newContract.liability.contractNumber = newValue;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                            />
+                            <div>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Contract</p>
+                              <Input
+                                value={editedContract.liability?.contractNumber || ''}
+                                onChange={(e) => {
+                                  const newValue = e.target.value;
+                                  const newContract = JSON.parse(JSON.stringify(editedContract));
+                                  if (newContract.liability) {
+                                    newContract.liability.contractNumber = newValue;
+                                    setEditedContract(newContract);
+                                  }
+                                }}
+                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                              />
+                            </div>
                           ) : (
                             <>
                               <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Contract</p>
@@ -495,18 +522,21 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                       <div className="bg-purple-50/50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800/30">
                         <div className="group">
                           {isEditing ? (
-                            <Input
-                              value={editedContract.liability?.client || ''}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.liability) {
-                                  newContract.liability.client = newValue;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                            />
+                            <div>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Client</p>
+                              <Input
+                                value={editedContract.liability?.client || ''}
+                                onChange={(e) => {
+                                  const newValue = e.target.value;
+                                  const newContract = JSON.parse(JSON.stringify(editedContract));
+                                  if (newContract.liability) {
+                                    newContract.liability.client = newValue;
+                                    setEditedContract(newContract);
+                                  }
+                                }}
+                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                              />
+                            </div>
                           ) : (
                             <>
                               <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Client</p>
@@ -540,18 +570,21 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                       <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
                         <div className="group">
                           {isEditing ? (
-                            <Input
-                              value={editedContract.financial?.currency || "VND"}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.financial) {
-                                  newContract.financial.currency = newValue;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                            />
+                            <div>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Currency</p>
+                              <Input
+                                value={editedContract.financial?.currency || "VND"}
+                                onChange={(e) => {
+                                  const newValue = e.target.value;
+                                  const newContract = JSON.parse(JSON.stringify(editedContract));
+                                  if (newContract.financial) {
+                                    newContract.financial.currency = newValue;
+                                    setEditedContract(newContract);
+                                  }
+                                }}
+                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                              />
+                            </div>
                           ) : (
                             <>
                               <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Currency</p>
@@ -571,19 +604,22 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                       <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
                         <div className="group">
                           {isEditing ? (
-                            <Input
-                              value={editedContract.financial?.available.toString() || "0"}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.financial) {
-                                  newContract.financial.available = parseFloat(newValue) || 0;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                              type="number"
-                            />
+                            <div>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Available</p>
+                              <Input
+                                value={editedContract.financial?.available.toString() || "0"}
+                                onChange={(e) => {
+                                  const newValue = e.target.value;
+                                  const newContract = JSON.parse(JSON.stringify(editedContract));
+                                  if (newContract.financial) {
+                                    newContract.financial.available = parseFloat(newValue) || 0;
+                                    setEditedContract(newContract);
+                                  }
+                                }}
+                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                                type="number"
+                              />
+                            </div>
                           ) : (
                             <>
                               <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Available</p>
@@ -603,19 +639,22 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                       <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
                         <div className="group">
                           {isEditing ? (
-                            <Input
-                              value={editedContract.financial?.balance.toString() || "0"}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.financial) {
-                                  newContract.financial.balance = parseFloat(newValue) || 0;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                              type="number"
-                            />
+                            <div>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Balance</p>
+                              <Input
+                                value={editedContract.financial?.balance.toString() || "0"}
+                                onChange={(e) => {
+                                  const newValue = e.target.value;
+                                  const newContract = JSON.parse(JSON.stringify(editedContract));
+                                  if (newContract.financial) {
+                                    newContract.financial.balance = parseFloat(newValue) || 0;
+                                    setEditedContract(newContract);
+                                  }
+                                }}
+                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                                type="number"
+                              />
+                            </div>
                           ) : (
                             <>
                               <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Balance</p>
@@ -638,19 +677,22 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                       <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
                         <div className="group">
                           {isEditing ? (
-                            <Input
-                              value={editedContract.financial?.creditLimit?.toString() || "0"}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.financial) {
-                                  newContract.financial.creditLimit = parseFloat(newValue) || 0;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                              type="number"
-                            />
+                            <div>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Credit Limit</p>
+                              <Input
+                                value={editedContract.financial?.creditLimit?.toString() || "0"}
+                                onChange={(e) => {
+                                  const newValue = e.target.value;
+                                  const newContract = JSON.parse(JSON.stringify(editedContract));
+                                  if (newContract.financial) {
+                                    newContract.financial.creditLimit = parseFloat(newValue) || 0;
+                                    setEditedContract(newContract);
+                                  }
+                                }}
+                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                                type="number"
+                              />
+                            </div>
                           ) : (
                             <>
                               <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Credit Limit</p>
@@ -670,19 +712,22 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                       <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
                         <div className="group">
                           {isEditing ? (
-                            <Input
-                              value={editedContract.financial?.additionalLimit?.toString() || "0"}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.financial) {
-                                  newContract.financial.additionalLimit = parseFloat(newValue) || 0;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                              type="number"
-                            />
+                            <div>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Additional Limit</p>
+                              <Input
+                                value={editedContract.financial?.additionalLimit?.toString() || "0"}
+                                onChange={(e) => {
+                                  const newValue = e.target.value;
+                                  const newContract = JSON.parse(JSON.stringify(editedContract));
+                                  if (newContract.financial) {
+                                    newContract.financial.additionalLimit = parseFloat(newValue) || 0;
+                                    setEditedContract(newContract);
+                                  }
+                                }}
+                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                                type="number"
+                              />
+                            </div>
                           ) : (
                             <>
                               <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Additional Limit</p>
@@ -702,19 +747,22 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                       <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
                         <div className="group">
                           {isEditing ? (
-                            <Input
-                              value={editedContract.financial?.blocked?.toString() || "0"}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.financial) {
-                                  newContract.financial.blocked = parseFloat(newValue) || 0;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                              type="number"
-                            />
+                            <div>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Blocked</p>
+                              <Input
+                                value={editedContract.financial?.blocked?.toString() || "0"}
+                                onChange={(e) => {
+                                  const newValue = e.target.value;
+                                  const newContract = JSON.parse(JSON.stringify(editedContract));
+                                  if (newContract.financial) {
+                                    newContract.financial.blocked = parseFloat(newValue) || 0;
+                                    setEditedContract(newContract);
+                                  }
+                                }}
+                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                                type="number"
+                              />
+                            </div>
                           ) : (
                             <>
                               <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Blocked</p>
@@ -782,31 +830,211 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                      <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Institution</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{contract.segment?.institution || "Nam A Bank"}</p>
+                      <div className="group">
+                        {isEditing ? (
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Institution</p>
+                            <Input
+                              value={editedContract.segment?.institution || "Nam A Bank"}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                const newContract = JSON.parse(JSON.stringify(editedContract));
+                                if (newContract.segment) {
+                                  newContract.segment.institution = newValue;
+                                  setEditedContract(newContract);
+                                }
+                              }}
+                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Institution</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.institution || "Nam A Bank"}</p>
+                            {!isLocked && (
+                              <button 
+                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                onClick={() => setIsEditing(true)}
+                              >
+                                <RiPencilLine className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                      <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Branch</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{contract.segment?.branch || "Hoi so Nam A"}</p>
+                      <div className="group">
+                        {isEditing ? (
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Branch</p>
+                            <Input
+                              value={editedContract.segment?.branch || "Hoi so Nam A"}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                const newContract = JSON.parse(JSON.stringify(editedContract));
+                                if (newContract.segment) {
+                                  newContract.segment.branch = newValue;
+                                  setEditedContract(newContract);
+                                }
+                              }}
+                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Branch</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.branch || "Hoi so Nam A"}</p>
+                            {!isLocked && (
+                              <button 
+                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                onClick={() => setIsEditing(true)}
+                              >
+                                <RiPencilLine className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                      <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Product</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{contract.segment?.product || "MasterCard EMV Standard Credit Account"}</p>
+                      <div className="group">
+                        {isEditing ? (
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Product</p>
+                            <Input
+                              value={editedContract.segment?.product || "MasterCard EMV Standard Credit Account"}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                const newContract = JSON.parse(JSON.stringify(editedContract));
+                                if (newContract.segment) {
+                                  newContract.segment.product = newValue;
+                                  setEditedContract(newContract);
+                                }
+                              }}
+                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Product</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.product || "MasterCard EMV Standard Credit Account"}</p>
+                            {!isLocked && (
+                              <button 
+                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                onClick={() => setIsEditing(true)}
+                              >
+                                <RiPencilLine className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                     <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                      <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Service Group</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{contract.segment?.serviceGroup || ""}</p>
+                      <div className="group">
+                        {isEditing ? (
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Service Group</p>
+                            <Input
+                              value={editedContract.segment?.serviceGroup || ""}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                const newContract = JSON.parse(JSON.stringify(editedContract));
+                                if (newContract.segment) {
+                                  newContract.segment.serviceGroup = newValue;
+                                  setEditedContract(newContract);
+                                }
+                              }}
+                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Service Group</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.serviceGroup || ""}</p>
+                            {!isLocked && (
+                              <button 
+                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                onClick={() => setIsEditing(true)}
+                              >
+                                <RiPencilLine className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                      <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Report Type</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{contract.segment?.reportType || "Cardholder Default"}</p>
+                      <div className="group">
+                        {isEditing ? (
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Report Type</p>
+                            <Input
+                              value={editedContract.segment?.reportType || "Cardholder Default"}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                const newContract = JSON.parse(JSON.stringify(editedContract));
+                                if (newContract.segment) {
+                                  newContract.segment.reportType = newValue;
+                                  setEditedContract(newContract);
+                                }
+                              }}
+                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Report Type</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.reportType || "Cardholder Default"}</p>
+                            {!isLocked && (
+                              <button 
+                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                onClick={() => setIsEditing(true)}
+                              >
+                                <RiPencilLine className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                      <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Role</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{contract.segment?.role || "Full Liability"}</p>
+                      <div className="group">
+                        {isEditing ? (
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Role</p>
+                            <Input
+                              value={editedContract.segment?.role || "Full Liability"}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                const newContract = JSON.parse(JSON.stringify(editedContract));
+                                if (newContract.segment) {
+                                  newContract.segment.role = newValue;
+                                  setEditedContract(newContract);
+                                }
+                              }}
+                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Role</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.role || "Full Liability"}</p>
+                            {!isLocked && (
+                              <button 
+                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                onClick={() => setIsEditing(true)}
+                              >
+                                <RiPencilLine className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -816,21 +1044,110 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                     <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg mr-3">
                       <RiFileTextLine className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                     </div>
-                    LIABILITY
+                    <span className="bg-purple-50 dark:bg-purple-900/50 px-3 py-1 rounded-lg">LIABILITY</span>
                   </h3>
-                  
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-purple-50/50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800/30">
-                      <p className="text-sm text-gray-500 dark:text-purple-300/70 mb-1">Liability Category</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{contract.liability?.category || "Full Liability"}</p>
+                      <div className="group">
+                        {isEditing ? (
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Category</p>
+                            <Input
+                              value={editedContract.liability?.category || ''}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                const newContract = JSON.parse(JSON.stringify(editedContract));
+                                if (newContract.liability) {
+                                  newContract.liability.category = newValue;
+                                  setEditedContract(newContract);
+                                }
+                              }}
+                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Category</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.liability?.category || ''}</p>
+                            {!isLocked && (
+                              <button 
+                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                onClick={() => setIsEditing(true)}
+                              >
+                                <RiPencilLine className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div className="bg-purple-50/50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800/30">
-                      <p className="text-sm text-gray-500 dark:text-purple-300/70 mb-1">Liability Contract</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{contract.liability?.contractNumber || "001-L-00000006"}</p>
+                      <div className="group">
+                        {isEditing ? (
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Contract</p>
+                            <Input
+                              value={editedContract.liability?.contractNumber || ''}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                const newContract = JSON.parse(JSON.stringify(editedContract));
+                                if (newContract.liability) {
+                                  newContract.liability.contractNumber = newValue;
+                                  setEditedContract(newContract);
+                                }
+                              }}
+                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Contract</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.liability?.contractNumber || ''}</p>
+                            {!isLocked && (
+                              <button 
+                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                onClick={() => setIsEditing(true)}
+                              >
+                                <RiPencilLine className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div className="bg-purple-50/50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800/30">
-                      <p className="text-sm text-gray-500 dark:text-purple-300/70 mb-1">Liability Client</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{contract.liability?.client || "Test Test Test"}</p>
+                      <div className="group">
+                        {isEditing ? (
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Client</p>
+                            <Input
+                              value={editedContract.liability?.client || ''}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                const newContract = JSON.parse(JSON.stringify(editedContract));
+                                if (newContract.liability) {
+                                  newContract.liability.client = newValue;
+                                  setEditedContract(newContract);
+                                }
+                              }}
+                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Client</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.liability?.client || ''}</p>
+                            {!isLocked && (
+                              <button 
+                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                onClick={() => setIsEditing(true)}
+                              >
+                                <RiPencilLine className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -844,31 +1161,216 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                      <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Currency</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{contract.financial.currency || "VND"}</p>
+                      <div className="group">
+                        {isEditing ? (
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Currency</p>
+                            <Input
+                              value={editedContract.financial?.currency || "VND"}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                const newContract = JSON.parse(JSON.stringify(editedContract));
+                                if (newContract.financial) {
+                                  newContract.financial.currency = newValue;
+                                  setEditedContract(newContract);
+                                }
+                              }}
+                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Currency</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.financial?.currency || "VND"}</p>
+                            {!isLocked && (
+                              <button 
+                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                onClick={() => setIsEditing(true)}
+                              >
+                                <RiPencilLine className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                      <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Available</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(contract.financial.available)}</p>
+                      <div className="group">
+                        {isEditing ? (
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Available</p>
+                            <Input
+                              value={editedContract.financial?.available.toString() || "0"}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                const newContract = JSON.parse(JSON.stringify(editedContract));
+                                if (newContract.financial) {
+                                  newContract.financial.available = parseFloat(newValue) || 0;
+                                  setEditedContract(newContract);
+                                }
+                              }}
+                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                              type="number"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Available</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(editedContract.financial?.available || 0)}</p>
+                            {!isLocked && (
+                              <button 
+                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                onClick={() => setIsEditing(true)}
+                              >
+                                <RiPencilLine className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                      <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Balance</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(contract.financial.balance)}</p>
+                      <div className="group">
+                        {isEditing ? (
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Balance</p>
+                            <Input
+                              value={editedContract.financial?.balance.toString() || "0"}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                const newContract = JSON.parse(JSON.stringify(editedContract));
+                                if (newContract.financial) {
+                                  newContract.financial.balance = parseFloat(newValue) || 0;
+                                  setEditedContract(newContract);
+                                }
+                              }}
+                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                              type="number"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Balance</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(editedContract.financial?.balance || 0)}</p>
+                            {!isLocked && (
+                              <button 
+                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                onClick={() => setIsEditing(true)}
+                              >
+                                <RiPencilLine className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                     <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                      <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Credit Limit</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(contract.financial.creditLimit || 0)}</p>
+                      <div className="group">
+                        {isEditing ? (
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Credit Limit</p>
+                            <Input
+                              value={editedContract.financial?.creditLimit?.toString() || "0"}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                const newContract = JSON.parse(JSON.stringify(editedContract));
+                                if (newContract.financial) {
+                                  newContract.financial.creditLimit = parseFloat(newValue) || 0;
+                                  setEditedContract(newContract);
+                                }
+                              }}
+                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                              type="number"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Credit Limit</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(editedContract.financial?.creditLimit || 0)}</p>
+                            {!isLocked && (
+                              <button 
+                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                onClick={() => setIsEditing(true)}
+                              >
+                                <RiPencilLine className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                      <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Additional Limit</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(contract.financial.additionalLimit || 0)}</p>
+                      <div className="group">
+                        {isEditing ? (
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Additional Limit</p>
+                            <Input
+                              value={editedContract.financial?.additionalLimit?.toString() || "0"}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                const newContract = JSON.parse(JSON.stringify(editedContract));
+                                if (newContract.financial) {
+                                  newContract.financial.additionalLimit = parseFloat(newValue) || 0;
+                                  setEditedContract(newContract);
+                                }
+                              }}
+                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                              type="number"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Additional Limit</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(editedContract.financial?.additionalLimit || 0)}</p>
+                            {!isLocked && (
+                              <button 
+                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                onClick={() => setIsEditing(true)}
+                              >
+                                <RiPencilLine className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                      <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Blocked</p>
-                      <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(contract.financial.blocked || 0)}</p>
+                      <div className="group">
+                        {isEditing ? (
+                          <div>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Blocked</p>
+                            <Input
+                              value={editedContract.financial?.blocked?.toString() || "0"}
+                              onChange={(e) => {
+                                const newValue = e.target.value;
+                                const newContract = JSON.parse(JSON.stringify(editedContract));
+                                if (newContract.financial) {
+                                  newContract.financial.blocked = parseFloat(newValue) || 0;
+                                  setEditedContract(newContract);
+                                }
+                              }}
+                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
+                              type="number"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Blocked</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(editedContract.financial?.blocked || 0)}</p>
+                            {!isLocked && (
+                              <button 
+                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                onClick={() => setIsEditing(true)}
+                              >
+                                <RiPencilLine className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
