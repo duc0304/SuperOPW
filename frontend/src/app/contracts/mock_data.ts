@@ -36,7 +36,7 @@ export const MOCK_CONTRACTS: ContractNode[] = [
     segment: {
       institution: 'Nam A Bank',
       branch: 'Hoi so Nam A',
-      product: 'MasterCard EMV Standard Credit Account',
+      product: 'MasterCard EMV',
       serviceGroup: '',
       reportType: 'Cardholder Default',
       role: 'Full Liability'
@@ -68,7 +68,7 @@ export const MOCK_CONTRACTS: ContractNode[] = [
         segment: {
           institution: 'Nam A Bank',
           branch: 'Hoi so Nam A',
-          product: 'MasterCard EMV Standard Credit Account',
+          product: 'MasterCard EMV',
           serviceGroup: '',
           reportType: 'Cardholder Default',
           role: 'Full Liability'
@@ -129,7 +129,7 @@ export const MOCK_CONTRACTS: ContractNode[] = [
         segment: {
           institution: 'Nam A Bank',
           branch: 'Hoi so Nam A',
-          product: 'MasterCard EMV Standard Credit Account',
+          product: 'MasterCard EMV',
           serviceGroup: '',
           reportType: 'Cardholder Default',
           role: 'Full Liability'
@@ -179,7 +179,7 @@ export const MOCK_CONTRACTS: ContractNode[] = [
     segment: {
       institution: 'Nam A Bank',
       branch: 'Hoi so Nam A',
-      product: 'MasterCard EMV Standard Credit Account',
+      product: 'MasterCard EMV',
       serviceGroup: '',
       reportType: 'Cardholder Default',
       role: 'Full Liability'
@@ -211,7 +211,7 @@ export const MOCK_CONTRACTS: ContractNode[] = [
         segment: {
           institution: 'Nam A Bank',
           branch: 'Hoi so Nam A',
-          product: 'MasterCard EMV Standard Credit Account',
+          product: 'MasterCard',
           serviceGroup: '',
           reportType: 'Cardholder Default',
           role: 'Full Liability'
@@ -261,7 +261,7 @@ export const MOCK_CONTRACTS: ContractNode[] = [
     segment: {
       institution: 'Nam A Bank',
       branch: 'Hoi so Nam A',
-      product: 'MasterCard EMV Standard Credit Account',
+      product: 'MasterCard EMV',
       serviceGroup: '',
       reportType: 'Cardholder Default',
       role: 'Full Liability'
@@ -295,7 +295,7 @@ export const MOCK_CONTRACTS: ContractNode[] = [
     segment: {
       institution: 'Nam A Bank',
       branch: 'Hoi so Nam A',
-      product: 'MasterCard EMV Standard Credit Account',
+      product: 'MasterCard EMV',
       serviceGroup: '',
       reportType: 'Cardholder Default',
       role: 'Full Liability'
@@ -329,7 +329,7 @@ export const MOCK_CONTRACTS: ContractNode[] = [
     segment: {
       institution: 'Nam A Bank',
       branch: 'Hoi so Nam A',
-      product: 'MasterCard EMV Standard Credit Account',
+      product: 'MasterCard EMV',
       serviceGroup: '',
       reportType: 'Cardholder Default',
       role: 'Full Liability'

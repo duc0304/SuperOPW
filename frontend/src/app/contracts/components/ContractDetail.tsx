@@ -164,7 +164,7 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl shadow-xl border-2 border-purple-200/60 dark:border-purple-700/30 bg-white/80 backdrop-blur-sm dark:bg-gray-800/90 transition-all duration-300 h-[calc(100vh-180px)]">
+    <div className="overflow-hidden rounded-2xl shadow-xl border-2 border-purple-200/60 dark:border-purple-700/30 bg-white/80 backdrop-blur-sm dark:bg-gray-800/90 transition-all duration-300 h-auto md:h-[calc(100vh-180px)]">
       {/* Decorative elements */}
       <div className="absolute top-20 right-20 w-64 h-64 bg-gradient-to-br from-purple-300/20 to-indigo-400/20 rounded-full blur-3xl -z-10"></div>
       <div className="absolute bottom-20 left-40 w-48 h-48 bg-gradient-to-br from-indigo-300/20 to-purple-400/20 rounded-full blur-3xl -z-10"></div>
@@ -192,7 +192,7 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
           <div className="flex flex-wrap gap-2 md:flex-nowrap">
             <Button
               variant="secondary"
-              className={`transition-all duration-300 hover:shadow-md min-w-[100px] text-sm py-1.5 px-3 ${
+              className={`transition-all duration-300 hover:shadow-md min-w-[90px] md:min-w-[100px] text-sm py-1.5 px-2 md:px-3 ${
                 isLocked 
                   ? 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50' 
                   : 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700/50'
@@ -205,7 +205,7 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
             
             <Button
               variant="primary"
-              className={`transition-all duration-300 hover:shadow-md min-w-[100px] text-sm py-1.5 px-3 ${
+              className={`transition-all duration-300 hover:shadow-md min-w-[90px] md:min-w-[100px] text-sm py-1.5 px-2 md:px-3 ${
                 isLocked ? 'opacity-50 cursor-not-allowed' : ''
               }`}
               icon={isEditing ? RiSaveLine : RiEditLine}
@@ -786,7 +786,7 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                 {contract.children && contract.children.length > 0 && (
                   <div className="mt-6">
                     <h4 className="text-base font-medium text-gray-900 dark:text-white mb-3">
-                      Hợp đồng phát hành liên quan ({contract.children.length})
+                      Related Issuing Contracts ({contract.children.length})
                     </h4>
                     <div className="space-y-3">
                       {contract.children.map(child => (
@@ -903,7 +903,7 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                           <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Product</p>
                             <Input
-                              value={editedContract.segment?.product || "MasterCard EMV Standard Credit Account"}
+                              value={editedContract.segment?.product || "MasterCard EMV"}
                               onChange={(e) => {
                                 const newValue = e.target.value;
                                 const newContract = JSON.parse(JSON.stringify(editedContract));
@@ -918,7 +918,7 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                         ) : (
                           <>
                             <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Product</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.product || "MasterCard EMV Standard Credit Account"}</p>
+                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.product || "MasterCard EMV"}</p>
                             {!isLocked && (
                               <button 
                                 className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"

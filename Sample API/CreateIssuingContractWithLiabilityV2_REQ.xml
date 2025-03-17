@@ -8,7 +8,7 @@
       <wsin:CreateIssuingContractWithLiabilityV2>
       	<wsin:LiabCategory>Y</wsin:LiabCategory>
       	<wsin:LiabContractSearchMethod>CONTRACT_NUMBER</wsin:LiabContractSearchMethod>
-      	<wsin:LiabContractIdentifier>001-P-LIB-2810963869</wsin:LiabContractIdentifier>
+      	<wsin:LiabContractIdentifier>LIAB</wsin:LiabContractIdentifier>
          	<wsin:ClientSearchMethod>CLIENT_NUMBER</wsin:ClientSearchMethod>
          	<wsin:ClientIdentifier>099773245419</wsin:ClientIdentifier>
          	<wsin:ProductCode>MC_CR_GLD</wsin:ProductCode>
@@ -25,3 +25,52 @@
       </wsin:CreateIssuingContractWithLiabilityV2>
    </soapenv:Body>
 </soapenv:Envelope>
+
+<s:Envelope xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'>
+    <s:Body>
+        <CreateContractV4Response xmlns="http://www.openwaygroup.com/wsint" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <CreateContractV4Result>
+                <CreatedContract>360210</CreatedContract>
+                <ContractNumber>001-P-557666</ContractNumber>
+                <ApplicationNumber>50736979308290</ApplicationNumber>
+                <CBSNumber>21324556600</CBSNumber>
+                <RetCode>0</RetCode>
+                <RetMsg>I Successfully Completed</RetMsg>
+                <ResultInfo> officer="WX_ADMIN"</ResultInfo>
+            </CreateContractV4Result>
+        </CreateContractV4Response>
+    </s:Body>
+</s:Envelope>
+
+<s:Envelope xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'>
+    <s:Body>
+        <CreateIssuingContractWithLiabilityV2Response xmlns="http://www.openwaygroup.com/wsint" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <CreateIssuingContractWithLiabilityV2Result>
+                <CreatedContract>360220</CreatedContract>
+                <ContractNumber>001-P-755420</ContractNumber>
+                <ApplicationNumber>50736992308400</ApplicationNumber>
+                <CBSNumber>213245566000</CBSNumber>
+                <RetCode>0</RetCode>
+                <RetMsg>I Successfully Completed</RetMsg>
+                <ResultInfo> officer="WX_ADMIN"</ResultInfo>
+            </CreateIssuingContractWithLiabilityV2Result>
+        </CreateIssuingContractWithLiabilityV2Response>
+    </s:Body>
+</s:Envelope>
+
+<s:Envelope xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'>
+    <s:Body>
+        <CreateCardV3Response xmlns="http://www.openwaygroup.com/wsint" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+            <CreateCardV3Result>
+                <CreatedCard>360250</CreatedCard>
+                <CardNumber>1000010104664450</CardNumber>
+                <ExpiryDate>2601</ExpiryDate>
+                <SequenceNumber>1</SequenceNumber>
+                <CBSNumber>213245566000</CBSNumber>
+                <RetCode>0</RetCode>
+                <RetMsg>I Successfully Completed</RetMsg>
+                <ResultInfo> officer="WX_ADMIN"</ResultInfo>
+            </CreateCardV3Result>
+        </CreateCardV3Response>
+    </s:Body>
+</s:Envelope>

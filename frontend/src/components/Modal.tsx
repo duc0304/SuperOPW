@@ -41,7 +41,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, maxWidt
                 <h3 className="text-xl font-semibold text-white">{title}</h3>
               </div>
               
-              {/* White circular close button */}
+              {/* White circur close button */}
               <button
                 onClick={onClose}
                 className="bg-white p-2 rounded-full text-primary-600 hover:text-primary-800 transition-all duration-200 focus:outline-none hover:shadow-md"
