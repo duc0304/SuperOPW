@@ -1,13 +1,14 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '@/redux/store';
-import { ContractNode, Customer } from '@/app/contracts/types';
-import { MOCK_CONTRACTS, MOCK_CUSTOMERS } from '@/app/contracts/mock_data';
+import { ContractNode } from '@/app/contracts/types';
+import type { Client } from '@/app/contracts/types';
+import { MOCK_CONTRACTS, MOCK_CLIENTS } from '@/app/contracts/mock_data';
 
 // Định nghĩa state type
 interface ContractState {
   contracts: ContractNode[];
   selectedContract: ContractNode | null;
-  selectedCustomer: Customer | null;
+  selectedClient: Client | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -16,7 +17,7 @@ interface ContractState {
 const initialState: ContractState = {
   contracts: [],
   selectedContract: null,
-  selectedCustomer: null,
+  selectedClient: null,
   isLoading: false,
   error: null,
 };
@@ -28,60 +29,59 @@ export const fetchContracts = createAsyncThunk(
     try {
       // Giả lập API call
       await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Trả về dữ liệu mock
       return MOCK_CONTRACTS;
-    } catch (error) {
-      return rejectWithValue('Failed to fetch contracts');
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch contracts');
     }
   }
 );
 
-export const fetchContractsByCustomer = createAsyncThunk(
-  'contracts/fetchContractsByCustomer',
-  async (customerId: string, { rejectWithValue }) => {
+export const fetchContractsByClient = createAsyncThunk(
+  'contracts/fetchContractsByClient', 
+  async (clientId: string, { rejectWithValue }) => {
     try {
       // Giả lập API call
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Lọc contracts theo customerId từ dữ liệu mock
-      const customerContracts = MOCK_CONTRACTS.filter(
-        contract => contract.customer?.id === customerId
+      // Tìm client dựa vào id
+      const client = MOCK_CLIENTS.find(c => c.id === clientId);
+      
+      if (!client) {
+        return rejectWithValue('Client not found');
+      }
+      
+      // Lọc các contract thuộc về client
+      const filteredContracts = MOCK_CONTRACTS.filter(
+        contract => contract.client?.id === clientId || 
+                   (contract.children && 
+                    contract.children.some(sub => sub.client?.id === clientId))
       );
       
-      // Lấy thông tin khách hàng từ hợp đồng đầu tiên (nếu có)
-      const customer = customerContracts.length > 0 ? customerContracts[0].customer : null;
-      
-      return { contracts: customerContracts, customer };
-    } catch (error) {
-      return rejectWithValue('Failed to fetch customer contracts');
+      return { contracts: filteredContracts, client };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch contracts for client');
     }
   }
 );
 
 // Tạo slice
-const contractSlice = createSlice({
+export const contractSlice = createSlice({
   name: 'contracts',
   initialState,
   reducers: {
-    setSelectedContract: (state, action: PayloadAction<ContractNode | null>) => {
+    setSelectedContract: (state, action: PayloadAction<ContractNode>) => {
       state.selectedContract = action.payload;
     },
-    clearCustomerFilter: (state) => {
-      state.selectedCustomer = null;
-      // Không xóa contracts, chỉ xóa bộ lọc
+    clearClientFilter: (state) => {
+      state.selectedClient = null;
     },
     addContract: (state, action: PayloadAction<ContractNode>) => {
-      // Thêm hợp đồng mới vào đầu danh sách
-      state.contracts = [action.payload, ...state.contracts];
-      
-      // Tự động chọn hợp đồng mới
-      state.selectedContract = action.payload;
+      state.contracts.unshift(action.payload);
     }
   },
   extraReducers: (builder) => {
-    // Xử lý fetchContracts
     builder
+      // Fetch all contracts
       .addCase(fetchContracts.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -89,33 +89,25 @@ const contractSlice = createSlice({
       .addCase(fetchContracts.fulfilled, (state, action) => {
         state.isLoading = false;
         state.contracts = action.payload;
-        // Nếu chưa có contract nào được chọn, chọn contract đầu tiên
-        if (!state.selectedContract && action.payload.length > 0) {
-          state.selectedContract = action.payload[0];
-        }
+        state.error = null;
       })
       .addCase(fetchContracts.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
-      });
-
-    // Xử lý fetchContractsByCustomer
-    builder
-      .addCase(fetchContractsByCustomer.pending, (state) => {
+      })
+      
+      // Fetch contracts by client
+      .addCase(fetchContractsByClient.pending, (state) => {
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(fetchContractsByCustomer.fulfilled, (state, action) => {
+      .addCase(fetchContractsByClient.fulfilled, (state, action) => {
         state.isLoading = false;
         state.contracts = action.payload.contracts;
-        state.selectedCustomer = action.payload.customer || null;
-        
-        // Nếu chưa có contract nào được chọn, chọn contract đầu tiên
-        if (!state.selectedContract && action.payload.contracts.length > 0) {
-          state.selectedContract = action.payload.contracts[0];
-        }
+        state.selectedClient = action.payload.client;
+        state.error = null;
       })
-      .addCase(fetchContractsByCustomer.rejected, (state, action) => {
+      .addCase(fetchContractsByClient.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       });
@@ -123,12 +115,12 @@ const contractSlice = createSlice({
 });
 
 // Export actions
-export const { setSelectedContract, clearCustomerFilter, addContract } = contractSlice.actions;
+export const { setSelectedContract, clearClientFilter, addContract } = contractSlice.actions;
 
 // Export selectors
 export const selectContracts = (state: RootState) => state.contracts.contracts;
 export const selectSelectedContract = (state: RootState) => state.contracts.selectedContract;
-export const selectSelectedCustomer = (state: RootState) => state.contracts.selectedCustomer;
+export const selectSelectedClient = (state: RootState) => state.contracts.selectedClient;
 export const selectIsLoading = (state: RootState) => state.contracts.isLoading;
 export const selectError = (state: RootState) => state.contracts.error;
 

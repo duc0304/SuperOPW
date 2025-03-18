@@ -1,26 +1,14 @@
-import { ContractNode, Customer } from './types';
+import { ContractNode } from './types';
+import type { Client as ContractsClient } from './types';
+import { MOCK_CLIENTS as APP_MOCK_CLIENTS } from '../clients/mock_clients';
 
-// Mock Customers
-export const MOCK_CUSTOMERS: Customer[] = [
-  {
-    id: '1',
-    name: 'Acme Corporation',
-    email: 'contact@acme.com',
-    type: 'Corporate'
-  },
-  {
-    id: '2',
-    name: 'Globex Industries',
-    email: 'info@globex.com',
-    type: 'Corporate'
-  },
-  {
-    id: '3',
-    name: 'John Smith',
-    email: 'john.smith@example.com',
-    type: 'Individual'
-  }
-];
+// Mock Clients (đã được chuyển từ Client trong contracts sang sử dụng Client từ clients)
+export const MOCK_CLIENTS: ContractsClient[] = APP_MOCK_CLIENTS.slice(0, 3).map(client => ({
+  id: client.id,
+  name: client.companyName,
+  email: `contact@${client.shortName.toLowerCase()}.com`,
+  type: client.clientCategory || 'default' // Đảm bảo type luôn có giá trị
+}));
 
 // Mock Contracts với cấu trúc phân cấp
 export const MOCK_CONTRACTS: ContractNode[] = [
@@ -30,9 +18,10 @@ export const MOCK_CONTRACTS: ContractNode[] = [
     title: 'Liability Contract 1',
     type: 'liability',
     status: 'active',
-    startDate: '2023-01-01',
-    endDate: '2025-12-31',
-    value: 1000000,
+    startDate: '2022-01-15',
+    endDate: '2024-01-15',
+    value: 150000,
+    client: MOCK_CLIENTS[0],
     segment: {
       institution: 'Nam A Bank',
       branch: 'Hoi so Nam A',
@@ -41,7 +30,6 @@ export const MOCK_CONTRACTS: ContractNode[] = [
       reportType: 'Cardholder Default',
       role: 'Full Liability'
     },
-    customer: MOCK_CUSTOMERS[0], // Acme Corporation
     liability: {
       category: 'Full Liability',
       contractNumber: '001-L-00000006',
@@ -184,7 +172,7 @@ export const MOCK_CONTRACTS: ContractNode[] = [
       reportType: 'Cardholder Default',
       role: 'Full Liability'
     },
-    customer: MOCK_CUSTOMERS[1], // Globex Industries
+    client: MOCK_CLIENTS[1], // Globex Industries
     liability: {
       category: 'Full Liability',
       contractNumber: '001-L-00000007',
@@ -266,7 +254,7 @@ export const MOCK_CONTRACTS: ContractNode[] = [
       reportType: 'Cardholder Default',
       role: 'Full Liability'
     },
-    customer: MOCK_CUSTOMERS[2], // John Smith
+    client: MOCK_CLIENTS[2], // John Smith
     liability: {
       category: 'Full Liability',
       contractNumber: '001-L-00000008',
@@ -300,7 +288,7 @@ export const MOCK_CONTRACTS: ContractNode[] = [
       reportType: 'Cardholder Default',
       role: 'Full Liability'
     },
-    customer: MOCK_CUSTOMERS[0], // Acme Corporation
+    client: MOCK_CLIENTS[0], // Acme Corporation
     liability: {
       category: 'Full Liability',
       contractNumber: '001-L-00000009',
@@ -334,7 +322,7 @@ export const MOCK_CONTRACTS: ContractNode[] = [
       reportType: 'Cardholder Default',
       role: 'Full Liability'
     },
-    customer: MOCK_CUSTOMERS[2], // John Smith
+    client: MOCK_CLIENTS[2], // John Smith
     liability: {
       category: 'Full Liability',
       contractNumber: '001-L-00000010',

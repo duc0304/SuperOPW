@@ -43,17 +43,17 @@ sequelize.authenticate()
     console.error('Unable to connect to the database:', err);
   });
 
-// Thay đổi cách sync database
-db.sequelize.sync({ 
-  alter: false, // Không thay đổi cấu trúc bảng
-  force: false, // Không xóa và tạo lại bảng
-  hooks: false // Tắt hooks
-})
-  .then(() => {
-    console.log('Database synchronized successfully');
-  })
-  .catch(err => {
-    console.error('Failed to sync database:', err);
-  });
+// Bỏ phần sync database ở đây vì đã được xử lý trong server.js
+// db.sequelize.sync({ 
+//   alter: false, // Không thay đổi cấu trúc bảng
+//   force: false, // Không xóa và tạo lại bảng
+//   hooks: false // Tắt hooks
+// })
+//   .then(() => {
+//     console.log('Database synchronized successfully');
+//   })
+//   .catch(err => {
+//     console.error('Failed to sync database:', err);
+//   });
 
 module.exports = db; 

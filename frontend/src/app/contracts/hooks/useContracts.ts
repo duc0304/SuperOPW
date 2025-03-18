@@ -2,12 +2,12 @@ import { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import {
   fetchContracts,
-  fetchContractsByCustomer,
+  fetchContractsByClient,
   setSelectedContract,
-  clearCustomerFilter,
+  clearClientFilter,
   selectContracts,
   selectSelectedContract,
-  selectSelectedCustomer,
+  selectSelectedClient,
   selectIsLoading,
   selectError,
 } from '@/redux/slices/contractSlice';
@@ -20,37 +20,37 @@ export function useContracts() {
   
   const contracts = useAppSelector(selectContracts);
   const selectedContract = useAppSelector(selectSelectedContract);
-  const selectedCustomer = useAppSelector(selectSelectedCustomer);
+  const selectedClient = useAppSelector(selectSelectedClient);
   const loading = useAppSelector(selectIsLoading);
   const error = useAppSelector(selectError);
   
-  // Lấy customerId từ URL nếu có
-  const customerId = searchParams.get('customerId');
+  // Lấy clientId từ URL nếu có
+  const clientId = searchParams.get('clientId');
   
   useEffect(() => {
-    if (customerId) {
-      dispatch(fetchContractsByCustomer(customerId));
+    if (clientId) {
+      dispatch(fetchContractsByClient(clientId));
     } else {
       dispatch(fetchContracts());
     }
-  }, [dispatch, customerId]);
+  }, [dispatch, clientId]);
   
   const handleSelectContract = (contract: ContractNode) => {
     dispatch(setSelectedContract(contract));
   };
   
-  const handleClearCustomerFilter = () => {
-    dispatch(clearCustomerFilter());
+  const handleClearClientFilter = () => {
+    dispatch(clearClientFilter());
     dispatch(fetchContracts());
   };
   
   return {
     contracts,
     selectedContract,
-    customerName: selectedCustomer?.name,
+    clientName: selectedClient?.name,
     loading,
     error,
     setSelectedContract: handleSelectContract,
-    clearCustomerFilter: handleClearCustomerFilter,
+    clearClientFilter: handleClearClientFilter,
   };
 } 

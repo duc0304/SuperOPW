@@ -38,7 +38,18 @@ interface LoginData {
   password: string;
 }
 
-// Các hàm gọi API
+// Interface cho dữ liệu Client từ API
+export interface ApiClient {
+  id: string;
+  companyName: string;
+  shortName: string;
+  clientNumber: string;
+  cityzenship: string;
+  dateOpen: string | null;
+  status: 'active' | 'inactive';
+}
+
+// Các hàm gọi API Auth
 export const authService = {
   register: async (userData: RegisterData) => {
     return api.post('/auth/register', userData);
@@ -53,6 +64,34 @@ export const authService = {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
     }
+  }
+};
+
+// Các hàm gọi API Client
+export const clientService = {
+  // Lấy tất cả clients
+  getAllClients: async () => {
+    return api.get('/clients');
+  },
+  
+  // Lấy chi tiết một client
+  getClient: async (id: string) => {
+    return api.get(`/clients/${id}`);
+  },
+  
+  // Thêm client mới
+  createClient: async (clientData: Omit<ApiClient, 'id'>) => {
+    return api.post('/clients', clientData);
+  },
+  
+  // Cập nhật client
+  updateClient: async (id: string, clientData: Partial<Omit<ApiClient, 'id'>>) => {
+    return api.put(`/clients/${id}`, clientData);
+  },
+  
+  // Xóa client
+  deleteClient: async (id: string) => {
+    return api.delete(`/clients/${id}`);
   }
 };
 

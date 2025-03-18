@@ -168,6 +168,47 @@ exports.createIssuingContract = async (issuingContractData) => {
   }
 };
 
+// Thêm hàm mới để xử lý chỉnh sửa client
+exports.editClient = async (clientData) => {
+  try {
+    // Log request data
+    console.log('Received edit client data:', clientData);
+
+    // Tạo SOAP envelope từ dữ liệu client
+    const soapEnvelope = generateEditClientXML(clientData);
+    
+    console.log('Sending SOAP request:', soapEnvelope);
+
+    const response = await axios.post(SOAP_API_URL, soapEnvelope, {
+      headers: {
+        'Content-Type': 'text/xml;charset=UTF-8',
+        'SOAPAction': ''
+      }
+    });
+
+    console.log('SOAP Response:', response.data);
+    
+    // Parse XML response
+    const parsedResponse = await parseXmlResponse(response.data);
+    
+    // Kiểm tra RetCode
+    const retCode = getRetCodeFromResponse(parsedResponse, 'EditClientV6Response');
+    const retMsg = getRetMsgFromResponse(parsedResponse, 'EditClientV6Response');
+    
+    // Trả về kết quả có cấu trúc
+    return {
+      success: retCode === '0',
+      retCode: retCode,
+      message: retMsg,
+      rawResponse: response.data
+    };
+    
+  } catch (error) {
+    console.error('SOAP Error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
 // Hàm parse XML response
 async function parseXmlResponse(xmlData) {
   return new Promise((resolve, reject) => {
@@ -362,6 +403,66 @@ function generateCreateIssuingContractXML(issuingContractData) {
             <wsin:AddInfo02>${issuingContractData.addInfo02 || 'PAYMENT_OPTION=MTP;'}</wsin:AddInfo02>
          </wsin:InObject>  
       </wsin:CreateIssuingContractWithLiabilityV2>
+   </soapenv:Body>
+</soapenv:Envelope>`;
+}
+
+// Hàm tạo XML cho EditClient request
+function generateEditClientXML(clientData) {
+  // Tạo phần SetCustomData_InObject
+  let customDataXML = '';
+  
+  // Nếu có customData trong request, sử dụng nó
+  if (clientData.customData && clientData.customData.length > 0) {
+    customDataXML = clientData.customData.map(item => `
+         <wsin:SetCustomData_InObject>
+            <wsin:AddInfoType>${item.addInfoType || 'AddInfo01'}</wsin:AddInfoType>
+            <wsin:RemoveTag>${item.removeTag || ''}</wsin:RemoveTag>
+            <wsin:TagName>${item.tagName || ''}</wsin:TagName>
+            <wsin:TagValue>${item.tagValue || ''}</wsin:TagValue>
+         </wsin:SetCustomData_InObject>`).join('');
+  } else {
+    // Nếu không có, thêm một SetCustomData_InObject mặc định
+    customDataXML = `
+         <wsin:SetCustomData_InObject>
+            <wsin:AddInfoType>AddInfo01</wsin:AddInfoType>
+            <wsin:TagName>DefaultTag</wsin:TagName>
+            <wsin:TagValue>DefaultValue</wsin:TagValue>
+         </wsin:SetCustomData_InObject>`;
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsin="http://www.openwaygroup.com/wsint">
+   <soapenv:Header>
+      <wsin:SessionContextStr>${clientData.sessionContext || ''}</wsin:SessionContextStr>
+      <wsin:UserInfo>officer="WX_ADMIN"</wsin:UserInfo>
+      <wsin:CorrelationId>${clientData.correlationId || generateCorrelationId()}</wsin:CorrelationId>
+   </soapenv:Header>
+   <soapenv:Body>
+      <wsin:EditClientV6>
+         <wsin:ClientSearchMethod>CLIENT_NUMBER</wsin:ClientSearchMethod>
+         <wsin:ClientIdentifier>${clientData.clientNumber || ''}</wsin:ClientIdentifier>
+         <wsin:Reason>TO UPDATE CLIENT INFO</wsin:Reason>
+         <wsin:EditClient_InObject>
+            <wsin:ShortName>${clientData.shortName || ''}</wsin:ShortName>
+            <wsin:Gender>${clientData.GENDER || ''}</wsin:Gender>
+            <wsin:FirstName>${clientData.FIRST_NAM || ''}</wsin:FirstName>
+            <wsin:MiddleName>${clientData.FATHER_S_NAM || ''}</wsin:MiddleName>
+            <wsin:LastName>${clientData.LAST_NAM || ''}</wsin:LastName>
+            <wsin:BirthDate>${clientData.BIRTH_DATE ? clientData.BIRTH_DATE.split('T')[0] : ''}</wsin:BirthDate>
+            <wsin:Citizenship>${clientData.cityzenship || ''}</wsin:Citizenship>
+            <wsin:HomePhone>${clientData.PHONE_H || ''}</wsin:HomePhone>
+            <wsin:MobilePhone>${clientData.PHONE_H || ''}</wsin:MobilePhone>
+            <wsin:EMail>${clientData.E_MAIL || ''}</wsin:EMail>
+            <wsin:City>${clientData.CITY || ''}</wsin:City>
+            <wsin:AddressLine1>${clientData.ADDRESS_LINE_1 || ''}</wsin:AddressLine1>
+            <wsin:AddressLine2>${clientData.ADDRESS_LINE_2 || ''}</wsin:AddressLine2>
+            <wsin:AddressLine3>${clientData.ADDRESS_LINE_3 || ''}</wsin:AddressLine3>
+            <wsin:CompanyName>${clientData.companyName || ''}</wsin:CompanyName>
+            <wsin:Profession>${clientData.PROFESSION || ''}</wsin:Profession>
+         </wsin:EditClient_InObject>
+         ${customDataXML}
+      </wsin:EditClientV6>      
    </soapenv:Body>
 </soapenv:Envelope>`;
 }

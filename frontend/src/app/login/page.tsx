@@ -63,7 +63,7 @@ export default function LoginPage() {
               Manage Your Business with Confidence
             </h2>
             <p className="text-white/80">
-              Access your dashboard to track contracts, manage customers, and monitor transactions all in one place.
+              Access your dashboard to track contracts, manage clients, and monitor transactions all in one place.
             </p>
           </div>
         </div>

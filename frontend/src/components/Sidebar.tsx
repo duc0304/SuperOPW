@@ -16,9 +16,9 @@ const MENU_ITEMS = [
     text: "Dashboard"
   },
   {
-    href: "/customers",
+    href: "/clients",
     icon: RiUserLine,
-    text: "Customers"
+    text: "Clients"
   },
   {
     href: "/contracts",

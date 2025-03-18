@@ -5,12 +5,12 @@ import { RiAddLine, RiFilterLine, RiCloseLine, RiFileTextLine } from 'react-icon
 import Button from '@/components/ui/Button';
 
 interface ContractHeaderProps {
-  customerName?: string;
-  clearCustomerFilter?: () => void;
+  clientName?: string;
+  clearClientFilter?: () => void;
   onAddContract?: () => void;
 }
 
-export default function ContractHeader({ customerName, clearCustomerFilter, onAddContract }: ContractHeaderProps) {
+export default function ContractHeader({ clientName, clearClientFilter, onAddContract }: ContractHeaderProps) {
   const [animateBackground, setAnimateBackground] = useState(false);
 
   // Animation effect on mount
@@ -40,11 +40,11 @@ export default function ContractHeader({ customerName, clearCustomerFilter, onAd
             </div>
             <div>
               <h1 className="text-3xl font-bold text-white drop-shadow-md">
-                {customerName ? `${customerName}'s Contracts` : 'Contracts'}
+                {clientName ? `${clientName}'s Contracts` : 'Contracts'}
               </h1>
               <p className="text-primary-100 dark:text-primary-200">
-                {customerName ? 
-                  `Manage contracts for ${customerName}` : 
+                {clientName ? 
+                  `Manage contracts for ${clientName}` : 
                   'Manage and track all your contracts in one place'}
               </p>
             </div>
@@ -52,13 +52,13 @@ export default function ContractHeader({ customerName, clearCustomerFilter, onAd
           
           <div className="flex items-center mt-4 md:mt-0 space-x-3">
             {/* Customer filter badge (if filtering by customer) */}
-            {customerName && (
+            {clientName && (
               <div className="flex items-center">
                 <span className="bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-sm">
                   <span className="mr-2">👤</span>
-                  Customer: {customerName}
+                  Customer: {clientName}
                   <button 
-                    onClick={clearCustomerFilter}
+                    onClick={clearClientFilter}
                     className="ml-2 text-primary-700 dark:text-primary-300 hover:text-primary-900 dark:hover:text-primary-200 transition-colors duration-200"
                     aria-label="Clear filter"
                   >

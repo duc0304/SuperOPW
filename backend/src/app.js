@@ -2,6 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const soapRoutes = require('./routes/soap.routes');
+const apiRoutes = require('./routes/index');
+const authRoutes = require('./routes/auth.routes');
+const oracleClientRoutes = require('./routes/oracle.client.routes');
 
 const app = express();
 
@@ -12,7 +15,15 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 app.use(bodyParser.text({ type: 'text/xml' }));
 
 // Routes
-app.use('/api', soapRoutes);
+app.use('/api/soap', soapRoutes);
+app.use('/api', apiRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/oracle/clients', oracleClientRoutes);
+
+// Test route để kiểm tra API
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'API is working!' });
+});
 
 // Error handling
 app.use((err, req, res, next) => {

@@ -17,10 +17,10 @@ export default function ContractsPage() {
     contracts, 
     selectedContract,
     setSelectedContract,
-    customerName,
+    clientName,
     loading,
     error,
-    clearCustomerFilter
+    clearClientFilter
   } = useContracts();
 
   // Kiểm tra nếu là mobile và hiển thị panel chi tiết khi có contract được chọn
@@ -87,8 +87,8 @@ export default function ContractsPage() {
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
         <ContractHeader 
-          customerName={customerName} 
-          clearCustomerFilter={clearCustomerFilter}
+          clientName={clientName} 
+          clearClientFilter={clearClientFilter}
           onAddContract={() => setIsAddModalOpen(true)}
         />
 

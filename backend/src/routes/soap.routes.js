@@ -20,6 +20,25 @@ router.post('/createClient', async (req, res) => {
   }
 });
 
+// Thêm route mới để xử lý chỉnh sửa client
+router.put('/editClient', async (req, res) => {
+  try {
+    console.log('Received edit client request from frontend:', req.body);
+    const result = await soapService.editClient(req.body);
+    
+    // Trả về kết quả có cấu trúc
+    res.json(result);
+  } catch (error) {
+    console.error('Route Error:', error);
+    res.status(500).json({
+      success: false,
+      retCode: '9999',
+      message: error.message,
+      details: error.response?.data
+    });
+  }
+});
+
 // Thêm route mới để xử lý tạo contract
 router.post('/createContract', async (req, res) => {
   try {
