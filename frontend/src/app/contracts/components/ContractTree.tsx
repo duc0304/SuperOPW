@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useReducer, ReactNode } from 'react';
+import { useEffect, useCallback, useMemo, useReducer, ReactNode } from 'react';
 import { RiArrowRightSLine, RiArrowDownSLine, RiFileTextLine, RiSearchLine, RiFileList3Line, RiExchangeFundsLine, RiCalendarLine, RiIdCardLine } from 'react-icons/ri';
 import clsx from 'clsx';
 import { ContractNode } from '../types';
@@ -189,15 +189,14 @@ export default function ContractTree({
   contracts, 
   selectedId, 
   onSelect 
-}: ContractTreeProps) {
+}: Readonly<ContractTreeProps>) {
   // Sử dụng reducer thay vì nhiều useState
   const [state, dispatch] = useReducer(contractTreeReducer, initialState);
   const { 
     expandedContracts, 
     animatedRowsMap, 
     currentPage, 
-    visitedPages, 
-    isInitialRender, 
+    visitedPages,  
     ancestorPath, 
     searchQuery, 
     hoveredRow 
@@ -207,10 +206,10 @@ export default function ContractTree({
 
   // Phân loại card vs contract dựa vào contract number và LIAB_CONTRACT
   const getContractType = useCallback((contract: ContractNode): 'card' | 'issue' | 'liability' => {
-    const contractNumber = contract.oracleData?.CONTRACT_NUMBER || contract.liability?.contractNumber || '';
-    const cardNumber = contract.oracleData?.CARD_NUMBER || '';
-    const liabContract = contract.oracleData?.LIAB_CONTRACT || null;
-    const acntContract = contract.oracleData?.ACNT_CONTRACT__OID || null;
+    const contractNumber = contract.oracleData?.CONTRACT_NUMBER ?? contract.liability?.contractNumber ?? '';
+    const cardNumber = contract.oracleData?.CARD_NUMBER ?? '';
+    const liabContract = contract.oracleData?.LIAB_CONTRACT ?? null;
+    const acntContract = contract.oracleData?.ACNT_CONTRACT__OID ?? null;
     
     // Card có 16 số và thường bắt đầu bằng "10000" hoặc có ACNT_CONTRACT__OID
     if ((cardNumber && cardNumber.length === 16 && cardNumber.startsWith('10000')) || 
@@ -238,7 +237,7 @@ export default function ContractTree({
       contracts.forEach(contract => {
         if (getContractType(contract) === 'liability') {
           const liability = { ...contract, children: [] };
-          map[contract.oracleData?.ID || ''] = liability;
+          map[contract.oracleData?.ID ?? ''] = liability;
           list.push(liability);
         }
       });
@@ -256,7 +255,7 @@ export default function ContractTree({
       contracts.forEach(contract => {
         if (getContractType(contract) === 'issue') {
           const issue = { ...contract, children: [] };
-          issueMap[contract.oracleData?.ID || ''] = issue;
+          issueMap[contract.oracleData?.ID ?? ''] = issue;
           
           const parentId = contract.oracleData?.LIAB_CONTRACT;
           if (parentId && liabilityMap[parentId]) {
@@ -326,9 +325,9 @@ export default function ContractTree({
     const doesContractMatch = (contract: ContractNode): boolean => {
       return (
         contract.title.toLowerCase().includes(lowerQuery) ||
-        (contract.liability?.contractNumber?.toLowerCase() || '').includes(lowerQuery) ||
-        (contract.oracleData?.CONTRACT_NUMBER?.toLowerCase() || '').includes(lowerQuery) ||
-        (contract.oracleData?.CARD_NUMBER?.toLowerCase() || '').includes(lowerQuery)
+        (contract.liability?.contractNumber?.toLowerCase() ?? '').includes(lowerQuery) ||
+        (contract.oracleData?.CONTRACT_NUMBER?.toLowerCase() ?? '').includes(lowerQuery) ||
+        (contract.oracleData?.CARD_NUMBER?.toLowerCase() ?? '').includes(lowerQuery)
       );
     };
     
@@ -509,14 +508,10 @@ export default function ContractTree({
     } else if (isAncestor) {
       const isParent = ancestorLevel === 1;
       const isGrandparent = ancestorLevel === 2;
-      
-      if (contractType === 'issue' && isParent) {
-        bgClass = styles.parentBg || bgClass;
-      } else if (contractType === 'liability' && (isGrandparent || isParent)) {
-        bgClass = styles.parentBg || bgClass;
-      }
+      if ((contractType === 'issue' && isParent) || (contractType === 'liability' && (isGrandparent || isParent))) {
+        bgClass = styles.parentBg ?? bgClass;
     }
-    
+    } 
     return `${marginLeft} ${bgClass}`;
   };
 
@@ -620,18 +615,18 @@ export default function ContractTree({
     const findParent = (contracts: ContractNode[], id: string): boolean => {
       for (const contract of contracts) {
         // Kiểm tra nếu đây là contract cha trực tiếp
-        if (contract.children && contract.children.some(child => child.id === id)) {
+        if (contract.children?.some(child => child.id === id)) {
           path.push(contract.id);
           return true;
         }
-        
+    
         // Tìm kiếm đệ quy trong các contract con
-        if (contract.children && findParent(contract.children, id)) {
+        if (findParent(contract.children ?? [], id)) {
           path.push(contract.id);
           return true;
         }
       }
-      
+    
       return false;
     };
     
@@ -675,6 +670,8 @@ export default function ContractTree({
                 return (
                   <div 
                     key={contract.id} 
+                    role = "button"
+                    tabIndex = {0}
                     className={`transition-all duration-500 ease-out ${isAnimated ? 'opacity-100 transform-none' : 'opacity-0 translate-y-4'}`}
                     onMouseEnter={() => dispatch({ type: 'SET_HOVERED_ROW', id: contract.id })}
                     onMouseLeave={() => dispatch({ type: 'SET_HOVERED_ROW', id: null })}
@@ -721,6 +718,8 @@ export default function ContractTree({
                       )}
                       
                       <div 
+                        role = "button"
+                        tabIndex = {0}
                         className={`p-1.5 rounded-md mr-3 relative z-10 ${getIconBackground(contract)}`}
                         onClick={() => handleSelectContract(contract)}
                       >
@@ -729,7 +728,7 @@ export default function ContractTree({
                         </div>
                       </div>
                       
-                      <div className="flex-1 min-w-0 relative z-10" onClick={() => handleSelectContract(contract)}>
+                      <div role = "button" tabIndex={0} className="flex-1 min-w-0 relative z-10" onClick={() => handleSelectContract(contract)}>
                         <div className="font-medium text-gray-900 dark:text-white truncate">
                           {contract.title}
                           <span className={`ml-2 text-xs ${contractStyles[contractType].badge} px-2 py-0.5 rounded-full`}>
