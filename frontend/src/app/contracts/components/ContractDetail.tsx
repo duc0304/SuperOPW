@@ -1,13 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RiFileTextLine, RiUserLine, RiCalendarLine, RiMoneyDollarCircleLine, RiEditLine, RiBuilding4Line, RiBarChartBoxLine, RiExchangeFundsLine, RiLockLine, RiLockUnlockLine, RiCheckLine, RiCloseLine, RiPencilLine, RiSaveLine, RiNumber1, RiNumber2, RiHashtag, RiFileUserLine, RiUser3Line, RiBankLine, RiInformationLine, RiArrowRightSLine, RiLinkM, RiParentLine, RiIdCardLine } from 'react-icons/ri';
-import clsx from 'clsx';
+import { RiFileTextLine, RiCalendarLine, RiExchangeFundsLine, RiInformationLine, RiArrowRightSLine, RiParentLine, RiIdCardLine, RiUser3Line, RiBankLine, RiHashtag, RiFileUserLine } from 'react-icons/ri';
 import Link from 'next/link';
 import { ContractNode } from '../types';
-import Button from '@/components/ui/Button';
-import Modal from '@/components/Modal';
-import Input from '@/components/ui/Input';
 
 interface ContractDetailProps {
   contract: ContractNode;
@@ -15,16 +11,18 @@ interface ContractDetailProps {
 
 export default function ContractDetail({ contract }: ContractDetailProps) {
   const [animateIn, setAnimateIn] = useState(false);
-  const [isLocked, setIsLocked] = useState(true); // Mặc định khóa để không cho phép chỉnh sửa
-  const [isEditing, setIsEditing] = useState(false);
-  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [parentContract, setParentContract] = useState<any>(null);
   const [loadingParent, setLoadingParent] = useState(false);
   
   // Kiểm tra xem contract hiện tại có phải là Issuing contract không
   const isIssueContract = contract.oracleData?.LIAB_CONTRACT !== undefined && 
-                         contract.oracleData?.LIAB_CONTRACT !== null && 
-                         contract.oracleData?.LIAB_CONTRACT !== '';
+                          contract.oracleData?.LIAB_CONTRACT !== null && 
+                          contract.oracleData?.LIAB_CONTRACT !== '';
+
+  const isCardContract = (contract.oracleData?.CARD_NUMBER?.length === 16 && 
+                         contract.oracleData?.CARD_NUMBER?.startsWith('10000')) || 
+                         (contract.oracleData?.CONTRACT_NUMBER?.length === 16 && 
+                         contract.oracleData?.CONTRACT_NUMBER?.startsWith('10000'));
 
   // Fetch parent contract data if this is an issuing contract
   useEffect(() => {
@@ -57,8 +55,6 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
   // Animation effect when contract changes
   useEffect(() => {
     setAnimateIn(false);
-    setIsLocked(true);
-    setIsEditing(false);
     const timer = setTimeout(() => {
       setAnimateIn(true);
     }, 100);
@@ -69,11 +65,11 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'N/A';
     try {
-    const date = new Date(dateString);
+      const date = new Date(dateString);
       return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
       });
@@ -86,8 +82,7 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
   const getContractTypeTitle = () => {
     if (isIssueContract) {
       return "Issuing Contract";
-    } else if (contract.oracleData?.CONTRACT_NUMBER?.length === 16 && 
-               contract.oracleData?.CONTRACT_NUMBER?.startsWith('10000')) {
+    } else if (isCardContract) {
       return "Card Contract";
     } else {
       return "Liability Contract";
@@ -107,13 +102,13 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
             <div className={`p-2 rounded-xl mr-3 shadow-md ${
               isIssueContract 
                 ? 'bg-purple-100 dark:bg-purple-900/30' 
-                : contract.oracleData?.CONTRACT_NUMBER?.length === 16 && contract.oracleData?.CONTRACT_NUMBER?.startsWith('10000')
+                : isCardContract
                   ? 'bg-emerald-100 dark:bg-emerald-900/30'
                   : 'bg-indigo-100 dark:bg-indigo-900/30'
             }`}>
               {isIssueContract ? (
                 <RiExchangeFundsLine className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              ) : contract.oracleData?.CONTRACT_NUMBER?.length === 16 && contract.oracleData?.CONTRACT_NUMBER?.startsWith('10000') ? (
+              ) : isCardContract ? (
                 <RiIdCardLine className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               ) : (
                 <RiFileTextLine className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
@@ -128,7 +123,7 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                   isIssueContract 
                     ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300' 
-                    : contract.oracleData?.CONTRACT_NUMBER?.length === 16 && contract.oracleData?.CONTRACT_NUMBER?.startsWith('10000')
+                    : isCardContract
                       ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
                       : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300'
                 }`}>
@@ -160,7 +155,7 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                     </div>
                   ) : parentContract ? (
                     <div className="bg-indigo-50/30 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/20">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Parent Contract ID */}
                         <div className="flex flex-col">
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Parent Contract ID</p>
@@ -175,7 +170,7 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                           <p className="font-medium text-gray-900 dark:text-white bg-white/60 dark:bg-gray-700/60 p-2 rounded-lg">
                             {parentContract.CONTRACT_NUMBER || 'N/A'}
                           </p>
-                </div>
+                        </div>
                 
                         {/* Parent Contract Name */}
                         <div className="flex flex-col">
@@ -184,121 +179,121 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                             {parentContract.CONTRACT_NAME || 'N/A'}
                           </p>
                         </div>
-                    </div>
+                      </div>
                       <div className="mt-3 text-right">
                         <Link href={`/contracts?id=${parentContract.ID}`} className="text-xs bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900/50 dark:hover:bg-indigo-900/70 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded-lg inline-flex items-center transition-all duration-200">
                           <span>View Parent Contract</span>
                           <RiArrowRightSLine className="ml-1 w-4 h-4" />
                         </Link>
-                  </div>
-                        </div>
-                      ) : (
+                      </div>
+                    </div>
+                  ) : (
                     <div className="bg-yellow-50 dark:bg-yellow-900/10 p-4 rounded-xl border border-yellow-100 dark:border-yellow-800/20">
                       <div className="flex items-center text-yellow-700 dark:text-yellow-400">
                         <RiInformationLine className="mr-2 w-5 h-5" />
                         <p>Parent contract information (ID: {contract.oracleData?.LIAB_CONTRACT}) could not be loaded.</p>
+                      </div>
                     </div>
-                  </div>
-                      )}
-                    </div>
-                  </div>
+                  )}
+                </div>
+              </div>
             )}
                 
             {/* Main Contract Information */}
             <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-5 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                 <div className={`p-2 rounded-lg mr-3 ${
                   isIssueContract 
                     ? 'bg-purple-100 dark:bg-purple-900/30' 
-                    : contract.oracleData?.CONTRACT_NUMBER?.length === 16 && contract.oracleData?.CONTRACT_NUMBER?.startsWith('10000')
+                    : isCardContract
                       ? 'bg-emerald-100 dark:bg-emerald-900/30'
                       : 'bg-indigo-100 dark:bg-indigo-900/30'
                 }`}>
                   {isIssueContract ? (
                     <RiExchangeFundsLine className={`w-5 h-5 text-purple-600 dark:text-purple-400`} />
-                  ) : contract.oracleData?.CONTRACT_NUMBER?.length === 16 && contract.oracleData?.CONTRACT_NUMBER?.startsWith('10000') ? (
+                  ) : isCardContract ? (
                     <RiIdCardLine className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                   ) : (
                     <RiFileTextLine className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                          )}
-                        </div>
+                  )}
+                </div>
                 <span className={`px-3 py-1 rounded-lg ${
                   isIssueContract 
                     ? 'bg-purple-50 dark:bg-purple-900/50' 
-                    : contract.oracleData?.CONTRACT_NUMBER?.length === 16 && contract.oracleData?.CONTRACT_NUMBER?.startsWith('10000')
+                    : isCardContract
                       ? 'bg-emerald-50 dark:bg-emerald-900/50'
                       : 'bg-indigo-50 dark:bg-indigo-900/50'
                 }`}>CONTRACT DETAILS</span>
-                    </h3>
-                    
+              </h3>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Contract ID */}
                 <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
                   <div className="flex items-start">
                     <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
                       <RiHashtag className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                            </div>
-                            <div>
+                    </div>
+                    <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Contract ID</p>
                       <p className="font-medium text-gray-900 dark:text-white">
                         {contract.oracleData?.ID || contract.id || 'N/A'}
                       </p>
-                        </div>
-                      </div>
                     </div>
+                  </div>
+                </div>
                     
                 {/* Contract Name */}
                 <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
                   <div className="flex items-start">
                     <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
                       <RiFileUserLine className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                            </div>
-                            <div>
+                    </div>
+                    <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Contract Name</p>
                       <p className="font-medium text-gray-900 dark:text-white">
                         {contract.oracleData?.CONTRACT_NAME || 'N/A'}
                       </p>
-                            </div>
-                        </div>
-                      </div>
+                    </div>
+                  </div>
+                </div>
                 
                 {/* Contract Number */}
                 <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
                   <div className="flex items-start">
                     <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
-                      <RiNumber1 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                              </div>
-                              <div>
+                      <RiFileTextLine className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Contract Number</p>
                       <p className="font-medium text-gray-900 dark:text-white">
                         {contract.oracleData?.CONTRACT_NUMBER || 'N/A'}
-                                </p>
-                              </div>
-                            </div>
-                            </div>
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 
                 {/* Branch */}
-                    <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+                <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
                   <div className="flex items-start">
                     <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
                       <RiBankLine className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                          </div>
-                          <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Branch</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Branch</p>
                       <p className="font-medium text-gray-900 dark:text-white">
                         {contract.oracleData?.BRANCH || 'N/A'}
                       </p>
-                      </div>
                     </div>
                   </div>
+                </div>
                   
                 {/* Client ID */}
-                    <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+                <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
                   <div className="flex items-start">
                     <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
                       <RiUser3Line className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                          </div>
-                          <div>
+                    </div>
+                    <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Client ID</p>
                       <p className="font-medium text-gray-900 dark:text-white">
                         {contract.oracleData?.CLIENT_ID || 'N/A'}
@@ -318,68 +313,87 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                     <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
                       <RiCalendarLine className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                     </div>
-                          <div>
+                    <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Amendment Date</p>
                       <p className="font-medium text-gray-900 dark:text-white">
                         {formatDate(contract.oracleData?.AMND_DATE)}
                       </p>
-                          </div>
-                      </div>
                     </div>
                   </div>
                 </div>
-                
-            {/* Card Registration Info */}
-                <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-5 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg mr-3">
-                  <RiUserLine className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                <span className="bg-emerald-50 dark:bg-emerald-900/50 px-3 py-1 rounded-lg">CARD REGISTRATION</span>
-                  </h3>
+              </div>
+            </div>
+            
+            {/* Card Registration Info - Only show if it's a card contract */}
+            {isCardContract && (
+              <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-5 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg mr-3">
+                    <RiIdCardLine className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <span className="bg-emerald-50 dark:bg-emerald-900/50 px-3 py-1 rounded-lg">CARD REGISTRATION</span>
+                </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* First Name */}
-                    <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                  <div className="flex items-start">
-                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg mr-3">
-                      <RiUser3Line className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                          </div>
-                          <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">First Name</p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {contract.oracleData?.TR_FIRST_NAM || 'N/A'}
-                      </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* First Name */}
+                  <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
+                    <div className="flex items-start">
+                      <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg mr-3">
+                        <RiUser3Line className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">First Name</p>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {contract.oracleData?.TR_FIRST_NAM || 'N/A'}
+                        </p>
                       </div>
                     </div>
                   </div>
                   
-                {/* Last Name */}
+                  {/* Last Name */}
+                  <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
+                    <div className="flex items-start">
+                      <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg mr-3">
+                        <RiUser3Line className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Last Name</p>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {contract.oracleData?.TR_LAST_NAM || 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Card Number - Only if present */}
+                  {contract.oracleData?.CARD_NUMBER && (
                     <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                  <div className="flex items-start">
-                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg mr-3">
-                      <RiUser3Line className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                          </div>
-                          <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Last Name</p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {contract.oracleData?.TR_LAST_NAM || 'N/A'}
-                                </p>
-                              </div>
-                            </div>
-                            </div>
-                          </div>
+                      <div className="flex items-start">
+                        <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg mr-3">
+                          <RiIdCardLine className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                         </div>
+                        <div>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Card Number</p>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {contract.oracleData?.CARD_NUMBER || 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             
-            {/* Additional Details */}
-              <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-5 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+            {/* Additional Details/Raw Data */}
+            <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-5 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                 <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg mr-3">
                   <RiInformationLine className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                  </div>
+                </div>
                 <span className="bg-purple-50 dark:bg-purple-900/50 px-3 py-1 rounded-lg">ADDITIONAL DETAILS</span>
-                </h3>
-                
+              </h3>
+              
               <div className="grid grid-cols-1 gap-4">
                 {/* Raw JSON Data */}
                 <div className="bg-purple-50/30 dark:bg-purple-900/10 p-4 rounded-xl border border-purple-100 dark:border-purple-800/20">
@@ -389,12 +403,12 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                       {JSON.stringify(contract.oracleData, null, 2)}
                     </pre>
                   </div>
-                  </div>
                 </div>
-                    </div>
-                    </div>
-                    </div>
-                    </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

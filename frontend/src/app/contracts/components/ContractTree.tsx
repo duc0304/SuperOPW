@@ -1,10 +1,183 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { RiArrowRightSLine, RiArrowDownSLine, RiFileTextLine, RiSearchLine, RiFileList3Line, RiExchangeFundsLine, RiMoneyDollarCircleLine, RiCalendarLine, RiIdCardLine } from 'react-icons/ri';
+import { useState, useEffect, useCallback, useMemo, useReducer, ReactNode } from 'react';
+import { RiArrowRightSLine, RiArrowDownSLine, RiFileTextLine, RiSearchLine, RiFileList3Line, RiExchangeFundsLine, RiCalendarLine, RiIdCardLine } from 'react-icons/ri';
 import clsx from 'clsx';
 import { ContractNode } from '../types';
 import Input from '@/components/ui/Input';
+
+// Styles và icons cho từng loại contract
+interface ContractStyle {
+  icon: ReactNode;
+  color: string;
+  bg: string;
+  selectedBg: string;
+  parentBg?: string;
+  badge: string;
+  highlight: string;
+  marginLeft: string;
+}
+
+// Styles và icons cho từng loại contract
+const contractStyles: Record<string, ContractStyle> = {
+  card: {
+    icon: <RiIdCardLine className="w-5 h-5" />,
+    color: 'text-emerald-600 dark:text-emerald-400',
+    bg: 'bg-emerald-100 dark:bg-emerald-900/30',
+    selectedBg: 'bg-emerald-100 dark:bg-emerald-900/40 border-emerald-300 dark:border-emerald-700/50',
+    badge: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300',
+    highlight: 'bg-emerald-50 dark:bg-emerald-900/50',
+    marginLeft: 'left-[15%]',
+    parentBg: 'bg-transparent border-transparent'
+  },
+  issue: {
+    icon: <RiExchangeFundsLine className="w-5 h-5" />,
+    color: 'text-purple-600 dark:text-purple-400',
+    bg: 'bg-purple-100 dark:bg-purple-900/30',
+    selectedBg: 'bg-purple-100 dark:bg-purple-900/40 border-purple-300 dark:border-purple-700/50',
+    parentBg: 'bg-purple-50/50 dark:bg-purple-900/10 border-purple-200/60 dark:border-purple-800/20',
+    badge: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+    highlight: 'bg-purple-50 dark:bg-purple-900/50',
+    marginLeft: 'left-[5%]'
+  },
+  liability: {
+    icon: <RiFileList3Line className="w-5 h-5" />,
+    color: 'text-indigo-600 dark:text-indigo-400',
+    bg: 'bg-indigo-100 dark:bg-indigo-900/30',
+    selectedBg: 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-300 dark:border-indigo-700/50',
+    parentBg: 'bg-indigo-50/90 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800/30',
+    badge: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300',
+    highlight: 'bg-indigo-50 dark:bg-indigo-900/50',
+    marginLeft: 'left-0'
+  },
+  default: {
+    icon: <RiFileTextLine className="w-5 h-5" />,
+    color: 'text-gray-600 dark:text-gray-400',
+    bg: 'bg-gray-100 dark:bg-gray-800/50',
+    selectedBg: 'bg-primary-100 dark:bg-primary-900/40 border-primary-300 dark:border-primary-700/50',
+    parentBg: 'bg-transparent border-transparent',
+    badge: '',
+    highlight: '',
+    marginLeft: 'left-0'
+  }
+};
+
+// Định nghĩa action types
+type ActionType = 
+  | { type: 'TOGGLE_EXPAND_CONTRACT'; id: string }
+  | { type: 'SET_ANIMATED_ROWS'; rows: Record<string, boolean> }
+  | { type: 'ADD_ANIMATED_ROW'; id: string }
+  | { type: 'RESET_ANIMATED_ROWS' }
+  | { type: 'SET_CURRENT_PAGE'; page: number }
+  | { type: 'VISIT_PAGE'; page: number }
+  | { type: 'RESET_VISITED_PAGES' }
+  | { type: 'SET_ANCESTOR_PATH'; path: string[] }
+  | { type: 'SET_SEARCH_QUERY'; query: string }
+  | { type: 'SET_HOVERED_ROW'; id: string | null };
+
+// Định nghĩa state interface
+interface ContractTreeState {
+  expandedContracts: Record<string, boolean>;
+  animatedRowsMap: Record<string, boolean>;
+  currentPage: number;
+  visitedPages: Record<number, boolean>;
+  isInitialRender: boolean;
+  ancestorPath: string[];
+  searchQuery: string;
+  hoveredRow: string | null;
+}
+
+// State ban đầu
+const initialState: ContractTreeState = {
+  expandedContracts: {},
+  animatedRowsMap: {},
+  currentPage: 1,
+  visitedPages: {},
+  isInitialRender: true,
+  ancestorPath: [],
+  searchQuery: '',
+  hoveredRow: null
+};
+
+// Reducer function
+function contractTreeReducer(state: ContractTreeState, action: ActionType): ContractTreeState {
+  switch (action.type) {
+    case 'TOGGLE_EXPAND_CONTRACT':
+      return {
+        ...state,
+        expandedContracts: {
+          ...state.expandedContracts,
+          [action.id]: !state.expandedContracts[action.id]
+        }
+      };
+    case 'SET_ANIMATED_ROWS':
+      return {
+        ...state,
+        animatedRowsMap: action.rows
+      };
+    case 'ADD_ANIMATED_ROW':
+      return {
+        ...state,
+        animatedRowsMap: {
+          ...state.animatedRowsMap,
+          [action.id]: true
+        }
+      };
+    case 'RESET_ANIMATED_ROWS':
+      return {
+        ...state,
+        animatedRowsMap: {},
+        isInitialRender: true
+      };
+    case 'SET_CURRENT_PAGE':
+      return {
+        ...state,
+        currentPage: action.page
+      };
+    case 'VISIT_PAGE':
+      return {
+        ...state,
+        visitedPages: {
+          ...state.visitedPages,
+          [action.page]: true
+        },
+        isInitialRender: false
+      };
+    case 'RESET_VISITED_PAGES':
+      return {
+        ...state,
+        visitedPages: {},
+        isInitialRender: true
+      };
+    case 'SET_ANCESTOR_PATH':
+      return {
+        ...state,
+        ancestorPath: action.path,
+        // Mở rộng các contract trong đường dẫn tổ tiên
+        expandedContracts: action.path.reduce((acc, id) => {
+          acc[id] = true;
+          return acc;
+        }, { ...state.expandedContracts })
+      };
+    case 'SET_SEARCH_QUERY':
+      return {
+        ...state,
+        searchQuery: action.query,
+        // Reset khi search query thay đổi
+        currentPage: 1,
+        animatedRowsMap: {},
+        visitedPages: {},
+        isInitialRender: true
+      };
+    case 'SET_HOVERED_ROW':
+      return {
+        ...state,
+        hoveredRow: action.id
+      };
+    default:
+      return state;
+  }
+}
 
 interface ContractTreeProps {
   contracts: ContractNode[];
@@ -17,15 +190,20 @@ export default function ContractTree({
   selectedId, 
   onSelect 
 }: ContractTreeProps) {
-  const [animatedRowsMap, setAnimatedRowsMap] = useState<{[key: string]: boolean}>({});
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  // Sử dụng reducer thay vì nhiều useState
+  const [state, dispatch] = useReducer(contractTreeReducer, initialState);
+  const { 
+    expandedContracts, 
+    animatedRowsMap, 
+    currentPage, 
+    visitedPages, 
+    isInitialRender, 
+    ancestorPath, 
+    searchQuery, 
+    hoveredRow 
+  } = state;
+  
   const contractsPerPage = 10;
-  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
-  const [visitedPages, setVisitedPages] = useState<{[key: number]: boolean}>({});
-  const [isInitialRender, setIsInitialRender] = useState(true);
-  const [expandedContracts, setExpandedContracts] = useState<{[key: string]: boolean}>({});
-  const [ancestorPath, setAncestorPath] = useState<string[]>([]);
 
   // Phân loại card vs contract dựa vào contract number và LIAB_CONTRACT
   const getContractType = useCallback((contract: ContractNode): 'card' | 'issue' | 'liability' => {
@@ -52,119 +230,75 @@ export default function ContractTree({
 
   // Tổ chức contracts thành cấu trúc cây phân cấp ba cấp
   const organizeContractsHierarchy = useCallback(() => {
-    // Tạo map để theo dõi các contract theo ID
-    const liabilityContractsMap: { [key: string]: ContractNode } = {};
-    const issuingContractsMap: { [key: string]: ContractNode } = {};
-    
-    // Danh sách cuối cùng chỉ bao gồm các liability contract
-    const hierarchicalContracts: ContractNode[] = [];
-    
-    // Bước 1: Phân loại và lưu trữ tất cả các contract
-    contracts.forEach(contract => {
-      const contractType = getContractType(contract);
+    // Hàm phân loại và tạo map cho liabilities
+    const categorizeLiabilityContracts = (contracts: ContractNode[]) => {
+      const map: Record<string, ContractNode> = {};
+      const list: ContractNode[] = [];
       
-      if (contractType === 'liability') {
-        // Clone contract và thêm một mảng children rỗng
-        const liabilityContract = { 
-          ...contract, 
-          children: [] as ContractNode[] 
-        };
-        
-        // Thêm vào map để dễ truy cập sau này
-        if (contract.oracleData?.ID) {
-          liabilityContractsMap[contract.oracleData.ID] = liabilityContract;
+      contracts.forEach(contract => {
+        if (getContractType(contract) === 'liability') {
+          const liability = { ...contract, children: [] };
+          map[contract.oracleData?.ID || ''] = liability;
+          list.push(liability);
         }
-        
-        // Thêm vào danh sách kết quả
-        hierarchicalContracts.push(liabilityContract);
-      } 
-      else if (contractType === 'issue') {
-        // Clone issuing contract và thêm mảng children rỗng
-        const issuingContract = {
-          ...contract,
-          children: [] as ContractNode[]
-        };
-        
-        // Thêm vào map để dễ truy cập sau này
-        if (contract.oracleData?.ID) {
-          issuingContractsMap[contract.oracleData.ID] = issuingContract;
-        }
-        
-        // Không thêm trực tiếp vào danh sách kết quả, sẽ xử lý ở bước sau
-      }
-      // Card contracts sẽ được xử lý ở bước tiếp theo
-    });
-    
-    // Bước 2: Xử lý issue contracts và gán chúng vào liability contract cha
-    contracts.forEach(contract => {
-      const contractType = getContractType(contract);
+      });
       
-      if (contractType === 'issue') {
-        const parentId = contract.oracleData?.LIAB_CONTRACT;
-        
-        if (parentId && liabilityContractsMap[parentId]) {
-          // Thêm issuing contract đã có trong map vào mảng children của liability contract cha
-          const issuingContract = issuingContractsMap[contract.oracleData?.ID || ''] || { ...contract, children: [] };
-          liabilityContractsMap[parentId].children?.push(issuingContract);
-        } else {
-          // Nếu không tìm thấy parent, thêm issue contract vào danh sách chính
-          hierarchicalContracts.push({ ...contract, children: [] });
-        }
-      }
-    });
+      return { map, list };
+    };
     
-    // Bước 3: Xử lý card contracts và gán chúng vào issuing contract cha
-    contracts.forEach(contract => {
-      const contractType = getContractType(contract);
+    // Hàm gán issue contracts vào liability parent của chúng
+    const assignIssueContracts = (
+      contracts: ContractNode[],
+      liabilityMap: Record<string, ContractNode>
+    ) => {
+      const issueMap: Record<string, ContractNode> = {};
       
-      if (contractType === 'card') {
-        const parentId = contract.oracleData?.ACNT_CONTRACT__OID;
-        
-        if (parentId && issuingContractsMap[parentId]) {
-          // Thêm card contract vào mảng children của issuing contract cha
-          issuingContractsMap[parentId].children?.push({ ...contract });
-          // Đảm bảo issuing contract nằm trong hierarchy nếu chưa được thêm
-          const issueContract = issuingContractsMap[parentId];
-          const issueParentId = issueContract.oracleData?.LIAB_CONTRACT;
+      contracts.forEach(contract => {
+        if (getContractType(contract) === 'issue') {
+          const issue = { ...contract, children: [] };
+          issueMap[contract.oracleData?.ID || ''] = issue;
           
-          if (issueParentId && liabilityContractsMap[issueParentId]) {
-            // Kiểm tra xem issuing contract đã là con của liability contract chưa
-            const liabilityChildren = liabilityContractsMap[issueParentId].children || [];
-            const issueExists = liabilityChildren.some(child => 
-              child.oracleData?.ID === issueContract.oracleData?.ID);
-            
-            if (!issueExists) {
-              liabilityContractsMap[issueParentId].children?.push(issueContract);
-            }
-          }
-        } else {
-          // Thử tìm issuing contract cha dựa vào trường LIAB_CONTRACT
-          const issueParentId = contract.oracleData?.LIAB_CONTRACT;
-          
-          // Nếu có LIAB_CONTRACT, thử tìm trong các issuing contracts cùng LIAB_CONTRACT
-          if (issueParentId) {
-            // Tìm issuing contract phù hợp trong các issuing có cùng liab parent
-            const matchingIssueContract = Object.values(issuingContractsMap).find(issue => 
-              issue.oracleData?.LIAB_CONTRACT === issueParentId);
-            
-            if (matchingIssueContract && matchingIssueContract.oracleData?.ID) {
-              // Thêm card vào issuing contract này
-              issuingContractsMap[matchingIssueContract.oracleData.ID].children?.push({ ...contract });
-            } else if (liabilityContractsMap[issueParentId]) {
-              // Nếu không tìm thấy issuing phù hợp, thêm card trực tiếp vào liability
-              liabilityContractsMap[issueParentId].children?.push({ ...contract });
-            } else {
-              hierarchicalContracts.push({ ...contract });
-            }
-          } else {
-            // Nếu không tìm thấy parent nào, thêm card contract vào danh sách chính
-            hierarchicalContracts.push({ ...contract });
+          const parentId = contract.oracleData?.LIAB_CONTRACT;
+          if (parentId && liabilityMap[parentId]) {
+            liabilityMap[parentId].children?.push(issue);
           }
         }
-      }
-    });
+      });
+      
+      return issueMap;
+    };
     
-    return hierarchicalContracts;
+    // Hàm gán card contracts vào issue hoặc liability parent của chúng
+    const assignCardContracts = (
+      contracts: ContractNode[],
+      liabilityMap: Record<string, ContractNode>,
+      issueMap: Record<string, ContractNode>
+    ) => {
+      contracts.forEach(contract => {
+        if (getContractType(contract) === 'card') {
+          // Thử tìm parent dựa trên ACNT_CONTRACT__OID (issue parent)
+          const issueParentId = contract.oracleData?.ACNT_CONTRACT__OID;
+          if (issueParentId && issueMap[issueParentId]) {
+            issueMap[issueParentId].children?.push({ ...contract });
+            return;
+          }
+          
+          // Thử tìm parent dựa trên LIAB_CONTRACT (liability parent)
+          const liabParentId = contract.oracleData?.LIAB_CONTRACT;
+          if (liabParentId && liabilityMap[liabParentId]) {
+            liabilityMap[liabParentId].children?.push({ ...contract });
+            return;
+          }
+        }
+      });
+    };
+    
+    // Thực hiện các bước tổ chức cây
+    const { map: liabilityMap, list: result } = categorizeLiabilityContracts(contracts);
+    const issueMap = assignIssueContracts(contracts, liabilityMap);
+    assignCardContracts(contracts, liabilityMap, issueMap);
+    
+    return result;
   }, [contracts, getContractType]);
 
   // Sắp xếp contracts theo AMND_DATE mới nhất lên đầu
@@ -220,95 +354,101 @@ export default function ContractTree({
   }, [searchQuery, sortedHierarchicalContracts]);
 
   // Làm phẳng danh sách contracts cho hiển thị và phân trang
-  const flattenedContractsForDisplay = useMemo(() => {
-    const flattened: { contract: ContractNode; level: number; isChild: boolean }[] = [];
+  const flattenContractsForCurrentPage = useCallback((contracts: ContractNode[], page: number, itemsPerPage: number) => {
+    const flattened: { contract: ContractNode; level: number }[] = [];
+    let flatIndex = 0;
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage - 1;
     
-    const processContract = (contract: ContractNode, level: number, isChild: boolean) => {
-      flattened.push({ contract, level, isChild });
+    // Hàm đệ quy flatten với early return khi đã đủ số lượng cần thiết
+    const processContract = (contract: ContractNode, level: number) => {
+      // Skip nếu đã quá trang hiện tại
+      if (flatIndex > endIndex) {
+        return false; // Đã đủ dữ liệu, dừng xử lý
+      }
       
-      // Nếu contract này được mở rộng và có các contract con, thêm chúng vào danh sách
+      // Thêm contract hiện tại nếu nằm trong khoảng trang hiện tại
+      if (flatIndex >= startIndex && flatIndex <= endIndex) {
+        flattened.push({ contract, level });
+      }
+      
+      flatIndex++;
+      
+      // Chỉ xử lý các con nếu contract được mở rộng và flat index chưa vượt quá endIndex
       const contractType = getContractType(contract);
+      if (expandedContracts[contract.id] && contract.children && contract.children.length > 0 && flatIndex <= endIndex) {
+        for (const child of contract.children) {
+          // Nếu processContract return false (đã đủ dữ liệu), dừng vòng lặp
+          const childLevel = (contractType === 'issue' && getContractType(child) === 'card')
+            ? level + 2 
+            : level + 1;
+            
+          if (!processContract(child, childLevel)) {
+            return false;
+          }
+        }
+      }
+      
+      return flatIndex <= endIndex; // Còn cần thêm dữ liệu không
+    };
+    
+    // Xử lý từng contract cấp cao nhất cho đến khi đủ dữ liệu cho trang hiện tại
+    for (const contract of contracts) {
+      if (!processContract(contract, 0)) {
+        break; // Đã đủ dữ liệu cho trang hiện tại
+      }
+    }
+    
+    return flattened;
+  }, [expandedContracts, getContractType]);
+  
+  // Tính tổng số contracts để phân trang (tính cả đã mở rộng)
+  const totalContractCount = useMemo(() => {
+    let count = 0;
+    
+    const countContract = (contract: ContractNode) => {
+      count++;
+      
       if (expandedContracts[contract.id] && contract.children && contract.children.length > 0) {
-        contract.children.forEach(child => {
-          // Giảm độ thụt lề xuống, card chỉ thụt thêm 1 cấp so với issuing
-          const childLevel = (contractType === 'issue' && getContractType(child) === 'card') ? level + 2 : level + 1;
-          processContract(child, childLevel, true);
-        });
+        contract.children.forEach(countContract);
       }
     };
     
-    // Xử lý tất cả các contract cấp cao nhất
-    filteredContracts.forEach(contract => {
-      processContract(contract, 0, false);
-    });
+    filteredContracts.forEach(countContract);
     
-    return flattened;
-  }, [filteredContracts, expandedContracts, getContractType]);
-
+    return count;
+  }, [filteredContracts, expandedContracts]);
+  
   // Phân trang
-  const totalPages = Math.ceil(flattenedContractsForDisplay.length / contractsPerPage);
+  const totalPages = Math.ceil(totalContractCount / contractsPerPage);
   
   // Tính toán các contract hiển thị theo trang hiện tại
   const displayedContracts = useMemo(() => {
-    const indexOfLastContract = currentPage * contractsPerPage;
-    const indexOfFirstContract = indexOfLastContract - contractsPerPage;
-    return flattenedContractsForDisplay.slice(indexOfFirstContract, indexOfLastContract);
-  }, [flattenedContractsForDisplay, currentPage, contractsPerPage]);
-
-  // Animation effect cho tất cả các trang, đảm bảo luôn hiển thị dữ liệu
+    return flattenContractsForCurrentPage(filteredContracts, currentPage, contractsPerPage);
+  }, [filteredContracts, currentPage, contractsPerPage, flattenContractsForCurrentPage]);
+  
+  // Animation effect được tối ưu để mượt mà khi chuyển trang
   useEffect(() => {
-    // Đảm bảo trang 1 luôn được hiển thị ngay cả khi không có animation
-    if (currentPage === 1 && isInitialRender) {
-      // Với trang đầu tiên, đánh dấu animatedRows ngay lập tức
-      const initialAnimations: {[key: string]: boolean} = {};
-      displayedContracts.forEach(item => {
-        initialAnimations[item.contract.id] = true;
-      });
-      
-      setAnimatedRowsMap(initialAnimations);
-      setIsInitialRender(false);
-      setVisitedPages({ ...visitedPages, 1: true });
-      return;
+    // Đánh dấu tất cả các contracts là đã animate ngay lập tức
+    const allAnimated = displayedContracts.reduce((acc, item) => {
+      acc[item.contract.id] = true;
+      return acc;
+    }, {} as Record<string, boolean>);
+    
+    dispatch({ type: 'SET_ANIMATED_ROWS', rows: allAnimated });
+    
+    // Đánh dấu trang đã thăm
+    if (!visitedPages[currentPage]) {
+      dispatch({ type: 'VISIT_PAGE', page: currentPage });
     }
-    
-    // Không cần thực hiện animation cho các trang đã thăm
-    if (visitedPages[currentPage]) {
-      // Nhưng vẫn đảm bảo tất cả các contract đều được đánh dấu là đã animate
-      const currentPageContracts = displayedContracts.reduce((acc, item) => {
-        acc[item.contract.id] = true;
-        return acc;
-      }, {} as {[key: string]: boolean});
-      
-      setAnimatedRowsMap(prev => ({
-        ...prev,
-        ...currentPageContracts
-      }));
-      return;
-    }
-    
-    // Đánh dấu trang hiện tại đã thăm
-    setVisitedPages(prev => ({ ...prev, [currentPage]: true }));
-    
-    const animationDelay = 30; // giảm xuống từ 50 để animation nhanh hơn
-    
-    displayedContracts.forEach((item, index) => {
-      setTimeout(() => {
-        setAnimatedRowsMap(prev => ({
-          ...prev,
-          [item.contract.id]: true
-        }));
-      }, index * animationDelay);
-    });
-  }, [displayedContracts, currentPage, visitedPages, isInitialRender]);
+  }, [displayedContracts, currentPage, visitedPages, dispatch]);
 
   // Reset animation chỉ khi search query thay đổi
   useEffect(() => {
-    setAnimatedRowsMap({});
-    // Reset visited pages khi search
-    setVisitedPages({});
-    setIsInitialRender(true);
-    setCurrentPage(1);
-  }, [searchQuery]);
+    // Vẫn reset các state cần thiết khi thay đổi search
+    dispatch({ type: 'RESET_VISITED_PAGES' });
+    dispatch({ type: 'SET_CURRENT_PAGE', page: 1 });
+  }, [searchQuery, dispatch]);
 
   // Format date for display
   const formatDate = (dateString: string | undefined) => {
@@ -320,7 +460,7 @@ export default function ContractTree({
         day: 'numeric',
         year: 'numeric'
       });
-    } catch (error) {
+    } catch (_) {
       return '';
     }
   };
@@ -328,64 +468,56 @@ export default function ContractTree({
   // Xử lý chuyển trang
   const handlePageChange = (pageNumber: number) => {
     if (pageNumber === currentPage) return;
-    setCurrentPage(pageNumber);
+    dispatch({ type: 'SET_CURRENT_PAGE', page: pageNumber });
   };
 
   // Toggle mở rộng/thu gọn contract
   const toggleExpandContract = (contractId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    setExpandedContracts(prev => ({
-      ...prev,
-      [contractId]: !prev[contractId]
-    }));
+    dispatch({ type: 'TOGGLE_EXPAND_CONTRACT', id: contractId });
   };
 
   // Get icon based on contract type
   const getContractIcon = (contract: ContractNode) => {
     const contractType = getContractType(contract);
-    
-    switch (contractType) {
-      case 'card':
-        return <RiIdCardLine className="w-5 h-5" />;
-      case 'liability':
-        return <RiFileList3Line className="w-5 h-5" />;
-      case 'issue':
-        return <RiExchangeFundsLine className="w-5 h-5" />;
-      default:
-        return <RiFileTextLine className="w-5 h-5" />;
-    }
+    return contractStyles[contractType]?.icon || contractStyles.default.icon;
   };
 
   // Get icon color based on contract type
   const getIconColor = (contract: ContractNode) => {
     const contractType = getContractType(contract);
-    
-    switch (contractType) {
-      case 'card':
-        return 'text-emerald-600 dark:text-emerald-400';
-      case 'liability':
-        return 'text-indigo-600 dark:text-indigo-400';
-      case 'issue':
-        return 'text-purple-600 dark:text-purple-400';
-      default:
-        return 'text-gray-600 dark:text-gray-400';
-    }
+    return contractStyles[contractType]?.color || contractStyles.default.color;
   };
 
   // Get icon background based on contract type
   const getIconBackground = (contract: ContractNode) => {
     const contractType = getContractType(contract);
+    return contractStyles[contractType]?.bg || contractStyles.default.bg;
+  };
+  
+  // Get style for highlight background
+  const getHighlightStyle = (contract: ContractNode, isSelected: boolean, isAncestor: boolean, ancestorLevel: number) => {
+    const contractType = getContractType(contract);
+    const styles = contractStyles[contractType] || contractStyles.default;
+    const marginLeft = styles.marginLeft;
     
-    switch (contractType) {
-      case 'card':
-        return 'bg-emerald-100 dark:bg-emerald-900/30';
-      case 'liability':
-        return 'bg-indigo-100 dark:bg-indigo-900/30';
-      case 'issue':
-        return 'bg-purple-100 dark:bg-purple-900/30';
-      default:
-        return 'bg-gray-100 dark:bg-gray-800/50';
+    // Xác định background dựa vào trạng thái
+    let bgClass = 'bg-transparent border-transparent';
+    
+    if (isSelected) {
+      bgClass = styles.selectedBg;
+    } else if (isAncestor) {
+      const isParent = ancestorLevel === 1;
+      const isGrandparent = ancestorLevel === 2;
+      
+      if (contractType === 'issue' && isParent) {
+        bgClass = styles.parentBg || bgClass;
+      } else if (contractType === 'liability' && (isGrandparent || isParent)) {
+        bgClass = styles.parentBg || bgClass;
+      }
     }
+    
+    return `${marginLeft} ${bgClass}`;
   };
 
   // Tạo pagination buttons
@@ -468,20 +600,13 @@ export default function ContractTree({
         {buttons}
       </div>
     );
-  }, [currentPage, totalPages]);
+  }, [currentPage, totalPages, handlePageChange]);
 
   // Cập nhật hàm xử lý chọn contract để theo dõi ancestors
   const handleSelectContract = (contract: ContractNode) => {
     // Tìm đường dẫn ancestors của contract này
     const ancestors = findAncestorPath(contract.id);
-    setAncestorPath(ancestors);
-    
-    // Đảm bảo mở rộng tất cả các nút cha trong đường dẫn
-    const expandUpdates = {} as {[key: string]: boolean};
-    ancestors.forEach(id => {
-      expandUpdates[id] = true;
-    });
-    setExpandedContracts(prev => ({...prev, ...expandUpdates}));
+    dispatch({ type: 'SET_ANCESTOR_PATH', path: ancestors });
     
     // Gọi hàm onSelect gốc
     onSelect(contract);
@@ -528,7 +653,7 @@ export default function ContractTree({
           <Input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => dispatch({ type: 'SET_SEARCH_QUERY', query: e.target.value })}
             placeholder="Search contracts..."
             className="pl-10 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
           />
@@ -538,7 +663,7 @@ export default function ContractTree({
           {displayedContracts.length > 0 ? (
           <div className="space-y-1">
               {displayedContracts.map((item) => {
-                const { contract, level, isChild } = item;
+                const { contract, level } = item;
                 const isSelected = selectedId === contract.id;
                 const isAnimated = animatedRowsMap[contract.id] || currentPage === 1;
                 const amendDate = contract.oracleData?.AMND_DATE;
@@ -546,14 +671,13 @@ export default function ContractTree({
                 const hasChildren = (contractType === 'liability' || contractType === 'issue') && 
                                    contract.children && contract.children.length > 0;
                 const isExpanded = expandedContracts[contract.id];
-                const isHighlighted = isSelected || ancestorPath.includes(contract.id);
                 
                 return (
                   <div 
                     key={contract.id} 
                     className={`transition-all duration-500 ease-out ${isAnimated ? 'opacity-100 transform-none' : 'opacity-0 translate-y-4'}`}
-                    onMouseEnter={() => setHoveredRow(contract.id)}
-                    onMouseLeave={() => setHoveredRow(null)}
+                    onMouseEnter={() => dispatch({ type: 'SET_HOVERED_ROW', id: contract.id })}
+                    onMouseLeave={() => dispatch({ type: 'SET_HOVERED_ROW', id: null })}
                   >
                     <div 
                       className={clsx(
@@ -574,54 +698,7 @@ export default function ContractTree({
                           (() => {
                             const isAncestor = ancestorPath.includes(contract.id) && !isSelected;
                             const ancestorLevel = isAncestor ? ancestorPath.indexOf(contract.id) : -1;
-                            const isParent = ancestorLevel === 1; // Cha trực tiếp
-                            const isGrandparent = ancestorLevel === 2; // Ông/bà (Liability)
-                            
-                            // Điều chỉnh độ thụt vào bên trái theo cấp độ và loại contract
-                            const marginLeftClass = (() => {
-                              if (contractType === 'card') {
-                                return 'left-[15%]'; // Card: thụt vào 20% từ trái
-                              } else if (contractType === 'issue') {
-                                return 'left-[5%]'; // Issue: thụt vào 10% từ trái
-                              } else if (contractType === 'liability') {
-                                return 'left-0'; // Liability: không thụt vào
-                              }
-                              return 'left-0';
-                            })();
-                            
-                            // Màu nền và border theo loại contract & trạng thái
-                            switch (contractType) {
-                              case 'card':
-                                return `${marginLeftClass} ${
-                                  isSelected 
-                                    ? 'bg-emerald-100 dark:bg-emerald-900/40 border-emerald-300 dark:border-emerald-700/50' 
-                                    : isAncestor
-                                      ? 'bg-transparent border-transparent'
-                                      : 'bg-transparent border-transparent'
-                                }`;
-                              case 'issue':
-                                return `${marginLeftClass} ${
-                                  isSelected 
-                                    ? 'bg-purple-100 dark:bg-purple-900/40 border-purple-300 dark:border-purple-700/50' 
-                                    : isParent
-                                      ? 'bg-purple-50/50 dark:bg-purple-900/10 border-purple-200/60 dark:border-purple-800/20'
-                                      : 'bg-transparent border-transparent'
-                                }`;
-                              case 'liability':
-                                return `${marginLeftClass} ${
-                                  isSelected 
-                                    ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-300 dark:border-indigo-700/50' 
-                                    : isGrandparent || isParent
-                                      ? 'bg-indigo-50/90 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800/30'
-                                      : 'bg-transparent border-transparent'
-                                }`;
-                              default:
-                                return `${marginLeftClass} ${
-                                  isSelected 
-                                    ? 'bg-primary-100 dark:bg-primary-900/40 border-primary-300 dark:border-primary-700/50' 
-                                    : 'bg-transparent border-transparent'
-                                }`;
-                            }
+                            return getHighlightStyle(contract, isSelected, isAncestor, ancestorLevel);
                           })()
                         )}
                       ></div>
@@ -655,30 +732,9 @@ export default function ContractTree({
                       <div className="flex-1 min-w-0 relative z-10" onClick={() => handleSelectContract(contract)}>
                         <div className="font-medium text-gray-900 dark:text-white truncate">
                           {contract.title}
-                          {(() => {
-                            switch (contractType) {
-                              case 'card':
-                                return (
-                                  <span className="ml-2 text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full">
-                                    Card
-                                  </span>
-                                );
-                              case 'issue':
-                                return (
-                                  <span className="ml-2 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full">
-                                    Issue
-                                  </span>
-                                );
-                              case 'liability':
-                                return (
-                                  <span className="ml-2 text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full">
-                                    Liability
-                                  </span>
-                                );
-                              default:
-                                return null;
-                            }
-                          })()}
+                          <span className={`ml-2 text-xs ${contractStyles[contractType].badge} px-2 py-0.5 rounded-full`}>
+                            {contractType.charAt(0).toUpperCase() + contractType.slice(1)}
+                          </span>
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 truncate flex items-center">
                           <span className="mr-2">

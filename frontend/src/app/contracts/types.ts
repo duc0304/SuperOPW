@@ -8,16 +8,10 @@ import { Client as AppClient } from '../clients/mock_clients';
  * Không được sử dụng lẫn lộn 2 loại này.
  * Nếu cần lấy dữ liệu từ một Client dạng này sang dạng kia, hãy chuyển đổi bằng hàm map.
  */
-export interface Client {
-  id: string;
-  name: string;
-  email: string;
-  type: string;
-  shortName?: string;
-  clientNumber?: string;
-}
 
-// Interface mới cho Oracle Contract
+/**
+ * Interface cho Oracle Contract - chứa dữ liệu thô từ API
+ */
 export interface OracleContract {
   AMND_DATE?: string;
   ID?: string;
@@ -27,10 +21,51 @@ export interface OracleContract {
   CLIENT_ID?: string;
   TR_FIRST_NAM?: string;
   TR_LAST_NAM?: string;
+  LIAB_CONTRACT?: string;
+  ACNT_CONTRACT__OID?: string;
+  CARD_NUMBER?: string;
   [key: string]: any; // Cho phép các trường khác từ API
 }
 
-// Hàm chuyển đổi từ OracleContract sang ContractNode
+/**
+ * Interface đơn giản hóa cho Client
+ */
+export interface Client {
+  id: string;
+  name: string;
+  clientNumber?: string;
+}
+
+/**
+ * Hàm chuyển đổi từ AppClient sang Client
+ */
+export function mapAppClientToContractClient(appClient: AppClient): Client {
+  return {
+    id: appClient.id,
+    name: appClient.companyName,
+    clientNumber: appClient.clientNumber
+  };
+}
+
+/**
+ * Định nghĩa ContractNode đơn giản hóa
+ * Chỉ giữ lại các trường cần thiết
+ */
+export interface ContractNode {
+  id: string;
+  title: string;
+  type: 'liability' | 'issue' | 'card';
+  children?: ContractNode[];
+  oracleData?: OracleContract; // Lưu trữ dữ liệu gốc từ Oracle
+  liability?: {
+    contractNumber: string;
+  };
+}
+
+/**
+ * Hàm chuyển đổi từ OracleContract sang ContractNode
+ * Đơn giản hóa, chỉ giữ lại các trường cần thiết
+ */
 export function mapOracleContractToContractNode(oracleContract: OracleContract): ContractNode {
   // Tạo ID duy nhất từ CONTRACT_NUMBER hoặc ID để tránh trùng lặp
   const uniqueId = oracleContract.ID || 
@@ -40,86 +75,14 @@ export function mapOracleContractToContractNode(oracleContract: OracleContract):
   return {
     id: uniqueId,
     title: oracleContract.CONTRACT_NAME || oracleContract.CONTRACT_NUMBER || 'Unnamed Contract',
-    type: 'liability', // Tất cả contracts từ Oracle là liability contracts
-    status: 'active', // Default status
-    startDate: oracleContract.AMND_DATE || new Date().toISOString(),
-    endDate: new Date().toISOString(), // Default endDate
-    value: 0, // Default value
-    segment: {
-      institution: '',
-      branch: oracleContract.BRANCH || '',
-      product: '',
-      serviceGroup: '',
-      reportType: '',
-      role: '',
-    },
+    type: 'liability', // Mặc định là liability, sẽ được xác định lại trong getContractType
     liability: {
-      category: 'liability',
       contractNumber: oracleContract.CONTRACT_NUMBER || '',
-      client: oracleContract.CLIENT_ID || '',
     },
     oracleData: { // Lưu trữ dữ liệu gốc từ Oracle
       ...oracleContract
     }
   };
-}
-
-// Hàm chuyển đổi từ AppClient sang Client
-export function mapAppClientToContractClient(appClient: AppClient): Client {
-  return {
-    id: appClient.id,
-    name: appClient.companyName,
-    email: `contact@${appClient.shortName.toLowerCase()}.com`,
-    type: appClient.clientCategory || 'default',
-    shortName: appClient.shortName,
-    clientNumber: appClient.clientNumber
-  };
-}
-
-export interface Segment {
-  institution: string;
-  branch: string;
-  product: string;
-  serviceGroup: string;
-  reportType: string;
-  role: string;
-}
-
-export interface Liability {
-  category: string;
-  contractNumber: string;
-  client: string;
-}
-
-export interface Financial {
-  currency: string;
-  available: number;
-  balance: number;
-  creditLimit: number;
-  additionalLimit: number;
-  blocked: number;
-}
-
-export interface CardDetails {
-  type: string;
-  issueContract: string;
-}
-
-export interface ContractNode {
-  id: string;
-  title: string;
-  type: 'liability' | 'issuing' | 'card';
-  status: 'active' | 'pending' | 'closed';
-  startDate: string;
-  endDate: string;
-  value: number;
-  segment?: Segment;
-  client?: Client;
-  liability?: Liability;
-  financial?: Financial;
-  cardDetails?: CardDetails;
-  children?: ContractNode[];
-  oracleData?: OracleContract; // Thêm trường lưu trữ dữ liệu gốc
 }
 
 // Mock data sẽ được định nghĩa trong một file riêng 
