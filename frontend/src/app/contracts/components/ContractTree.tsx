@@ -728,7 +728,12 @@ export default function ContractTree({
                         </div>
                       </div>
                       
-                      <div className="flex-1 min-w-0 relative z-10" onClick={() => handleSelectContract(contract)}>
+                      <div 
+                        className="flex-1 min-w-0 relative z-10" 
+                        onClick={() => handleSelectContract(contract)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleSelectContract(contract); }}
+                        tabIndex={0} // Để phần tử có thể focus bằng bàn phím
+                      >
                         <div className="font-medium text-gray-900 dark:text-white truncate">
                           {contract.title}
                           <span className={`ml-2 text-xs ${contractStyles[contractType].badge} px-2 py-0.5 rounded-full`}>
