@@ -728,7 +728,7 @@ export default function ContractTree({
                         </div>
                       </div>
                       
-                      <div role = "button" tabIndex={0} className="flex-1 min-w-0 relative z-10" onClick={() => handleSelectContract(contract)}>
+                      <div className="flex-1 min-w-0 relative z-10" onClick={() => handleSelectContract(contract)}>
                         <div className="font-medium text-gray-900 dark:text-white truncate">
                           {contract.title}
                           <span className={`ml-2 text-xs ${contractStyles[contractType].badge} px-2 py-0.5 rounded-full`}>
