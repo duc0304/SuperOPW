@@ -431,6 +431,9 @@ function generateEditClientXML(clientData) {
          </wsin:SetCustomData_InObject>`;
   }
 
+  // Lưu ý: CLIENT_ID chỉ được dùng để hiển thị, 
+  // không cần gửi trong request EditClient vì nó không thể sửa đổi
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsin="http://www.openwaygroup.com/wsint">
    <soapenv:Header>

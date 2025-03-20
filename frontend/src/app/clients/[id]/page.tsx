@@ -23,6 +23,7 @@ interface ExtendedClient extends Client {
   ADDRESS_LINE_3?: string;
   PHONE_H?: string;
   E_MAIL?: string;
+  ID?: string;
 }
 
 export default function ClientDetailsPage() {
@@ -72,7 +73,12 @@ export default function ClientDetailsPage() {
 
   // Xử lý chuyển đổi sang chế độ chỉnh sửa
   const handleEnterEditMode = () => {
-    setEditedClient({...client!, id: client!.id});
+    // Đảm bảo sao chép tất cả trường dữ liệu, bao gồm cả CLIENT_ID
+    setEditedClient({
+      ...client!, 
+      id: client!.id,
+      ID: client!.ID // Đảm bảo CLIENT_ID được giữ nguyên
+    });
     setIsEditMode(true);
   };
 
@@ -171,7 +177,7 @@ export default function ClientDetailsPage() {
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24 blur-3xl animate-float"></div>
             <div className="absolute top-1/2 left-1/4 w-32 h-32 bg-primary-300/20 rounded-full blur-2xl animate-float-slow"></div>
             
-            {/* Decorative elements */}
+      {/* Decorative elements */}
             <div className="absolute right-10 bottom-10 w-20 h-20 border-4 border-primary-300/30 rounded-xl rotate-12"></div>
             <div className="absolute left-1/3 top-10 w-6 h-6 bg-primary-300/40 rounded-full"></div>
             
@@ -181,35 +187,35 @@ export default function ClientDetailsPage() {
                 <Link href="/clients">
                   <button className="bg-white/20 backdrop-blur-sm p-3 rounded-xl mr-4 shadow-lg transform transition-transform hover:scale-105 duration-300">
                     <RiArrowLeftLine className="h-6 w-6 text-white" />
-                  </button>
+          </button>
                 </Link>
-                
-                <div>
+          
+              <div>
                   <h1 className="text-3xl font-bold text-white drop-shadow-md">{client.shortName}</h1>
                   <p className="text-primary-100 dark:text-primary-200">Company: {client.companyName}</p>
                   
                   <div className="flex mt-2 space-x-3">
                     <span className="inline-flex items-center bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg text-sm text-white">
-                      ID: {client.id}
-                    </span>
+                    ID: {client.id}
+                  </span>
                     <span className="inline-flex items-center bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg text-sm text-white">
-                      {client.clientNumber}
-                    </span>
+                    {client.clientNumber}
+                  </span>
                   </div>
                 </div>
               </div>
               
-              <div className="mt-4 md:mt-0 flex items-center">
+            <div className="mt-4 md:mt-0 flex items-center">
                 <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium mr-4 ${
-                  client.status === 'active' 
+                client.status === 'active' 
                     ? 'bg-emerald-500/50 backdrop-blur-sm text-white' 
                     : 'bg-rose-500/50 backdrop-blur-sm text-white'
-                }`}>
+              }`}>
                   <span className={`h-2 w-2 rounded-full mr-2 ${
                     client.status === 'active' ? 'bg-white animate-pulse' : 'bg-white'
-                  }`}></span>
-                  {client.status === 'active' ? 'Active' : 'Inactive'}
-                </span>
+                }`}></span>
+                {client.status === 'active' ? 'Active' : 'Inactive'}
+              </span>
                 
                 {/* Thay đổi nút Edit/Save */}
                 {isEditMode ? (
@@ -232,14 +238,14 @@ export default function ClientDetailsPage() {
                     </Button>
                   </>
                 ) : (
-                  <Button
+              <Button
                     onClick={handleEnterEditMode}
-                    variant="primary"
-                    icon={RiEditLine}
+                variant="primary"
+                icon={RiEditLine}
                     className="px-6 py-2.5"
-                  >
-                    Edit
-                  </Button>
+              >
+                Edit
+              </Button>
                 )}
               </div>
             </div>
@@ -257,6 +263,14 @@ export default function ClientDetailsPage() {
               <h3 className="text-lg font-semibold text-white">Company Information</h3>
             </div>
             <div className="p-6 space-y-4">
+              {/* Client ID */}
+              <div className="bg-white/60 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-xl hover:bg-white/80 transition-all duration-300 border-2 border-indigo-300 dark:border-indigo-600/50 shadow-md">
+                <label className="text-gray-500 dark:text-gray-400 block mb-1 text-sm font-semibold">Client ID (Database)</label>
+                <p className="font-bold text-gray-900 dark:text-white bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-lg inline-block">
+                  {client.ID || 'N/A'}
+                </p>
+                </div>
+              
               {/* Company Name */}
               <div className="bg-white/60 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-xl hover:bg-white/80 transition-all duration-300 border border-indigo-200 dark:border-indigo-700/30">
                 <label className="text-gray-500 dark:text-gray-400 block mb-1 text-sm">Company Name</label>
@@ -269,7 +283,7 @@ export default function ClientDetailsPage() {
                 ) : (
                   <p className="font-medium text-gray-900 dark:text-white">{client.companyName || 'N/A'}</p>
                 )}
-              </div>
+                </div>
               
               {/* Tương tự làm cho các trường khác - chỉ cần thay thế phần hiển thị tương tự */}
               {/* Short Name */}
@@ -284,7 +298,7 @@ export default function ClientDetailsPage() {
                 ) : (
                   <p className="font-medium text-gray-900 dark:text-white">{client.shortName || 'N/A'}</p>
                 )}
-              </div>
+                </div>
               
               {/* Client Number - chỉ đọc, không cho phép chỉnh sửa */}
               <div className="bg-white/60 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-xl hover:bg-white/80 transition-all duration-300 border-2 border-indigo-300 dark:border-indigo-600/50 shadow-md">
@@ -365,7 +379,7 @@ export default function ClientDetailsPage() {
                 ) : (
                   <p className="font-medium text-gray-900 dark:text-white">{formatDate(client.BIRTH_DATE)}</p>
                 )}
-              </div>
+                </div>
               
               {/* Gender */}
               <div className="bg-white/60 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-xl hover:bg-white/80 transition-all duration-300 border border-indigo-200 dark:border-indigo-700/30">
@@ -379,7 +393,7 @@ export default function ClientDetailsPage() {
                 ) : (
                   <p className="font-medium text-gray-900 dark:text-white">{client.GENDER || 'N/A'}</p>
                 )}
-              </div>
+                </div>
               
               {/* Profession */}
               <div className="bg-white/60 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-xl hover:bg-white/80 transition-all duration-300 border border-indigo-200 dark:border-indigo-700/30">
@@ -393,7 +407,7 @@ export default function ClientDetailsPage() {
                 ) : (
                   <p className="font-medium text-gray-900 dark:text-white">{client.PROFESSION || 'N/A'}</p>
                 )}
-              </div>
+                </div>
               
               {/* Citizenship */}
               <div className="bg-white/60 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-xl hover:bg-white/80 transition-all duration-300 border border-indigo-200 dark:border-indigo-700/30">
@@ -432,7 +446,7 @@ export default function ClientDetailsPage() {
                 ) : (
                   <p className="font-medium text-gray-900 dark:text-white">{client.CITY || 'N/A'}</p>
                 )}
-              </div>
+                </div>
               
               {/* Address Line 1 */}
               <div className="bg-white/60 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-xl hover:bg-white/80 transition-all duration-300 border border-indigo-200 dark:border-indigo-700/30">
@@ -446,7 +460,7 @@ export default function ClientDetailsPage() {
                 ) : (
                   <p className="font-medium text-gray-900 dark:text-white">{client.ADDRESS_LINE_1 || 'N/A'}</p>
                 )}
-              </div>
+                </div>
               
               {/* Address Line 2 */}
               <div className="bg-white/60 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-xl hover:bg-white/80 transition-all duration-300 border border-indigo-200 dark:border-indigo-700/30">
@@ -460,7 +474,7 @@ export default function ClientDetailsPage() {
                 ) : (
                   <p className="font-medium text-gray-900 dark:text-white">{client.ADDRESS_LINE_2 || 'N/A'}</p>
                 )}
-              </div>
+                </div>
               
               {/* Address Line 3 */}
               <div className="bg-white/60 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-xl hover:bg-white/80 transition-all duration-300 border border-indigo-200 dark:border-indigo-700/30">
@@ -491,8 +505,8 @@ export default function ClientDetailsPage() {
                     {client.PHONE_H || 'N/A'}
                   </p>
                 )}
-              </div>
-              
+        </div>
+
               {/* Email */}
               <div className="bg-white/60 dark:bg-gray-700/30 backdrop-blur-sm p-4 rounded-xl hover:bg-white/80 transition-all duration-300 border border-indigo-200 dark:border-indigo-700/30">
                 <label className="text-gray-500 dark:text-gray-400 block mb-1 text-sm">Email</label>
@@ -509,7 +523,7 @@ export default function ClientDetailsPage() {
                     {client.E_MAIL || 'N/A'}
                   </p>
                 )}
-              </div>
+                </div>
             </div>
           </div>
         </div>

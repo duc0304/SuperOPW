@@ -21,41 +21,32 @@ export default function Pagination({
   const startItem = totalItems > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
   
-  // Log để debug
-  console.log('Pagination render:', { currentPage, totalPages: actualTotalPages, totalItems, itemsPerPage });
-  
   // Tạo mảng các trang cần hiển thị
   const getPageNumbers = () => {
-    // Sử dụng actualTotalPages thay vì totalPages
-    const maxPagesToShow = 5;
+    // Hiển thị trang đầu, trang cuối và các trang gần trang hiện tại (giống ContractTree)
+    const pages = [];
     
-    if (actualTotalPages <= maxPagesToShow) {
-      return Array.from({ length: actualTotalPages }, (_, i) => i + 1);
+    for (let i = 1; i <= actualTotalPages; i++) {
+      // Hiển thị trang đầu, trang cuối và các trang xung quanh trang hiện tại
+      if (
+        i === 1 ||
+        i === actualTotalPages ||
+        (i >= currentPage - 1 && i <= currentPage + 1)
+      ) {
+        pages.push(i);
+      } 
+      // Thêm dấu ... (ellipsis) cho khoảng cách lớn
+      else if (
+        (i === 2 && currentPage > 3) ||
+        (i === actualTotalPages - 1 && currentPage < actualTotalPages - 2)
+      ) {
+        pages.push(-i); // Giá trị âm để đánh dấu vị trí ellipsis
+      }
     }
     
-    // Tính toán các trang cần hiển thị khi có nhiều trang
-    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-    let endPage = startPage + maxPagesToShow - 1;
-    
-    if (endPage > actualTotalPages) {
-      endPage = actualTotalPages;
-      startPage = Math.max(1, endPage - maxPagesToShow + 1);
-    }
-    
-    const pages = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
-    
-    // Thêm dấu ... nếu cần
-    if (startPage > 1) {
-      pages.unshift(1);
-      if (startPage > 2) pages.splice(1, 0, -1); // -1 đại diện cho dấu "..."
-    }
-    
-    if (endPage < actualTotalPages) {
-      if (endPage < actualTotalPages - 1) pages.push(-2); // -2 đại diện cho dấu "..." thứ hai
-      pages.push(actualTotalPages);
-    }
-    
-    return pages;
+    return pages.filter((value, index, self) => 
+      self.indexOf(value) === index // Loại bỏ trùng lặp
+    );
   };
   
   const pageNumbers = getPageNumbers();
@@ -65,51 +56,56 @@ export default function Pagination({
       <div className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-200">
         Showing {startItem} to {endItem} of {totalItems} customers
       </div>
-      <div className="flex space-x-1">
+      <div className="flex justify-center space-x-2">
+        {/* Previous button */}
         <button
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
-          className={`px-3 py-1 rounded-md text-sm font-medium ${
-            currentPage === 1
-              ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'
-          } transition-colors duration-200`}
+          className={`px-3 py-1 rounded-md ${
+            currentPage === 1 
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500' 
+              : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300'
+          }`}
         >
           Prev
         </button>
         
-        {pageNumbers.map((page, index) => (
-          page < 0 ? (
-            // Hiển thị dấu "..." cho các trang bị bỏ qua
-            <span 
-              key={`ellipsis-${index}`} 
-              className="px-3 py-1 text-gray-500 dark:text-gray-400"
-            >
-              ...
-            </span>
-          ) : (
+        {/* Page buttons */}
+        {pageNumbers.map((page, index) => {
+          // Xử lý hiển thị dấu "..." 
+          if (page < 0) {
+            return (
+              <span key={`ellipsis-${index}`} className="px-2 self-end pb-1">
+                ...
+              </span>
+            );
+          }
+          
+          // Hiển thị nút trang
+          return (
             <button
-              key={page}
+              key={`page-${page}`}
               onClick={() => onPageChange(page)}
-              className={`px-3 py-1 rounded-md text-sm font-medium ${
-                currentPage === page
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'
-              } transition-colors duration-200`}
+              className={`w-8 h-8 rounded-md ${
+                page === currentPage 
+                  ? 'bg-primary-600 text-white dark:bg-primary-700' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'
+              }`}
             >
               {page}
             </button>
-          )
-        ))}
+          );
+        })}
         
+        {/* Next button */}
         <button
           onClick={() => onPageChange(Math.min(currentPage + 1, actualTotalPages))}
           disabled={currentPage === actualTotalPages}
-          className={`px-3 py-1 rounded-md text-sm font-medium ${
-            currentPage === actualTotalPages
-              ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600'
-          } transition-colors duration-200`}
+          className={`px-3 py-1 rounded-md ${
+            currentPage === actualTotalPages 
+              ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500' 
+              : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300'
+          }`}
         >
           Next
         </button>

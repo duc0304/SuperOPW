@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RiFileTextLine, RiUserLine, RiCalendarLine, RiMoneyDollarCircleLine, RiEditLine, RiBuilding4Line, RiBarChartBoxLine, RiExchangeFundsLine, RiLockLine, RiLockUnlockLine, RiCheckLine, RiCloseLine, RiPencilLine, RiSaveLine } from 'react-icons/ri';
+import { RiFileTextLine, RiUserLine, RiCalendarLine, RiMoneyDollarCircleLine, RiEditLine, RiBuilding4Line, RiBarChartBoxLine, RiExchangeFundsLine, RiLockLine, RiLockUnlockLine, RiCheckLine, RiCloseLine, RiPencilLine, RiSaveLine, RiNumber1, RiNumber2, RiHashtag, RiFileUserLine, RiUser3Line, RiBankLine, RiInformationLine, RiArrowRightSLine, RiLinkM, RiParentLine, RiIdCardLine } from 'react-icons/ri';
 import clsx from 'clsx';
 import Link from 'next/link';
 import { ContractNode } from '../types';
@@ -15,152 +15,83 @@ interface ContractDetailProps {
 
 export default function ContractDetail({ contract }: ContractDetailProps) {
   const [animateIn, setAnimateIn] = useState(false);
-  const [isLocked, setIsLocked] = useState(contract.status !== 'active');
+  const [isLocked, setIsLocked] = useState(true); // Mặc định khóa để không cho phép chỉnh sửa
   const [isEditing, setIsEditing] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [editedContract, setEditedContract] = useState<ContractNode>(contract);
+  const [parentContract, setParentContract] = useState<any>(null);
+  const [loadingParent, setLoadingParent] = useState(false);
   
+  // Kiểm tra xem contract hiện tại có phải là Issuing contract không
+  const isIssueContract = contract.oracleData?.LIAB_CONTRACT !== undefined && 
+                         contract.oracleData?.LIAB_CONTRACT !== null && 
+                         contract.oracleData?.LIAB_CONTRACT !== '';
+
+  // Fetch parent contract data if this is an issuing contract
+  useEffect(() => {
+    const fetchParentContract = async () => {
+      if (!isIssueContract) return;
+      
+      const parentId = contract.oracleData?.LIAB_CONTRACT;
+      if (!parentId) return;
+      
+      setLoadingParent(true);
+      try {
+        // Fetch from Oracle API
+        const response = await fetch(`http://localhost:5000/api/oracle/contracts/${parentId}`);
+        if (!response.ok) throw new Error('Failed to fetch parent contract');
+        
+        const data = await response.json();
+        if (data.success && data.data) {
+          setParentContract(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching parent contract:', error);
+      } finally {
+        setLoadingParent(false);
+      }
+    };
+    
+    fetchParentContract();
+  }, [contract.oracleData?.LIAB_CONTRACT, isIssueContract]);
+
   // Animation effect when contract changes
   useEffect(() => {
     setAnimateIn(false);
-    setIsLocked(contract.status !== 'active');
+    setIsLocked(true);
     setIsEditing(false);
-    setEditedContract(contract);
     const timer = setTimeout(() => {
       setAnimateIn(true);
     }, 100);
     return () => clearTimeout(timer);
-  }, [contract.id, contract.status]);
-
-  // Toggle lock status
-  const toggleLock = () => {
-    setIsLocked(!isLocked);
-    if (!isLocked) {
-      setIsEditing(false);
-    }
-    // Ở đây bạn sẽ gọi API để cập nhật trạng thái của hợp đồng
-    // Hiện tại, chúng ta chỉ thay đổi trạng thái UI
-  };
-
-  // Toggle edit mode
-  const toggleEdit = () => {
-    if (!isLocked) {
-      setIsEditing(!isEditing);
-      if (isEditing) {
-        // Nếu đang tắt chế độ edit, hiển thị modal xác nhận
-        setIsConfirmModalOpen(true);
-      }
-    }
-  };
-
-  // Save changes
-  const saveChanges = () => {
-    // Ở đây bạn sẽ gọi API để lưu thay đổi
-    // Hiện tại, chúng ta chỉ cập nhật UI
-    setIsConfirmModalOpen(false);
-    setIsEditing(false);
-    // Thông báo thành công (có thể thêm toast notification)
-  };
-
-  // Cancel changes
-  const cancelChanges = () => {
-    setEditedContract(contract);
-    setIsConfirmModalOpen(false);
-    setIsEditing(false);
-  };
-
-  // Format currency
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(value);
-  };
+  }, [contract.id]);
 
   // Format date
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'N/A';
+    try {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
+      return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-    }).format(date);
-  };
-
-  // Get status color
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300';
-      case 'pending':
-        return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
-      case 'closed':
-        return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
-      default:
-        return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300';
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return dateString;
     }
   };
 
-  // Get contract type icon
-  const getContractTypeIcon = (type: string) => {
-    switch (type) {
-      case 'liability':
-        return <RiFileTextLine className="w-5 h-5" />;
-      case 'issuing':
-        return <RiExchangeFundsLine className="w-5 h-5" />;
-      case 'card':
-        return <RiMoneyDollarCircleLine className="w-5 h-5" />;
-      default:
-        return <RiFileTextLine className="w-5 h-5" />;
+  // Get the appropriate title based on contract type
+  const getContractTypeTitle = () => {
+    if (isIssueContract) {
+      return "Issuing Contract";
+    } else if (contract.oracleData?.CONTRACT_NUMBER?.length === 16 && 
+               contract.oracleData?.CONTRACT_NUMBER?.startsWith('10000')) {
+      return "Card Contract";
+    } else {
+      return "Liability Contract";
     }
-  };
-
-  // Editable field component
-  const EditableField = ({ section, field, value, label }: { section: string, field: string, value: any, label: string }) => {
-    return (
-      <div className="relative group">
-        {isEditing ? (
-          <div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{label}</p>
-            <Input
-              value={value}
-              onChange={(e) => {
-                const newValue = e.target.value;
-                const newContract = JSON.parse(JSON.stringify(editedContract));
-                
-                if (section === 'segment' && newContract.segment) {
-                  newContract.segment[field] = newValue;
-                } else if (section === 'liability' && newContract.liability) {
-                  newContract.liability[field] = newValue;
-                } else if (section === 'financial' && newContract.financial) {
-                  newContract.financial[field] = field === 'currency' ? newValue : parseFloat(newValue) || 0;
-                } else if (section === 'cardDetails' && newContract.cardDetails) {
-                  newContract.cardDetails[field] = newValue;
-                }
-                
-                setEditedContract(newContract);
-              }}
-              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-            />
-          </div>
-        ) : (
-          <>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{label}</p>
-            <p className="font-medium text-gray-900 dark:text-white">{value}</p>
-            {!isLocked && (
-              <button 
-                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                onClick={() => setIsEditing(true)}
-              >
-                <RiPencilLine className="w-4 h-4" />
-              </button>
-            )}
-          </>
-        )}
-      </div>
-    );
   };
 
   return (
@@ -170,1325 +101,300 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
       <div className="absolute bottom-20 left-40 w-48 h-48 bg-gradient-to-br from-indigo-300/20 to-purple-400/20 rounded-full blur-3xl -z-10"></div>
       
       <div className="p-6 h-full flex flex-col overflow-hidden">
-        {/* Header with animation - Modified to reduce text and button size */}
+        {/* Header with animation */}
         <div className={`flex flex-col md:flex-row md:items-center justify-between mb-6 transition-all duration-500 ease-out ${animateIn ? 'opacity-100 transform-none' : 'opacity-0 -translate-y-4'}`}>
           <div className="flex items-start md:items-center mb-4 md:mb-0">
             <div className={`p-2 rounded-xl mr-3 shadow-md ${
-              contract.type === 'liability' ? 'bg-indigo-100 dark:bg-indigo-900/30' :
-              contract.type === 'issuing' ? 'bg-purple-100 dark:bg-purple-900/30' :
-              'bg-emerald-100 dark:bg-emerald-900/30'
+              isIssueContract 
+                ? 'bg-purple-100 dark:bg-purple-900/30' 
+                : contract.oracleData?.CONTRACT_NUMBER?.length === 16 && contract.oracleData?.CONTRACT_NUMBER?.startsWith('10000')
+                  ? 'bg-emerald-100 dark:bg-emerald-900/30'
+                  : 'bg-indigo-100 dark:bg-indigo-900/30'
             }`}>
-              {getContractTypeIcon(contract.type)}
+              {isIssueContract ? (
+                <RiExchangeFundsLine className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              ) : contract.oracleData?.CONTRACT_NUMBER?.length === 16 && contract.oracleData?.CONTRACT_NUMBER?.startsWith('10000') ? (
+                <RiIdCardLine className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              ) : (
+                <RiFileTextLine className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              )}
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{contract.title}</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                {contract.oracleData?.CONTRACT_NAME || contract.title}
+              </h2>
               <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
-                <span className="mr-2">{contract.type.charAt(0).toUpperCase() + contract.type.slice(1)} Contract</span>
+                <span className="mr-2">{getContractTypeTitle()}</span>
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                  isIssueContract 
+                    ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300' 
+                    : contract.oracleData?.CONTRACT_NUMBER?.length === 16 && contract.oracleData?.CONTRACT_NUMBER?.startsWith('10000')
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
+                      : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300'
+                }`}>
+                  {contract.oracleData?.CONTRACT_NUMBER || contract.liability?.contractNumber || 'No number'}
+                </span>
               </div>
             </div>
-          </div>
-          
-          {/* Modified buttons to be smaller */}
-          <div className="flex flex-wrap gap-2 md:flex-nowrap">
-            <Button
-              variant="secondary"
-              className={`transition-all duration-300 hover:shadow-md min-w-[90px] md:min-w-[100px] text-sm py-1.5 px-2 md:px-3 ${
-                isLocked 
-                  ? 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50' 
-                  : 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700/50'
-              }`}
-              icon={isLocked ? RiLockLine : RiLockUnlockLine}
-              onClick={toggleLock}
-            >
-              {isLocked ? 'Locked' : 'Unlocked'}
-            </Button>
-            
-            <Button
-              variant="primary"
-              className={`transition-all duration-300 hover:shadow-md min-w-[90px] md:min-w-[100px] text-sm py-1.5 px-2 md:px-3 ${
-                isLocked ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-              icon={isEditing ? RiSaveLine : RiEditLine}
-              onClick={toggleEdit}
-              disabled={isLocked}
-            >
-              {isEditing ? 'Save Changes' : 'Edit'}
-            </Button>
           </div>
         </div>
         
         {/* Scrollable content */}
         <div className="overflow-y-auto flex-1 pr-1 custom-scrollbar">
           <div className={`space-y-6 transition-all duration-500 ease-out ${animateIn ? 'opacity-100 transform-none' : 'opacity-0 translate-y-4'}`}>
-            {/* Content based on contract type */}
-            {contract.type === 'liability' && editedContract.segment && (
+            
+            {/* Parent Contract Information (Only for Issue contracts) */}
+            {isIssueContract && (
               <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-5 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
-                {/* Enhanced SEGMENT section */}
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                   <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg mr-3">
-                    <RiBuilding4Line className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                    <RiParentLine className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                   </div>
-                  <span className="bg-indigo-50 dark:bg-indigo-900/50 px-3 py-1 rounded-lg">SEGMENT</span>
+                  <span className="bg-indigo-50 dark:bg-indigo-900/50 px-3 py-1 rounded-lg">PARENT LIABILITY CONTRACT</span>
                 </h3>
                 
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                  {loadingParent ? (
+                    <div className="flex justify-center p-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
+                    </div>
+                  ) : parentContract ? (
+                    <div className="bg-indigo-50/30 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/20">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                    <div className="group">
-                      {isEditing ? (
-                        <div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Institution</p>
-                          <Input
-                            value={editedContract.segment?.institution || ''}
-                            onChange={(e) => {
-                              const newValue = e.target.value;
-                              const newContract = JSON.parse(JSON.stringify(editedContract));
-                              if (newContract.segment) {
-                                newContract.segment.institution = newValue;
-                                setEditedContract(newContract);
-                              }
-                            }}
-                            className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                          />
+                        {/* Parent Contract ID */}
+                        <div className="flex flex-col">
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Parent Contract ID</p>
+                          <p className="font-medium text-gray-900 dark:text-white bg-white/60 dark:bg-gray-700/60 p-2 rounded-lg">
+                            {parentContract.ID || contract.oracleData?.LIAB_CONTRACT || 'N/A'}
+                          </p>
                         </div>
-                      ) : (
-                        <>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Institution</p>
-                          <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.institution || ''}</p>
-                          {!isLocked && (
-                            <button 
-                              className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                              onClick={() => setIsEditing(true)}
-                            >
-                              <RiPencilLine className="w-4 h-4" />
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                    <div className="group">
-                      {isEditing ? (
-                        <div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Branch</p>
-                          <Input
-                            value={editedContract.segment?.branch || ''}
-                            onChange={(e) => {
-                              const newValue = e.target.value;
-                              const newContract = JSON.parse(JSON.stringify(editedContract));
-                              if (newContract.segment) {
-                                newContract.segment.branch = newValue;
-                                setEditedContract(newContract);
-                              }
-                            }}
-                            className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                          />
-                        </div>
-                      ) : (
-                        <>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Branch</p>
-                          <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.branch || ''}</p>
-                          {!isLocked && (
-                            <button 
-                              className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                              onClick={() => setIsEditing(true)}
-                            >
-                              <RiPencilLine className="w-4 h-4" />
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                    <div className="group">
-                      {isEditing ? (
-                        <div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Product</p>
-                          <Input
-                            value={editedContract.segment?.product || ''}
-                            onChange={(e) => {
-                              const newValue = e.target.value;
-                              const newContract = JSON.parse(JSON.stringify(editedContract));
-                              if (newContract.segment) {
-                                newContract.segment.product = newValue;
-                                setEditedContract(newContract);
-                              }
-                            }}
-                            className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                          />
-                        </div>
-                      ) : (
-                        <>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Product</p>
-                          <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.product || ''}</p>
-                          {!isLocked && (
-                            <button 
-                              className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                              onClick={() => setIsEditing(true)}
-                            >
-                              <RiPencilLine className="w-4 h-4" />
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
+                        
+                        {/* Parent Contract Number */}
+                        <div className="flex flex-col">
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Parent Contract Number</p>
+                          <p className="font-medium text-gray-900 dark:text-white bg-white/60 dark:bg-gray-700/60 p-2 rounded-lg">
+                            {parentContract.CONTRACT_NUMBER || 'N/A'}
+                          </p>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                  <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                    <div className="group">
-                      {isEditing ? (
-                        <div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Service Group</p>
-                          <Input
-                            value={editedContract.segment?.serviceGroup || ''}
-                            onChange={(e) => {
-                              const newValue = e.target.value;
-                              const newContract = JSON.parse(JSON.stringify(editedContract));
-                              if (newContract.segment) {
-                                newContract.segment.serviceGroup = newValue;
-                                setEditedContract(newContract);
-                              }
-                            }}
-                            className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                          />
+                        {/* Parent Contract Name */}
+                        <div className="flex flex-col">
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Parent Contract Name</p>
+                          <p className="font-medium text-gray-900 dark:text-white bg-white/60 dark:bg-gray-700/60 p-2 rounded-lg">
+                            {parentContract.CONTRACT_NAME || 'N/A'}
+                          </p>
+                        </div>
+                    </div>
+                      <div className="mt-3 text-right">
+                        <Link href={`/contracts?id=${parentContract.ID}`} className="text-xs bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900/50 dark:hover:bg-indigo-900/70 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded-lg inline-flex items-center transition-all duration-200">
+                          <span>View Parent Contract</span>
+                          <RiArrowRightSLine className="ml-1 w-4 h-4" />
+                        </Link>
+                  </div>
                         </div>
                       ) : (
-                        <>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Service Group</p>
-                          <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.serviceGroup || ''}</p>
-                          {!isLocked && (
-                            <button 
-                              className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                              onClick={() => setIsEditing(true)}
-                            >
-                              <RiPencilLine className="w-4 h-4" />
-                            </button>
-                          )}
-                        </>
+                    <div className="bg-yellow-50 dark:bg-yellow-900/10 p-4 rounded-xl border border-yellow-100 dark:border-yellow-800/20">
+                      <div className="flex items-center text-yellow-700 dark:text-yellow-400">
+                        <RiInformationLine className="mr-2 w-5 h-5" />
+                        <p>Parent contract information (ID: {contract.oracleData?.LIAB_CONTRACT}) could not be loaded.</p>
+                    </div>
+                  </div>
                       )}
                     </div>
                   </div>
-                  <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                    <div className="group">
-                      {isEditing ? (
-                        <div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Report Type</p>
-                          <Input
-                            value={editedContract.segment?.reportType || ''}
-                            onChange={(e) => {
-                              const newValue = e.target.value;
-                              const newContract = JSON.parse(JSON.stringify(editedContract));
-                              if (newContract.segment) {
-                                newContract.segment.reportType = newValue;
-                                setEditedContract(newContract);
-                              }
-                            }}
-                            className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                          />
-                        </div>
-                      ) : (
-                        <>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Report Type</p>
-                          <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.reportType || ''}</p>
-                          {!isLocked && (
-                            <button 
-                              className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                              onClick={() => setIsEditing(true)}
-                            >
-                              <RiPencilLine className="w-4 h-4" />
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                    <div className="group">
-                      {isEditing ? (
-                        <div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Role</p>
-                          <Input
-                            value={editedContract.segment?.role || ''}
-                            onChange={(e) => {
-                              const newValue = e.target.value;
-                              const newContract = JSON.parse(JSON.stringify(editedContract));
-                              if (newContract.segment) {
-                                newContract.segment.role = newValue;
-                                setEditedContract(newContract);
-                              }
-                            }}
-                            className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                          />
-                        </div>
-                      ) : (
-                        <>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Role</p>
-                          <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.role || ''}</p>
-                          {!isLocked && (
-                            <button 
-                              className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                              onClick={() => setIsEditing(true)}
-                            >
-                              <RiPencilLine className="w-4 h-4" />
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
+            )}
                 
-                {editedContract.liability && (
-                  <div className="mt-6">
+            {/* Main Contract Information */}
+            <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-5 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                      <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg mr-3">
-                        <RiFileTextLine className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                      </div>
-                      <span className="bg-purple-50 dark:bg-purple-900/50 px-3 py-1 rounded-lg">LIABILITY</span>
+                <div className={`p-2 rounded-lg mr-3 ${
+                  isIssueContract 
+                    ? 'bg-purple-100 dark:bg-purple-900/30' 
+                    : contract.oracleData?.CONTRACT_NUMBER?.length === 16 && contract.oracleData?.CONTRACT_NUMBER?.startsWith('10000')
+                      ? 'bg-emerald-100 dark:bg-emerald-900/30'
+                      : 'bg-indigo-100 dark:bg-indigo-900/30'
+                }`}>
+                  {isIssueContract ? (
+                    <RiExchangeFundsLine className={`w-5 h-5 text-purple-600 dark:text-purple-400`} />
+                  ) : contract.oracleData?.CONTRACT_NUMBER?.length === 16 && contract.oracleData?.CONTRACT_NUMBER?.startsWith('10000') ? (
+                    <RiIdCardLine className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  ) : (
+                    <RiFileTextLine className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                          )}
+                        </div>
+                <span className={`px-3 py-1 rounded-lg ${
+                  isIssueContract 
+                    ? 'bg-purple-50 dark:bg-purple-900/50' 
+                    : contract.oracleData?.CONTRACT_NUMBER?.length === 16 && contract.oracleData?.CONTRACT_NUMBER?.startsWith('10000')
+                      ? 'bg-emerald-50 dark:bg-emerald-900/50'
+                      : 'bg-indigo-50 dark:bg-indigo-900/50'
+                }`}>CONTRACT DETAILS</span>
                     </h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-purple-50/50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800/30">
-                        <div className="group">
-                          {isEditing ? (
-                            <div>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Category</p>
-                              <Input
-                                value={editedContract.liability?.category || ''}
-                                onChange={(e) => {
-                                  const newValue = e.target.value;
-                                  const newContract = JSON.parse(JSON.stringify(editedContract));
-                                  if (newContract.liability) {
-                                    newContract.liability.category = newValue;
-                                    setEditedContract(newContract);
-                                  }
-                                }}
-                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Contract ID */}
+                <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+                  <div className="flex items-start">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
+                      <RiHashtag className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                             </div>
-                          ) : (
-                            <>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Category</p>
-                              <p className="font-medium text-gray-900 dark:text-white">{editedContract.liability?.category || ''}</p>
-                              {!isLocked && (
-                                <button 
-                                  className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                  onClick={() => setIsEditing(true)}
-                                >
-                                  <RiPencilLine className="w-4 h-4" />
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="bg-purple-50/50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800/30">
-                        <div className="group">
-                          {isEditing ? (
                             <div>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Contract</p>
-                              <Input
-                                value={editedContract.liability?.contractNumber || ''}
-                                onChange={(e) => {
-                                  const newValue = e.target.value;
-                                  const newContract = JSON.parse(JSON.stringify(editedContract));
-                                  if (newContract.liability) {
-                                    newContract.liability.contractNumber = newValue;
-                                    setEditedContract(newContract);
-                                  }
-                                }}
-                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                              />
-                            </div>
-                          ) : (
-                            <>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Contract</p>
-                              <p className="font-medium text-gray-900 dark:text-white">{editedContract.liability?.contractNumber || ''}</p>
-                              {!isLocked && (
-                                <button 
-                                  className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                  onClick={() => setIsEditing(true)}
-                                >
-                                  <RiPencilLine className="w-4 h-4" />
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="bg-purple-50/50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800/30">
-                        <div className="group">
-                          {isEditing ? (
-                            <div>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Client</p>
-                              <Input
-                                value={editedContract.liability?.client || ''}
-                                onChange={(e) => {
-                                  const newValue = e.target.value;
-                                  const newContract = JSON.parse(JSON.stringify(editedContract));
-                                  if (newContract.liability) {
-                                    newContract.liability.client = newValue;
-                                    setEditedContract(newContract);
-                                  }
-                                }}
-                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                              />
-                            </div>
-                          ) : (
-                            <>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Client</p>
-                              <p className="font-medium text-gray-900 dark:text-white">{editedContract.liability?.client || ''}</p>
-                              {!isLocked && (
-                                <button 
-                                  className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                  onClick={() => setIsEditing(true)}
-                                >
-                                  <RiPencilLine className="w-4 h-4" />
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {editedContract.financial && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                      <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg mr-3">
-                        <RiBarChartBoxLine className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                      </div>
-                      <span className="bg-emerald-50 dark:bg-emerald-900/50 px-3 py-1 rounded-lg">FINANCIALS</span>
-                    </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                        <div className="group">
-                          {isEditing ? (
-                            <div>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Currency</p>
-                              <Input
-                                value={editedContract.financial?.currency || "VND"}
-                                onChange={(e) => {
-                                  const newValue = e.target.value;
-                                  const newContract = JSON.parse(JSON.stringify(editedContract));
-                                  if (newContract.financial) {
-                                    newContract.financial.currency = newValue;
-                                    setEditedContract(newContract);
-                                  }
-                                }}
-                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                              />
-                            </div>
-                          ) : (
-                            <>
-                              <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Currency</p>
-                              <p className="font-medium text-gray-900 dark:text-white">{editedContract.financial?.currency || "VND"}</p>
-                              {!isLocked && (
-                                <button 
-                                  className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                  onClick={() => setIsEditing(true)}
-                                >
-                                  <RiPencilLine className="w-4 h-4" />
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                        <div className="group">
-                          {isEditing ? (
-                            <div>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Available</p>
-                              <Input
-                                value={editedContract.financial?.available.toString() || "0"}
-                                onChange={(e) => {
-                                  const newValue = e.target.value;
-                                  const newContract = JSON.parse(JSON.stringify(editedContract));
-                                  if (newContract.financial) {
-                                    newContract.financial.available = parseFloat(newValue) || 0;
-                                    setEditedContract(newContract);
-                                  }
-                                }}
-                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                                type="number"
-                              />
-                            </div>
-                          ) : (
-                            <>
-                              <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Available</p>
-                              <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(editedContract.financial?.available || 0)}</p>
-                              {!isLocked && (
-                                <button 
-                                  className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                  onClick={() => setIsEditing(true)}
-                                >
-                                  <RiPencilLine className="w-4 h-4" />
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                        <div className="group">
-                          {isEditing ? (
-                            <div>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Balance</p>
-                              <Input
-                                value={editedContract.financial?.balance.toString() || "0"}
-                                onChange={(e) => {
-                                  const newValue = e.target.value;
-                                  const newContract = JSON.parse(JSON.stringify(editedContract));
-                                  if (newContract.financial) {
-                                    newContract.financial.balance = parseFloat(newValue) || 0;
-                                    setEditedContract(newContract);
-                                  }
-                                }}
-                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                                type="number"
-                              />
-                            </div>
-                          ) : (
-                            <>
-                              <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Balance</p>
-                              <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(editedContract.financial?.balance || 0)}</p>
-                              {!isLocked && (
-                                <button 
-                                  className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                  onClick={() => setIsEditing(true)}
-                                >
-                                  <RiPencilLine className="w-4 h-4" />
-                                </button>
-                              )}
-                            </>
-                          )}
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Contract ID</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {contract.oracleData?.ID || contract.id || 'N/A'}
+                      </p>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                      <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                        <div className="group">
-                          {isEditing ? (
-                            <div>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Credit Limit</p>
-                              <Input
-                                value={editedContract.financial?.creditLimit?.toString() || "0"}
-                                onChange={(e) => {
-                                  const newValue = e.target.value;
-                                  const newContract = JSON.parse(JSON.stringify(editedContract));
-                                  if (newContract.financial) {
-                                    newContract.financial.creditLimit = parseFloat(newValue) || 0;
-                                    setEditedContract(newContract);
-                                  }
-                                }}
-                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                                type="number"
-                              />
+                {/* Contract Name */}
+                <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+                  <div className="flex items-start">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
+                      <RiFileUserLine className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                             </div>
-                          ) : (
-                            <>
-                              <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Credit Limit</p>
-                              <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(editedContract.financial?.creditLimit || 0)}</p>
-                              {!isLocked && (
-                                <button 
-                                  className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                  onClick={() => setIsEditing(true)}
-                                >
-                                  <RiPencilLine className="w-4 h-4" />
-                                </button>
-                              )}
-                            </>
-                          )}
+                            <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Contract Name</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {contract.oracleData?.CONTRACT_NAME || 'N/A'}
+                      </p>
+                            </div>
                         </div>
                       </div>
-                      <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                        <div className="group">
-                          {isEditing ? (
-                            <div>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Additional Limit</p>
-                              <Input
-                                value={editedContract.financial?.additionalLimit?.toString() || "0"}
-                                onChange={(e) => {
-                                  const newValue = e.target.value;
-                                  const newContract = JSON.parse(JSON.stringify(editedContract));
-                                  if (newContract.financial) {
-                                    newContract.financial.additionalLimit = parseFloat(newValue) || 0;
-                                    setEditedContract(newContract);
-                                  }
-                                }}
-                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                                type="number"
-                              />
-                            </div>
-                          ) : (
-                            <>
-                              <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Additional Limit</p>
-                              <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(editedContract.financial?.additionalLimit || 0)}</p>
-                              {!isLocked && (
-                                <button 
-                                  className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                  onClick={() => setIsEditing(true)}
-                                >
-                                  <RiPencilLine className="w-4 h-4" />
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                        <div className="group">
-                          {isEditing ? (
-                            <div>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Blocked</p>
-                              <Input
-                                value={editedContract.financial?.blocked?.toString() || "0"}
-                                onChange={(e) => {
-                                  const newValue = e.target.value;
-                                  const newContract = JSON.parse(JSON.stringify(editedContract));
-                                  if (newContract.financial) {
-                                    newContract.financial.blocked = parseFloat(newValue) || 0;
-                                    setEditedContract(newContract);
-                                  }
-                                }}
-                                className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                                type="number"
-                              />
-                            </div>
-                          ) : (
-                            <>
-                              <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Blocked</p>
-                              <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(editedContract.financial?.blocked || 0)}</p>
-                              {!isLocked && (
-                                <button 
-                                  className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                  onClick={() => setIsEditing(true)}
-                                >
-                                  <RiPencilLine className="w-4 h-4" />
-                                </button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
                 
-                {contract.children && contract.children.length > 0 && (
-                  <div className="mt-6">
-                    <h4 className="text-base font-medium text-gray-900 dark:text-white mb-3">
-                      Related Issuing Contracts ({contract.children.length})
-                    </h4>
-                    <div className="space-y-3">
-                      {contract.children.map(child => (
-                        <div key={child.id} className="bg-purple-50/50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800/30 hover:shadow-md transition-all duration-300 transform hover:scale-[1.01]">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg mr-3">
-                                <RiExchangeFundsLine className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                {/* Contract Number */}
+                <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+                  <div className="flex items-start">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
+                      <RiNumber1 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                               </div>
                               <div>
-                                <p className="font-medium text-gray-900 dark:text-white">{child.title}</p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  {formatDate(child.startDate)} - {formatDate(child.endDate)}
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Contract Number</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {contract.oracleData?.CONTRACT_NUMBER || 'N/A'}
                                 </p>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(child.value)}</p>
-                              <span className={`inline-block px-2 py-1 text-xs rounded-lg ${getStatusColor(child.status)}`}>
-                                {child.status}
-                              </span>
                             </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {contract.type === 'issuing' && contract.financial && (
-              <div className="space-y-6">
-                <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-5 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg mr-3">
-                      <RiBuilding4Line className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                    SEGMENT
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                {/* Branch */}
                     <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                      <div className="group">
-                        {isEditing ? (
-                          <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Institution</p>
-                            <Input
-                              value={editedContract.segment?.institution || "Nam A Bank"}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.segment) {
-                                  newContract.segment.institution = newValue;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                            />
+                  <div className="flex items-start">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
+                      <RiBankLine className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                           </div>
-                        ) : (
-                          <>
-                            <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Institution</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.institution || "Nam A Bank"}</p>
-                            {!isLocked && (
-                              <button 
-                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                onClick={() => setIsEditing(true)}
-                              >
-                                <RiPencilLine className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                      <div className="group">
-                        {isEditing ? (
                           <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Branch</p>
-                            <Input
-                              value={editedContract.segment?.branch || "Hoi so Nam A"}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.segment) {
-                                  newContract.segment.branch = newValue;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                            />
-                          </div>
-                        ) : (
-                          <>
-                            <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Branch</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.branch || "Hoi so Nam A"}</p>
-                            {!isLocked && (
-                              <button 
-                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                onClick={() => setIsEditing(true)}
-                              >
-                                <RiPencilLine className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                      <div className="group">
-                        {isEditing ? (
-                          <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Product</p>
-                            <Input
-                              value={editedContract.segment?.product || "MasterCard EMV"}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.segment) {
-                                  newContract.segment.product = newValue;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                            />
-                          </div>
-                        ) : (
-                          <>
-                            <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Product</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.product || "MasterCard EMV"}</p>
-                            {!isLocked && (
-                              <button 
-                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                onClick={() => setIsEditing(true)}
-                              >
-                                <RiPencilLine className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {contract.oracleData?.BRANCH || 'N/A'}
+                      </p>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                {/* Client ID */}
                     <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                      <div className="group">
-                        {isEditing ? (
-                          <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Service Group</p>
-                            <Input
-                              value={editedContract.segment?.serviceGroup || ""}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.segment) {
-                                  newContract.segment.serviceGroup = newValue;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                            />
+                  <div className="flex items-start">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
+                      <RiUser3Line className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                           </div>
-                        ) : (
-                          <>
-                            <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Service Group</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.serviceGroup || ""}</p>
-                            {!isLocked && (
-                              <button 
-                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                onClick={() => setIsEditing(true)}
-                              >
-                                <RiPencilLine className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
+                          <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Client ID</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {contract.oracleData?.CLIENT_ID || 'N/A'}
+                      </p>
+                      {contract.oracleData?.CLIENT_ID && (
+                        <Link href={`/clients/${contract.oracleData.CLIENT_ID}`} className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 hover:dark:text-indigo-300 transition-colors mt-1 inline-block">
+                          View Client Details →
+                        </Link>
+                      )}
                     </div>
-                    <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                      <div className="group">
-                        {isEditing ? (
-                          <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Report Type</p>
-                            <Input
-                              value={editedContract.segment?.reportType || "Cardholder Default"}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.segment) {
-                                  newContract.segment.reportType = newValue;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                            />
-                          </div>
-                        ) : (
-                          <>
-                            <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Report Type</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.reportType || "Cardholder Default"}</p>
-                            {!isLocked && (
-                              <button 
-                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                onClick={() => setIsEditing(true)}
-                              >
-                                <RiPencilLine className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
+                  </div>
+                </div>
+                
+                {/* Amendment Date */}
+                <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+                  <div className="flex items-start">
+                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
+                      <RiCalendarLine className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                     </div>
-                    <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
-                      <div className="group">
-                        {isEditing ? (
                           <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Role</p>
-                            <Input
-                              value={editedContract.segment?.role || "Full Liability"}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.segment) {
-                                  newContract.segment.role = newValue;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                            />
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Amendment Date</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {formatDate(contract.oracleData?.AMND_DATE)}
+                      </p>
                           </div>
-                        ) : (
-                          <>
-                            <p className="text-sm text-gray-500 dark:text-indigo-300/70 mb-1">Role</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.segment?.role || "Full Liability"}</p>
-                            {!isLocked && (
-                              <button 
-                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                onClick={() => setIsEditing(true)}
-                              >
-                                <RiPencilLine className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
                       </div>
                     </div>
                   </div>
                 </div>
                 
-                <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-5 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg mr-3">
-                      <RiFileTextLine className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <span className="bg-purple-50 dark:bg-purple-900/50 px-3 py-1 rounded-lg">LIABILITY</span>
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-purple-50/50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800/30">
-                      <div className="group">
-                        {isEditing ? (
-                          <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Category</p>
-                            <Input
-                              value={editedContract.liability?.category || ''}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.liability) {
-                                  newContract.liability.category = newValue;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                            />
-                          </div>
-                        ) : (
-                          <>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Category</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.liability?.category || ''}</p>
-                            {!isLocked && (
-                              <button 
-                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                onClick={() => setIsEditing(true)}
-                              >
-                                <RiPencilLine className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="bg-purple-50/50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800/30">
-                      <div className="group">
-                        {isEditing ? (
-                          <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Contract</p>
-                            <Input
-                              value={editedContract.liability?.contractNumber || ''}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.liability) {
-                                  newContract.liability.contractNumber = newValue;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                            />
-                          </div>
-                        ) : (
-                          <>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Contract</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.liability?.contractNumber || ''}</p>
-                            {!isLocked && (
-                              <button 
-                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                onClick={() => setIsEditing(true)}
-                              >
-                                <RiPencilLine className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="bg-purple-50/50 dark:bg-purple-900/20 p-4 rounded-xl border border-purple-100 dark:border-purple-800/30">
-                      <div className="group">
-                        {isEditing ? (
-                          <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Client</p>
-                            <Input
-                              value={editedContract.liability?.client || ''}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.liability) {
-                                  newContract.liability.client = newValue;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                            />
-                          </div>
-                        ) : (
-                          <>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Liability Client</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.liability?.client || ''}</p>
-                            {!isLocked && (
-                              <button 
-                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                onClick={() => setIsEditing(true)}
-                              >
-                                <RiPencilLine className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
+            {/* Card Registration Info */}
                 <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-5 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                     <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg mr-3">
-                      <RiBarChartBoxLine className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  <RiUserLine className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
-                    <span className="bg-emerald-50 dark:bg-emerald-900/50 px-3 py-1 rounded-lg">FINANCIALS</span>
+                <span className="bg-emerald-50 dark:bg-emerald-900/50 px-3 py-1 rounded-lg">CARD REGISTRATION</span>
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* First Name */}
                     <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                      <div className="group">
-                        {isEditing ? (
-                          <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Currency</p>
-                            <Input
-                              value={editedContract.financial?.currency || "VND"}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.financial) {
-                                  newContract.financial.currency = newValue;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                            />
+                  <div className="flex items-start">
+                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg mr-3">
+                      <RiUser3Line className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                           </div>
-                        ) : (
-                          <>
-                            <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Currency</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{editedContract.financial?.currency || "VND"}</p>
-                            {!isLocked && (
-                              <button 
-                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                onClick={() => setIsEditing(true)}
-                              >
-                                <RiPencilLine className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                      <div className="group">
-                        {isEditing ? (
                           <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Available</p>
-                            <Input
-                              value={editedContract.financial?.available.toString() || "0"}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.financial) {
-                                  newContract.financial.available = parseFloat(newValue) || 0;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                              type="number"
-                            />
-                          </div>
-                        ) : (
-                          <>
-                            <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Available</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(editedContract.financial?.available || 0)}</p>
-                            {!isLocked && (
-                              <button 
-                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                onClick={() => setIsEditing(true)}
-                              >
-                                <RiPencilLine className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                      <div className="group">
-                        {isEditing ? (
-                          <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Balance</p>
-                            <Input
-                              value={editedContract.financial?.balance.toString() || "0"}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.financial) {
-                                  newContract.financial.balance = parseFloat(newValue) || 0;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                              type="number"
-                            />
-                          </div>
-                        ) : (
-                          <>
-                            <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Balance</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(editedContract.financial?.balance || 0)}</p>
-                            {!isLocked && (
-                              <button 
-                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                onClick={() => setIsEditing(true)}
-                              >
-                                <RiPencilLine className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">First Name</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {contract.oracleData?.TR_FIRST_NAM || 'N/A'}
+                      </p>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                {/* Last Name */}
                     <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                      <div className="group">
-                        {isEditing ? (
-                          <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Credit Limit</p>
-                            <Input
-                              value={editedContract.financial?.creditLimit?.toString() || "0"}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.financial) {
-                                  newContract.financial.creditLimit = parseFloat(newValue) || 0;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                              type="number"
-                            />
+                  <div className="flex items-start">
+                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg mr-3">
+                      <RiUser3Line className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                           </div>
-                        ) : (
-                          <>
-                            <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Credit Limit</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(editedContract.financial?.creditLimit || 0)}</p>
-                            {!isLocked && (
-                              <button 
-                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                onClick={() => setIsEditing(true)}
-                              >
-                                <RiPencilLine className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                      <div className="group">
-                        {isEditing ? (
                           <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Additional Limit</p>
-                            <Input
-                              value={editedContract.financial?.additionalLimit?.toString() || "0"}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.financial) {
-                                  newContract.financial.additionalLimit = parseFloat(newValue) || 0;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                              type="number"
-                            />
-                          </div>
-                        ) : (
-                          <>
-                            <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Additional Limit</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(editedContract.financial?.additionalLimit || 0)}</p>
-                            {!isLocked && (
-                              <button 
-                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                onClick={() => setIsEditing(true)}
-                              >
-                                <RiPencilLine className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                      <div className="group">
-                        {isEditing ? (
-                          <div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Blocked</p>
-                            <Input
-                              value={editedContract.financial?.blocked?.toString() || "0"}
-                              onChange={(e) => {
-                                const newValue = e.target.value;
-                                const newContract = JSON.parse(JSON.stringify(editedContract));
-                                if (newContract.financial) {
-                                  newContract.financial.blocked = parseFloat(newValue) || 0;
-                                  setEditedContract(newContract);
-                                }
-                              }}
-                              className="py-1 px-2 w-full bg-white/90 dark:bg-gray-700/90 border-purple-300 dark:border-purple-700 text-sm"
-                              type="number"
-                            />
-                          </div>
-                        ) : (
-                          <>
-                            <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Blocked</p>
-                            <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(editedContract.financial?.blocked || 0)}</p>
-                            {!isLocked && (
-                              <button 
-                                className="absolute top-0 right-0 p-1 text-gray-400 hover:text-primary-500 dark:text-gray-500 dark:hover:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                onClick={() => setIsEditing(true)}
-                              >
-                                <RiPencilLine className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {contract.children && contract.children.length > 0 && (
-                  <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-5 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      Thẻ ({contract.children.length})
-                    </h3>
-                    <div className="space-y-3">
-                      {contract.children.map(transaction => (
-                        <div key={transaction.id} className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30 hover:shadow-md transition-all duration-300 transform hover:scale-[1.01]">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg mr-3">
-                                <RiMoneyDollarCircleLine className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900 dark:text-white">{transaction.title}</p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  {formatDate(transaction.startDate)}
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Last Name</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {contract.oracleData?.TR_LAST_NAM || 'N/A'}
                                 </p>
                               </div>
                             </div>
-                            <div className="text-right">
-                              <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(transaction.value)}</p>
-                              <span className={`inline-block px-2 py-1 text-xs rounded-lg ${getStatusColor(transaction.status)}`}>
-                                {transaction.status}
-                              </span>
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
             
-            {contract.type === 'card' && contract.cardDetails && (
+            {/* Additional Details */}
               <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-5 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg mr-3">
-                    <RiMoneyDollarCircleLine className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg mr-3">
+                  <RiInformationLine className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                   </div>
-                  Chi tiết thẻ
+                <span className="bg-purple-50 dark:bg-purple-900/50 px-3 py-1 rounded-lg">ADDITIONAL DETAILS</span>
                 </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                    <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Loại</p>
-                    <p className="font-medium text-gray-900 dark:text-white">{contract.cardDetails.type}</p>
+              <div className="grid grid-cols-1 gap-4">
+                {/* Raw JSON Data */}
+                <div className="bg-purple-50/30 dark:bg-purple-900/10 p-4 rounded-xl border border-purple-100 dark:border-purple-800/20">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">All Contract Data</p>
+                  <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg overflow-x-auto max-h-40">
+                    <pre className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
+                      {JSON.stringify(contract.oracleData, null, 2)}
+                    </pre>
                   </div>
-                  <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
-                    <p className="text-sm text-gray-500 dark:text-emerald-300/70 mb-1">Hợp đồng phát hành</p>
-                    <p className="font-medium text-gray-900 dark:text-white">{contract.cardDetails.issueContract}</p>
-                  </div>
-                </div>
-                
-                <div className="mt-6">
-                  <h4 className="text-base font-medium text-gray-900 dark:text-white mb-3">Tóm tắt thẻ</h4>
-                  <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-gray-500 dark:text-gray-400">Ngày phát hành</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{formatDate(contract.startDate)}</span>
-                    </div>
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-gray-500 dark:text-gray-400">ID thẻ</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{contract.id}</span>
-                    </div>
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-gray-500 dark:text-gray-400">Số tiền</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(contract.value)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-500 dark:text-gray-400">Trạng thái</span>
-                      <span className={`px-2 py-1 text-xs rounded-lg ${getStatusColor(contract.status)}`}>
-                        {contract.status}
-                      </span>
-                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      {/* Confirmation Modal */}
-      <Modal
-        isOpen={isConfirmModalOpen}
-        onClose={cancelChanges}
-        title="Save Changes"
-        maxWidth="max-w-md"
-      >
-        <div className="p-6">
-          <p className="text-gray-700 dark:text-gray-300 mb-6">
-            Are you sure you want to save these changes?
-          </p>
-          <div className="flex justify-end space-x-4">
-            <Button
-              variant="secondary"
-              onClick={cancelChanges}
-              className="px-4 py-2"
-              icon={RiCloseLine}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              onClick={saveChanges}
-              className="px-4 py-2"
-              icon={RiCheckLine}
-            >
-              Save Changes
-            </Button>
-          </div>
-        </div>
-      </Modal>
+                    </div>
+                    </div>
+                    </div>
+                    </div>
     </div>
   );
 }

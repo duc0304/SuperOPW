@@ -5,6 +5,7 @@ const soapRoutes = require('./routes/soap.routes');
 const apiRoutes = require('./routes/index');
 const authRoutes = require('./routes/auth.routes');
 const oracleClientRoutes = require('./routes/oracle.client.routes');
+const oracleContractRoutes = require('./routes/oracle.contract.routes');
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use('/api/soap', soapRoutes);
 app.use('/api', apiRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/oracle/clients', oracleClientRoutes);
+app.use('/api/oracle/contracts', oracleContractRoutes);
 
 // Test route để kiểm tra API
 app.get('/api/test', (req, res) => {

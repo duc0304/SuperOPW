@@ -58,6 +58,9 @@ exports.getClientById = async (req, res) => {
         new ApiError(404, 'Client not found', [`Client with ID ${id} not found`])
       );
     }
+
+    // Debug log để xem các trường có sẵn của client
+    console.log('Raw client data from database:', JSON.stringify(client, null, 2));
     
     // Trả về client với đầy đủ thông tin từ Oracle
     const clientData = {
@@ -80,7 +83,8 @@ exports.getClientById = async (req, res) => {
       ADDRESS_LINE_2: client.ADDRESS_LINE_2 || null,
       ADDRESS_LINE_3: client.ADDRESS_LINE_3 || null,
       PHONE_H: client.PHONE_H || null,
-      E_MAIL: client.E_MAIL || null
+      E_MAIL: client.E_MAIL || null,
+      ID: client.ID || null  // Đảm bảo có trường ID từ database
     };
     
     return res.status(200).json(

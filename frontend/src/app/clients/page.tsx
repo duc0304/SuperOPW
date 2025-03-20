@@ -300,7 +300,7 @@ export default function ClientsPage() {
           {/* Pagination */}
           {clients.length > 0 && (
             <div className="mt-6 flex justify-between items-center">
-              <div className="text-sm text-gray-700 dark:text-gray-300">
+              <div className="text-sm text-gray-500 dark:text-gray-400 transition-colors duration-200">
                 Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{' '}
                 <span className="font-medium">
                   {indexOfLastItem > clients.length ? clients.length : indexOfLastItem}
@@ -308,40 +308,71 @@ export default function ClientsPage() {
                 of <span className="font-medium">{clients.length}</span> clients
               </div>
               
-              <div className="flex space-x-1">
+              <div className="flex justify-center space-x-2">
+                {/* Previous button */}
                 <button
                   onClick={() => handlePageChange(page > 1 ? page - 1 : 1)}
                   disabled={page === 1}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    page === 1
-                      ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                  className={`px-3 py-1 rounded-md ${
+                    page === 1 
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500' 
+                      : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300'
                   }`}
                 >
-                  Previous
+                  Prev
                 </button>
                 
-                {Array.from({ length: totalPagesOracle }, (_, i) => i + 1).map((number) => (
-                  <button
-                    key={number}
-                    onClick={() => handlePageChange(number)}
-                    className={`px-4 py-2 rounded-lg transition-colors ${
-                      page === number
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-                    }`}
-                  >
-                    {number}
-                  </button>
-                ))}
+                {/* Page buttons with ellipsis */}
+                {(() => {
+                  const buttons = [];
+                  const totalPages = totalPagesOracle;
+                  
+                  // Calculate which page numbers to display
+                  for (let i = 1; i <= totalPages; i++) {
+                    // Always show first page, last page, and pages around current page
+                    if (
+                      i === 1 ||
+                      i === totalPages ||
+                      (i >= page - 1 && i <= page + 1)
+                    ) {
+                      buttons.push(
+                        <button
+                          key={`page-${i}`}
+                          onClick={() => handlePageChange(i)}
+                          className={`w-10 h-10 rounded-md ${
+                            page === i 
+                              ? 'bg-primary-600 text-white dark:bg-primary-700' 
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300'
+                          }`}
+                        >
+                          {i}
+                        </button>
+                      );
+                    } 
+                    // Add ellipsis for gaps
+                    else if (
+                      (i === 2 && page > 3) ||
+                      (i === totalPages - 1 && page < totalPages - 2)
+                    ) {
+                      buttons.push(
+                        <span key={`ellipsis-${i}`} className="px-2 self-end pb-1">
+                          ...
+                        </span>
+                      );
+                    }
+                  }
+                  
+                  return buttons;
+                })()}
                 
+                {/* Next button */}
                 <button
                   onClick={() => handlePageChange(page < totalPagesOracle ? page + 1 : totalPagesOracle)}
                   disabled={page === totalPagesOracle}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    page === totalPagesOracle
-                      ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                  className={`px-3 py-1 rounded-md ${
+                    page === totalPagesOracle 
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500' 
+                      : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300'
                   }`}
                 >
                   Next

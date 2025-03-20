@@ -17,6 +17,53 @@ export interface Client {
   clientNumber?: string;
 }
 
+// Interface mới cho Oracle Contract
+export interface OracleContract {
+  AMND_DATE?: string;
+  ID?: string;
+  BRANCH?: string;
+  CONTRACT_NUMBER?: string;
+  CONTRACT_NAME?: string;
+  CLIENT_ID?: string;
+  TR_FIRST_NAM?: string;
+  TR_LAST_NAM?: string;
+  [key: string]: any; // Cho phép các trường khác từ API
+}
+
+// Hàm chuyển đổi từ OracleContract sang ContractNode
+export function mapOracleContractToContractNode(oracleContract: OracleContract): ContractNode {
+  // Tạo ID duy nhất từ CONTRACT_NUMBER hoặc ID để tránh trùng lặp
+  const uniqueId = oracleContract.ID || 
+                   (oracleContract.CONTRACT_NUMBER ? `contract-${oracleContract.CONTRACT_NUMBER}` : '') || 
+                   `oracle-contract-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  
+  return {
+    id: uniqueId,
+    title: oracleContract.CONTRACT_NAME || oracleContract.CONTRACT_NUMBER || 'Unnamed Contract',
+    type: 'liability', // Tất cả contracts từ Oracle là liability contracts
+    status: 'active', // Default status
+    startDate: oracleContract.AMND_DATE || new Date().toISOString(),
+    endDate: new Date().toISOString(), // Default endDate
+    value: 0, // Default value
+    segment: {
+      institution: '',
+      branch: oracleContract.BRANCH || '',
+      product: '',
+      serviceGroup: '',
+      reportType: '',
+      role: '',
+    },
+    liability: {
+      category: 'liability',
+      contractNumber: oracleContract.CONTRACT_NUMBER || '',
+      client: oracleContract.CLIENT_ID || '',
+    },
+    oracleData: { // Lưu trữ dữ liệu gốc từ Oracle
+      ...oracleContract
+    }
+  };
+}
+
 // Hàm chuyển đổi từ AppClient sang Client
 export function mapAppClientToContractClient(appClient: AppClient): Client {
   return {
@@ -72,6 +119,7 @@ export interface ContractNode {
   financial?: Financial;
   cardDetails?: CardDetails;
   children?: ContractNode[];
+  oracleData?: OracleContract; // Thêm trường lưu trữ dữ liệu gốc
 }
 
 // Mock data sẽ được định nghĩa trong một file riêng 
