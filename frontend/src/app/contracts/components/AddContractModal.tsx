@@ -23,6 +23,8 @@ import IssuingContractForm from './IssuingContractForm';
 interface AddContractModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSave?: (contractData: any) => Promise<void>;
+  clientId?: string;
 }
 
 interface SoapContractData {
@@ -45,7 +47,8 @@ type ContractType = 'liability' | 'issuing' | 'card';
 
 export default function AddContractModal({ 
   isOpen, 
-  onClose
+  onClose,
+  onSave
 }: AddContractModalProps) {
   const dispatch = useAppDispatch();
   
@@ -67,6 +70,7 @@ export default function AddContractModal({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [response, setResponse] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSoapDataChange = (field: keyof SoapContractData, value: string) => {
     setSoapContractData(prev => ({ ...prev, [field]: value }));
@@ -81,30 +85,8 @@ export default function AddContractModal({
       id: `L${Math.floor(Math.random() * 10000)}`,
       title: soapContractData.contractName,
       type: 'liability',
-      status: 'active',
-      startDate: now.toISOString().split('T')[0],
-      endDate: endDate.toISOString().split('T')[0],
-      value: 0,
-      segment: {
-        institution: soapContractData.institutionCode,
-        branch: soapContractData.branch,
-        product: soapContractData.productCode,
-        serviceGroup: '',
-        reportType: 'Cardholder Default',
-        role: 'Full Liability'
-      },
       liability: {
-        category: 'Full Liability',
-        contractNumber: soapContractData.cbsNumber || `001-L-${Math.floor(Math.random() * 100000)}`,
-        client: soapContractData.clientIdentifier
-      },
-      financial: {
-        currency: 'VND',
-        available: 0,
-        balance: 0,
-        creditLimit: 0,
-        additionalLimit: 0,
-        blocked: 0
+        contractNumber: soapContractData.cbsNumber || `001-L-${Math.floor(Math.random() * 100000)}`
       },
       children: []
     };
@@ -112,66 +94,63 @@ export default function AddContractModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setResponse(null);
+    
+    if (isSubmitting) return;
     
     try {
-      console.log('Sending data to backend:', soapContractData);
-
-      const response = await axios.post('http://localhost:5000/api/createContract', soapContractData);
+      setIsSubmitting(true);
+      setError(null);
       
-      console.log('Response from backend:', response.data);
-      
-      if (response.data.success) {
-        setResponse("Tạo hợp đồng thành công!");
-        toast.success('Tạo hợp đồng thành công!', {
-          duration: 5000,
-          position: 'top-center',
-          style: {
-            background: '#10B981',
-            color: '#fff',
-            fontSize: '16px',
-            padding: '16px'
-          },
-        });
-        
-        const newContract = createNewContract();
-        dispatch(addContract(newContract));
-        
-        setTimeout(() => {
-          onClose();
-        }, 1500);
-      } else {
-        const errorMessage = `Lỗi (${response.data.retCode}): ${response.data.message}`;
-        setResponse(errorMessage);
-        toast.error(errorMessage, {
-          duration: 5000,
-          position: 'top-center',
-          style: {
-            background: '#EF4444',
-            color: '#fff',
-            fontSize: '16px',
-            padding: '16px'
-          },
-        });
+      // Validate fields
+      if (selectedContractType === 'liability' && !soapContractData.clientIdentifier) {
+        setError('Client identifier is required');
+        return;
       }
-
-    } catch (error: any) {
-      console.error('Error:', error);
       
-      const errorMessage = error.response?.data?.message || 'Không thể kết nối đến server';
-      setResponse(`Lỗi: ${errorMessage}`);
-      toast.error(errorMessage, {
-        duration: 5000,
-        position: 'top-center',
-        style: {
-          background: '#EF4444',
-          color: '#fff',
-          fontSize: '16px',
-          padding: '16px'
-        },
-      });
-    
+      if (selectedContractType === 'liability') {
+        // Call API to create contract via SOAP
+        try {
+          const response = await axios.post('http://localhost:5000/api/soap/addContract', soapContractData);
+          
+          if (response.data.success) {
+            const contractData = response.data.data;
+            
+            // Nếu có onSave từ props, sử dụng nó
+            if (onSave) {
+              await onSave(contractData);
+            } else {
+              // Dispatch action to add contract
+              dispatch(addContract(createNewContract()));
+            }
+            
+            // Close modal and show success message
+            onClose();
+            toast.success('Contract created successfully!');
+          } else {
+            setError(response.data.message || 'Failed to create contract');
+          }
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            setError(error.response?.data?.message || error.message);
+          } else {
+            setError('An unexpected error occurred');
+          }
+          console.error('Error creating contract:', error);
+        }
+      } else {
+        // Handle issuing and card contracts
+        // Nếu có onSave từ props, sử dụng nó
+        if (onSave) {
+          await onSave(createNewContract());
+        } else {
+          // Dispatch action to add contract
+          dispatch(addContract(createNewContract()));
+        }
+        
+        // Close modal and show success message
+        onClose();
+        toast.success('Contract created successfully!');
+      }
     } finally {
       setIsSubmitting(false);
     }

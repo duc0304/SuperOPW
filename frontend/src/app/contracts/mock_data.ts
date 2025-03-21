@@ -1,11 +1,19 @@
+/**
+ * DEPRECATED - Mock Data
+ * 
+ * This file contains mock data that is no longer being used.
+ * All contract data is now fetched from the database.
+ * 
+ * This file is kept for reference purposes only and may be removed in the future.
+ */
+
 import { ContractNode } from './types';
-import type { Client as ContractsClient } from './types';
+import { Client } from '@/services/api';
 import { MOCK_CLIENTS as APP_MOCK_CLIENTS } from '../clients/mock_clients';
 
-// Mock Clients (đã được chuyển từ Client trong contracts sang sử dụng Client từ clients)
-export const MOCK_CLIENTS: ContractsClient[] = APP_MOCK_CLIENTS.slice(0, 3).map(client => ({
-  id: client.id,
-  name: client.companyName,
+// Mock Clients (sử dụng Client từ API)
+export const MOCK_CLIENTS: Client[] = APP_MOCK_CLIENTS.slice(0, 3).map(client => ({
+  ...client,
   email: `contact@${client.shortName.toLowerCase()}.com`,
   type: client.clientCategory || 'default' // Đảm bảo type luôn có giá trị
 }));

@@ -104,7 +104,13 @@ export default function ClientsPage() {
       }
       
       const data = await response.json();
-      const clientsData = data.data || [];
+      let clientsData = data.data || [];
+      
+      // Đảm bảo mỗi client có ID từ Oracle để sử dụng làm định danh và đường dẫn URL
+      clientsData = clientsData.map((client: any) => ({
+        ...client,
+        ID: client.ID != null ? client.ID.toString() : ""  // Check if ID exists before calling toString()
+      }));
       
       // Sort clients by date opened
       const sortedClients = sortClientsByDate(clientsData, sortOrder);
@@ -183,7 +189,7 @@ export default function ClientsPage() {
       // We only dispatch if we have a selectedClient
       // clientData can be partial since we're sending a PATCH
       await dispatch(updateClientAction({
-        id: selectedClient.id,
+        id: selectedClient.ID,
         clientData: formData,
       }));
       setIsEditModalOpen(false);
@@ -194,7 +200,7 @@ export default function ClientsPage() {
   const handleDeleteClient = async () => {
     if (selectedClient) {
       // We only dispatch if we have a selectedClient
-      await dispatch(deleteClientAction(selectedClient.id));
+      await dispatch(deleteClientAction(selectedClient.ID));
       setIsDeleteModalOpen(false);
       setSelectedClient(null);
     }

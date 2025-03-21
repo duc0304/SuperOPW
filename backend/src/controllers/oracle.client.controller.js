@@ -8,16 +8,13 @@ exports.getAllClients = async (req, res) => {
     const clients = await clientModel.getAllClients();
     
     // Chuyển đổi dữ liệu từ Oracle sang định dạng phù hợp với customer table
-    const formattedClients = clients.map((client, index) => {
-      // Tạo ID duy nhất cho mỗi client
-      const id = (index + 1).toString();
-      
-      // Lấy các trường cần thiết từ client Oracle
+    const formattedClients = clients.map((client) => {
+      // Sử dụng ID từ database Oracle làm định danh duy nhất
       return {
-        id,
+        ID: client.ID, // ID từ Oracle database là định danh chính
         companyName: client.COMPANY_NAM || 'Unknown',
         shortName: client.SHORT_NAME || (client.CLIENT_NAME?.substring(0, 10) + '...') || 'Unknown',
-        clientNumber: client.CLIENT_NUMBER || client.ID || `CL-${id.padStart(3, '0')}`,
+        clientNumber: client.CLIENT_NUMBER || `CL-${client.ID}`,
         cityzenship: client.CITIZENSHIP || 'N/A',
         dateOpen: client.DATE_OPEN || null,
         status: client.STATUS?.toLowerCase() === 'inactive' ? 'inactive' : 'active'
@@ -46,12 +43,8 @@ exports.getClientById = async (req, res) => {
       );
     }
     
-    // Lấy tất cả clients trước (vì chưa có hàm getClientById trong model)
-    const clients = await clientModel.getAllClients();
-    
-    // Vì ID là index + 1, nên cần -1 để lấy đúng client
-    const clientIndex = parseInt(id) - 1;
-    const client = clients[clientIndex];
+    // Sử dụng hàm getClientById từ model
+    const client = await clientModel.getClientById(id);
     
     if (!client) {
       return res.status(404).json(
@@ -64,10 +57,10 @@ exports.getClientById = async (req, res) => {
     
     // Trả về client với đầy đủ thông tin từ Oracle
     const clientData = {
-      id,
+      ID: client.ID, // ID từ Oracle database là định danh chính
       companyName: client.COMPANY_NAM || 'Unknown',
       shortName: client.SHORT_NAME || (client.CLIENT_NAME?.substring(0, 10) + '...') || 'Unknown',
-      clientNumber: client.CLIENT_NUMBER || client.ID || `CL-${id.padStart(3, '0')}`,
+      clientNumber: client.CLIENT_NUMBER || `CL-${client.ID}`,
       cityzenship: client.CITIZENSHIP || 'N/A',
       dateOpen: client.DATE_OPEN || null,
       status: client.STATUS?.toLowerCase() === 'inactive' ? 'inactive' : 'active',
@@ -83,8 +76,7 @@ exports.getClientById = async (req, res) => {
       ADDRESS_LINE_2: client.ADDRESS_LINE_2 || null,
       ADDRESS_LINE_3: client.ADDRESS_LINE_3 || null,
       PHONE_H: client.PHONE_H || null,
-      E_MAIL: client.E_MAIL || null,
-      ID: client.ID || null  // Đảm bảo có trường ID từ database
+      E_MAIL: client.E_MAIL || null
     };
     
     return res.status(200).json(

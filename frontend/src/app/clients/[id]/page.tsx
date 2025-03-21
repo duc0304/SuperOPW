@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { RiArrowLeftLine, RiFileTextLine, RiBuildingLine, RiUserLine, RiCalendarLine, RiEditLine, RiInformationLine, RiListCheck2, RiShieldUserLine, RiBarChartBoxLine, RiMapPinLine, RiPhoneLine, RiMailLine, RiSaveLine, RiCloseLine } from 'react-icons/ri';
+import { RiArrowLeftLine, RiFileTextLine, RiBuildingLine, RiUserLine, RiCalendarLine, RiEditLine, RiInformationLine, RiListCheck2, RiShieldUserLine, RiBarChartBoxLine, RiMapPinLine, RiPhoneLine, RiMailLine, RiSaveLine, RiCloseLine, RiCheckLine } from 'react-icons/ri';
 import Link from 'next/link';
 import EditClientModal from '../components/EditClientModal';
 import Button from '@/components/ui/Button';
@@ -10,7 +10,8 @@ import { Client } from '@/redux/slices/clientSlice';
 import toast from 'react-hot-toast';
 import Input from '@/components/ui/Input';
 
-interface ExtendedClient extends Client {
+interface ExtendedClient extends Omit<Client, 'ID'> {
+  ID: string; // Oracle database ID (bắt buộc)
   FIRST_NAM?: string;
   LAST_NAM?: string;
   FATHER_S_NAM?: string;
@@ -23,7 +24,6 @@ interface ExtendedClient extends Client {
   ADDRESS_LINE_3?: string;
   PHONE_H?: string;
   E_MAIL?: string;
-  ID?: string;
 }
 
 export default function ClientDetailsPage() {
@@ -52,6 +52,7 @@ export default function ClientDetailsPage() {
       
       setLoading(true);
       try {
+        // Sử dụng ID từ URL (params.id) là ID từ Oracle database để truy vấn API
         const response = await fetch(`http://localhost:5000/api/oracle/clients/${params.id}`);
         
         if (!response.ok) {
@@ -59,7 +60,15 @@ export default function ClientDetailsPage() {
         }
         
         const data = await response.json();
-        setClient(data.data || null);
+        if (data.data) {
+          // Đảm bảo rằng client object có ID từ Oracle database
+          setClient({
+            ...data.data,
+            ID: params.id as string // Lưu ID từ URL vào client object
+          });
+        } else {
+          setClient(null);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch client details');
         console.error('Error fetching client details:', err);
@@ -73,11 +82,10 @@ export default function ClientDetailsPage() {
 
   // Xử lý chuyển đổi sang chế độ chỉnh sửa
   const handleEnterEditMode = () => {
-    // Đảm bảo sao chép tất cả trường dữ liệu, bao gồm cả CLIENT_ID
+    // Đảm bảo sao chép tất cả trường dữ liệu, bao gồm cả ID
     setEditedClient({
       ...client!, 
-      id: client!.id,
-      ID: client!.ID // Đảm bảo CLIENT_ID được giữ nguyên
+      ID: client!.ID // Đảm bảo ID được giữ nguyên
     });
     setIsEditMode(true);
   };
@@ -146,6 +154,58 @@ export default function ClientDetailsPage() {
     }
   };
 
+  // Header with action buttons
+  const renderActionBar = () => (
+    <div className="flex items-center space-x-3 text-sm">
+      {isEditMode ? (
+        <>
+          <Button
+            onClick={handleSaveChanges}
+            disabled={loading}
+            variant="primary"
+            className="shadow-lg"
+            icon={loading ? undefined : RiCheckLine}
+          >
+            {loading ? 
+              <div className="flex items-center">
+                <div className="animate-spin mr-2 h-4 w-4 border-2 border-b-transparent border-white rounded-full"></div>
+                Saving...
+              </div> : 'Save Changes'}
+          </Button>
+          <Button 
+            onClick={handleCancelEdit}
+            variant="secondary"
+            className="shadow-md"
+            icon={RiCloseLine}
+          >
+            Cancel
+          </Button>
+        </>
+      ) : (
+        <>
+          <Button
+            onClick={handleEnterEditMode}
+            variant="primary"
+            className="shadow-lg"
+            icon={RiEditLine}
+          >
+            Edit Client
+          </Button>
+          {client && (
+            <Button
+              onClick={() => router.push(`/clients/${client.ID}/contracts`)}
+              variant="secondary"
+              className="shadow-md"
+              icon={RiFileTextLine}
+            >
+              View Contracts
+            </Button>
+          )}
+        </>
+      )}
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="p-4 pt-20 min-h-screen flex items-center justify-center">
@@ -196,11 +256,11 @@ export default function ClientDetailsPage() {
                   
                   <div className="flex mt-2 space-x-3">
                     <span className="inline-flex items-center bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg text-sm text-white">
-                    ID: {client.id}
-                  </span>
+                      ID: {client.ID}
+                    </span>
                     <span className="inline-flex items-center bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg text-sm text-white">
-                    {client.clientNumber}
-                  </span>
+                      {client.clientNumber}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -218,35 +278,7 @@ export default function ClientDetailsPage() {
               </span>
                 
                 {/* Thay đổi nút Edit/Save */}
-                {isEditMode ? (
-                  <>
-                    <Button
-                      onClick={handleSaveChanges}
-                      variant="primary"
-                      icon={RiSaveLine}
-                      className="px-6 py-2.5 mr-2"
-                    >
-                      Save
-                    </Button>
-                    <Button
-                      onClick={handleCancelEdit}
-                      variant="secondary"
-                      className="px-6 py-2.5"
-                      icon={RiCloseLine}
-                    >
-                      Cancel
-                    </Button>
-                  </>
-                ) : (
-              <Button
-                    onClick={handleEnterEditMode}
-                variant="primary"
-                icon={RiEditLine}
-                    className="px-6 py-2.5"
-              >
-                Edit
-              </Button>
-                )}
+                {renderActionBar()}
               </div>
             </div>
           </div>

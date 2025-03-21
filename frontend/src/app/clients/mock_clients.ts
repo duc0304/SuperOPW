@@ -1,11 +1,12 @@
-// Import các type đã định nghĩa từ Redux store
-import type { Client, StatusFilter, FilterCriteria } from '@/redux/slices/clientSlice';
+// Import Client từ API thay vì từ Redux store
+import type { Client } from '@/services/api';
+import type { StatusFilter, FilterCriteria } from '@/redux/slices/clientSlice';
 
-// Re-export các type
-export type { Client, StatusFilter, FilterCriteria };
+// Re-export các type còn lại
+export type { StatusFilter, FilterCriteria };
 
 // Giá trị mặc định cho form thêm mới client
-export const DEFAULT_FORM_DATA: Omit<Client, 'id'> = {
+export const DEFAULT_FORM_DATA: Omit<Client, 'ID'> = {
   companyName: '',
   shortName: '',
   clientNumber: '',
@@ -19,13 +20,13 @@ export const DEFAULT_FORM_DATA: Omit<Client, 'id'> = {
   status: 'active',
   contractsCount: 0,
   cityzenship: '',
-  dateOpen: ''
+  dateOpen: null
 };
 
 // Dữ liệu mẫu - chỉ sử dụng khi cần test UI mà không có backend
 export const MOCK_CLIENTS: Client[] = [
   {
-    id: '1',
+    ID: '1',
     companyName: 'Enterprise Corporation',
     shortName: 'EnterCorp',
     clientNumber: 'CL-001',
@@ -42,7 +43,7 @@ export const MOCK_CLIENTS: Client[] = [
     dateOpen: '2022-01-15',
   },
   {
-    id: '2',
+    ID: '2',
     companyName: 'Tech Solutions Ltd',
     shortName: 'TechSol',
     clientNumber: 'CL-002',
@@ -59,7 +60,7 @@ export const MOCK_CLIENTS: Client[] = [
     dateOpen: '2022-03-22',
   },
   {
-    id: '3',
+    ID: '3',
     companyName: 'Global Trading Co',
     shortName: 'GTC',
     clientNumber: 'CL-003',

@@ -1,50 +1,14 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '@/redux/store';
-import { clientService, ApiClient } from '@/services/api';
+import { clientService, Client } from '@/services/api';
+import axios from 'axios';
 
 // Định nghĩa các type ở đây thay vì import từ mock_clients
 export type StatusFilter = 'all' | 'active' | 'inactive';
 export type FilterCriteria = 'Most Contracts' | 'Latest Clients' | 'Oldest Clients' | null;
 
-// Định nghĩa interface Client dựa trên response từ API
-export interface Client {
-  id: string;
-  companyName: string;
-  shortName: string;
-  clientNumber: string;
-  clientTypeCode?: string;
-  reasonCode?: string;
-  reason?: string;
-  institutionCode?: string;
-  branch?: string;
-  clientCategory?: string;
-  productCategory?: string;
-  status: 'active' | 'inactive';
-  contractsCount?: number;
-  cityzenship?: string;
-  dateOpen?: string;
-}
-
-// Chuyển đổi từ API response sang Client model
-const mapApiClientToClient = (apiClient: ApiClient): Client => {
-  return {
-    id: apiClient.id,
-    companyName: apiClient.companyName,
-    shortName: apiClient.shortName,
-    clientNumber: apiClient.clientNumber,
-    cityzenship: apiClient.cityzenship,
-    dateOpen: apiClient.dateOpen || undefined,
-    status: apiClient.status as 'active' | 'inactive',
-    contractsCount: 0,
-    clientTypeCode: '',
-    reasonCode: '',
-    reason: '',
-    institutionCode: '',
-    branch: '',
-    clientCategory: '',
-    productCategory: ''
-  };
-};
+// Re-export Client interface từ api
+export type { Client };
 
 // Định nghĩa state type
 interface ClientState {
@@ -124,13 +88,10 @@ export const fetchClients = createAsyncThunk(
         throw new Error('No data received from API');
       }
       
-      let apiClients = response.data.data as ApiClient[];
-      
-      // Chuyển đổi từ ApiClient sang Client
-      let allClients = apiClients.map(mapApiClientToClient);
+      let apiClients = response.data.data as Client[];
       
       // Lọc dữ liệu theo searchQuery và statusFilter
-      let filteredData = [...allClients];
+      let filteredData = [...apiClients];
       
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
@@ -169,7 +130,7 @@ export const fetchClients = createAsyncThunk(
       return {
         page: targetPage,
         clients: paginatedData,
-        allClients: allClients,
+        allClients: apiClients,
         totalItems,
         totalPages,
         skipUpdate: false
@@ -211,27 +172,21 @@ export const preloadNextPage = createAsyncThunk(
   }
 );
 
-// Các thunk khác không thay đổi
+// Thêm client mới
 export const addClient = createAsyncThunk(
   'clients/addClient',
-  async (clientData: Omit<Client, 'id'>, { getState, rejectWithValue }) => {
+  async (clientData: Omit<Client, "ID">, { dispatch, rejectWithValue }) => {
     try {
-      // Gọi API để thêm client mới
-      const apiClientData = {
-        companyName: clientData.companyName,
-        shortName: clientData.shortName,
-        clientNumber: clientData.clientNumber,
-        cityzenship: clientData.cityzenship || '',
-        dateOpen: clientData.dateOpen || '',
-        status: clientData.status
-      };
+      // Gọi API để thêm client
+      const response = await clientService.createClient(clientData);
       
-      const response = await clientService.createClient(apiClientData);
-      const newClient = mapApiClientToClient(response.data.data);
-      
-      return newClient;
+      // Trả về client mới từ API
+      return response.data.data;
     } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Failed to add client');
+      if (axios.isAxiosError(error)) {
+        return rejectWithValue(error.response?.data?.message || error.message);
+      }
+      return rejectWithValue('An unexpected error occurred');
     }
   }
 );
@@ -251,7 +206,7 @@ export const updateClient = createAsyncThunk(
       };
       
       const response = await clientService.updateClient(id, apiClientData);
-      const updatedClient = mapApiClientToClient(response.data.data);
+      const updatedClient = response.data.data;
       
       return { id, clientData: updatedClient };
     } catch (error) {
@@ -460,7 +415,7 @@ const clientSlice = createSlice({
         
         // Cập nhật client trong danh sách
         state.clients = state.clients.map(client => 
-          client.id === id ? { ...client, ...updatedClient } : client
+          client.ID === id ? { ...client, ...updatedClient } : client
         );
         
         // Cập nhật filteredClients
@@ -483,7 +438,7 @@ const clientSlice = createSlice({
       })
       .addCase(deleteClient.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.clients = state.clients.filter(client => client.id !== action.payload);
+        state.clients = state.clients.filter(client => client.ID !== action.payload);
         state.filteredClients = applyFilters(state);
         
         // Invalidate cache khi xóa client
@@ -524,10 +479,10 @@ function applyFilters(state: ClientState): Client[] {
         result.sort((a: Client, b: Client) => (b.contractsCount || 0) - (a.contractsCount || 0));
         break;
       case 'Latest Clients':
-        result.sort((a: Client, b: Client) => parseInt(b.id) - parseInt(a.id));
+        result.sort((a: Client, b: Client) => parseInt(b.ID) - parseInt(a.ID));
         break;
       case 'Oldest Clients':
-        result.sort((a: Client, b: Client) => parseInt(a.id) - parseInt(b.id));
+        result.sort((a: Client, b: Client) => parseInt(a.ID) - parseInt(b.ID));
         break;
     }
   }

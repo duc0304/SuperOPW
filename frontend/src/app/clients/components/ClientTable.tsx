@@ -21,7 +21,7 @@ export default function ClientTable({ clients, onEdit, onDelete }: ClientTablePr
       setTimeout(() => {
         setAnimatedRows(prev => ({
           ...prev,
-          [client.id]: true
+          [client.ID]: true
         }));
       }, index * animationDelay);
     });
@@ -108,16 +108,16 @@ export default function ClientTable({ clients, onEdit, onDelete }: ClientTablePr
           
           {/* Table body with updated fields */}
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50 transition-colors duration-200">
-            {clients.map((client) => (
+            {clients.map((client, index) => (
               <tr 
-                key={client.id} 
+                key={`${client.ID}-${index}`} 
                 className={`
                   transition-all duration-500 ease-out
                   ${getRowHoverBg(client?.status)}
-                  ${hoveredRow === client.id ? 'shadow-md dark:shadow-gray-900/50 z-10 scale-[1.01] relative' : ''}
-                  ${animatedRows[client.id] ? 'opacity-100 transform-none' : 'opacity-0 translate-y-4'}
+                  ${hoveredRow === client.ID ? 'shadow-md dark:shadow-gray-900/50 z-10 scale-[1.01] relative' : ''}
+                  ${animatedRows[client.ID] ? 'opacity-100 transform-none' : 'opacity-0 translate-y-4'}
                 `}
-                onMouseEnter={() => setHoveredRow(client.id)}
+                onMouseEnter={() => setHoveredRow(client.ID)}
                 onMouseLeave={() => setHoveredRow(null)}
               >
                 {/* Short Name */}
@@ -156,7 +156,7 @@ export default function ClientTable({ clients, onEdit, onDelete }: ClientTablePr
                 {/* Date Open */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-medium bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-3 py-1 rounded-full inline-block text-center shadow-sm">
-                    {formatDate(client?.dateOpen)}
+                    {formatDate(client?.dateOpen ?? undefined)}
                   </div>
                 </td>
                 
@@ -173,30 +173,27 @@ export default function ClientTable({ clients, onEdit, onDelete }: ClientTablePr
                 </td>
                 
                 {/* Actions */}
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex justify-end space-x-1 items-center">
-                    {client?.id ? (
-                      <Link href={`/clients/${client.id}`}>
-                        <button className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 shadow-sm hover:shadow-md">
-                          <RiEyeLine className="h-5 w-5" />
-                        </button>
-                      </Link>
-                    ) : (
-                      <button disabled className="text-gray-400 cursor-not-allowed flex items-center justify-center w-9 h-9">
-                        <RiEyeLine className="h-5 w-5" />
+                <td
+                  className={`px-6 py-4 whitespace-nowrap transition-colors text-right border-b border-gray-200 dark:border-gray-700`}
+                >
+                  <div className="flex justify-end items-center space-x-3">
+                    {/* View Details / Edit Button */}
+                    <Link href={`/clients/${client.ID}`}>
+                      <button 
+                        className="p-2 rounded-full bg-indigo-100 dark:bg-indigo-900/30 hover:bg-indigo-200 dark:hover:bg-indigo-800/50 text-indigo-600 dark:text-indigo-400 transition-colors duration-200"
+                        aria-label="View client details"
+                      >
+                        <RiEyeLine className="w-5 h-5" />
                       </button>
-                    )}
-                    <button 
-                      onClick={() => client && onDelete(client)}
-                      disabled={!client}
-                      className={`
-                        flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md
-                        ${client 
-                          ? "text-rose-600 dark:text-rose-400 hover:text-rose-900 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-900/30" 
-                          : "text-gray-400 cursor-not-allowed"}
-                      `}
+                    </Link>
+                    
+                    {/* Delete Button */}
+                    <button
+                      onClick={() => onDelete(client)} 
+                      className="p-2 rounded-full bg-rose-100 dark:bg-rose-900/30 hover:bg-rose-200 dark:hover:bg-rose-800/50 text-rose-600 dark:text-rose-400 transition-colors duration-200"
+                      aria-label="Delete client"
                     >
-                      <RiDeleteBinLine className="h-5 w-5" />
+                      <RiDeleteBinLine className="w-5 h-5" />
                     </button>
                   </div>
                 </td>

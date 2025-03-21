@@ -1,0 +1,13 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsin="http://www.openwaygroup.com/wsint">
+   <soapenv:Header>
+      <wsin:SessionContextStr>?</wsin:SessionContextStr>
+      <wsin:UserInfo>officer="WX_ADMIN"</wsin:UserInfo>
+      <wsin:CorrelationId>?</wsin:CorrelationId>
+   </soapenv:Header>
+   <soapenv:Body>
+      <wsin:GetContractsByClientV2>
+         <wsin:ClientSearchMethod>CLIENT_NUMBER</wsin:ClientSearchMethod>
+         <wsin:ClientIdentifier>099773245419</wsin:ClientIdentifier>
+      </wsin:GetContractsByClientV2>
+   </soapenv:Body>
+</soapenv:Envelope>

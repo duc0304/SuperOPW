@@ -1,0 +1,244 @@
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+   <s:Body>
+      <GetContractsByClientV2Response xmlns="http://www.openwaygroup.com/wsint" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+         <GetContractsByClientV2Result>
+            <RetCode>0</RetCode>
+            <ResultInfo>officer="WX_ADMIN"</ResultInfo>
+            <OutObject>
+               <IssContractDetailsAPIOutputV2Record>
+                  <Institution>1;SVFC</Institution>
+                  <Branch>9999;Hoi So</Branch>
+                  <ClientCategory>P;Private</ClientCategory>
+                  <ClientType>3;Private Resident</ClientType>
+                  <ProductCategory>C;Issuing</ProductCategory>
+                  <RedefinedProductCategory>C;Issuing</RedefinedProductCategory>
+                  <ContractCategory>A;Account</ContractCategory>
+                  <MainProductCorrected>430;001-Liability Account Contract Private</MainProductCorrected>
+                  <MainProductIDT>181225000000000000208010</MainProductIDT>
+                  <Product>181225000000000000208010;001-Liability Account Contract Private</Product>
+                  <ContractSubtype>33750;001-Liability Private Account Contract</ContractSubtype>
+                  <ReportType>C;Cardholder Default</ReportType>
+                  <Role>Top Level</Role>
+                  <Icon>contract.png</Icon>
+                  <Leaf>N;No</Leaf>
+                  <Currency>704;VND</Currency>
+                  <Available>0</Available>
+                  <Balance>0</Balance>
+                  <CreditLimit>0</CreditLimit>
+                  <AddLimit>0</AddLimit>
+                  <Blocked>0</Blocked>
+                  <TotalDue>0</TotalDue>
+                  <PastDue>0</PastDue>
+                  <ShadowAuthLimit>0</ShadowAuthLimit>
+                  <Client>84560;Anh Ha Truong (OPenWay)</Client>
+                  <ContractNumber>001-P-LIB-2810963869</ContractNumber>
+                  <SafeContractNumber>365850;001-P-LIB-2810963869</SafeContractNumber>
+                  <ContractName>Liability Contract</ContractName>
+                  <ContractLevel>.</ContractLevel>
+                  <BillingContract>365850;001-P-LIB-2810963869</BillingContract>
+                  <TopContract>365850;001-P-LIB-2810963869</TopContract>
+                  <CBSNumber>21324556600</CBSNumber>
+                  <OpenDate>2022-02-02</OpenDate>
+                  <CheckUsage>Y;Main and Own</CheckUsage>
+                  <LastBillingDate>2022-02-02</LastBillingDate>
+                  <NextBillingDate>2022-03-01</NextBillingDate>
+                  <PastDueDays>0</PastDueDays>
+                  <AddParmString>FIRST_CYCLE=2022-02-02;AS=&lt;ASV211014102730>&lt;SOV211014102730>;SP=&lt;SPV211013220045>&lt;SPA2800>;INIT_EVNT;</AddParmString>
+                  <Status>51;Account OK</Status>
+                  <StatusCode>00;Account OK</StatusCode>
+                  <ExternalCode>00;Account OK</ExternalCode>
+                  <LastApplicationDate>2021-12-17</LastApplicationDate>
+                  <LastApplicationOfficer>210;WX Administrator</LastApplicationOfficer>
+                  <LastApplicationStatus>P;Posted</LastApplicationStatus>
+                  <LastActivityDate>2022-02-02</LastActivityDate>
+                  <Ready>Y;Yes</Ready>
+                  <AmendmentDate>2021-12-17T16:55:58</AmendmentDate>
+                  <AmendmentOfficer>210;WX Administrator</AmendmentOfficer>
+                  <ID>365850</ID>
+                  <ClientFullName>Anh Ha Truong (OPenWay)</ClientFullName>
+                  <ProductCode>ISS_CR_P_LIB</ProductCode>
+                  <MainProductCode>ISS_CR_P_LIB</MainProductCode>
+               </IssContractDetailsAPIOutputV2Record>
+               <IssContractDetailsAPIOutputV2Record>
+                  <Institution>1;SVFC</Institution>
+                  <Branch>9999;Hoi So</Branch>
+                  <ClientCategory>P;Private</ClientCategory>
+                  <ClientType>3;Private Resident</ClientType>
+                  <ProductCategory>C;Issuing</ProductCategory>
+                  <RedefinedProductCategory>C;Issuing</RedefinedProductCategory>
+                  <ContractCategory>A;Account</ContractCategory>
+                  <ParentProduct>181225000000000000208010;001-Liability Account Contract Private</ParentProduct>
+                  <MainProductCorrected>430;001-Liability Account Contract Private</MainProductCorrected>
+                  <MainProductIDT>181225000000000000208010</MainProductIDT>
+                  <Product>191120000000000000000607;001-MasterCard Credit Gold</Product>
+                  <ContractSubtype>34560;001-MC Credit Gold Account</ContractSubtype>
+                  <ReportType>C;Cardholder Default</ReportType>
+                  <Role>Full Liability</Role>
+                  <Icon>contract.png</Icon>
+                  <Leaf>N;No</Leaf>
+                  <LiabilityCategory>Y;Full Liability</LiabilityCategory>
+                  <LiabilityContract>365850;001-P-LIB-2810963869</LiabilityContract>
+                  <Currency>704;VND</Currency>
+                  <Available>0</Available>
+                  <Balance>0</Balance>
+                  <CreditLimit>50000000</CreditLimit>
+                  <AddLimit>0</AddLimit>
+                  <Blocked>0</Blocked>
+                  <TotalDue>0</TotalDue>
+                  <PastDue>0</PastDue>
+                  <ShadowAuthLimit>0</ShadowAuthLimit>
+                  <Client>84560;Anh Ha Truong (OPenWay)</Client>
+                  <ContractNumber>001-MCR-65955952</ContractNumber>
+                  <SafeContractNumber>365860;001-MCR-65955952</SafeContractNumber>
+                  <ContractName>Issuing Contract</ContractName>
+                  <ContractLevel>.1.</ContractLevel>
+                  <ParentContract>365850;001-P-LIB-2810963869</ParentContract>
+                  <BillingContract>365860;001-MCR-65955952</BillingContract>
+                  <TopContract>365850;001-P-LIB-2810963869</TopContract>
+                  <CBSNumber>213245566000</CBSNumber>
+                  <OpenDate>2022-02-02</OpenDate>
+                  <CheckUsage>Y;Main and Own</CheckUsage>
+                  <LastBillingDate>2022-02-02</LastBillingDate>
+                  <NextBillingDate>2022-03-01</NextBillingDate>
+                  <PastDueDays>0</PastDueDays>
+                  <AddInfo01>PAYMENT_OPTION=MTP;START_DATE=0123;BANK=A1;ACCOUNT=A2;BANK_CODE=A3;ACC_NAME=A4;</AddInfo01>
+                  <AddInfo02>PAYMENT_OPTION=MTP;</AddInfo02>
+                  <AddParmString>FIRST_CYCLE=2022-02-02;AS=&lt;ASV211116230852>&lt;SOV211116230852>&lt;INT_TRF>;SP=&lt;SPV211014180848>&lt;SPA2970>;INIT_EVNT;</AddParmString>
+                  <Status>51;Account OK</Status>
+                  <StatusCode>00;Account OK</StatusCode>
+                  <BehaviourType>2;Default priv cardholder behavior</BehaviourType>
+                  <ExternalCode>00;Account OK</ExternalCode>
+                  <LastApplicationDate>2021-12-17</LastApplicationDate>
+                  <LastApplicationOfficer>210;WX Administrator</LastApplicationOfficer>
+                  <LastApplicationStatus>P;Posted</LastApplicationStatus>
+                  <LastActivityDate>2022-02-02</LastActivityDate>
+                  <Ready>Y;Yes</Ready>
+                  <AmendmentDate>2021-12-17T17:00:20</AmendmentDate>
+                  <AmendmentOfficer>210;WX Administrator</AmendmentOfficer>
+                  <ID>365860</ID>
+                  <ClientFullName>Anh Ha Truong (OPenWay)</ClientFullName>
+                  <ProductCode>MC_CR_GLD</ProductCode>
+                  <ParentProductCode>ISS_CR_P_LIB</ParentProductCode>
+                  <MainProductCode>ISS_CR_P_LIB</MainProductCode>
+               </IssContractDetailsAPIOutputV2Record>
+               <IssContractDetailsAPIOutputV2Record>
+                  <Institution>1;SVFC</Institution>
+                  <Branch>9999;Hoi So</Branch>
+                  <ClientCategory>P;Private</ClientCategory>
+                  <ClientType>3;Private Resident</ClientType>
+                  <ProductCategory>C;Issuing</ProductCategory>
+                  <RedefinedProductCategory>C;Issuing</RedefinedProductCategory>
+                  <ContractCategory>C;Card</ContractCategory>
+                  <ParentProduct>191120000000000000000607;001-MasterCard Credit Gold</ParentProduct>
+                  <MainProductCorrected>430;001-Liability Account Contract Private</MainProductCorrected>
+                  <MainProductIDT>181225000000000000208010</MainProductIDT>
+                  <Product>211217000000000000003270;001-MC Credit Gold Main Card</Product>
+                  <ContractSubtype>1238;001-MC GOLD</ContractSubtype>
+                  <ReportType>C;Cardholder Default</ReportType>
+                  <Role>See main</Role>
+                  <Icon>contract.png</Icon>
+                  <Leaf>Y;Yes</Leaf>
+                  <Currency>704;VND</Currency>
+                  <Available>0</Available>
+                  <Balance>0</Balance>
+                  <CreditLimit>50000000</CreditLimit>
+                  <AddLimit>0</AddLimit>
+                  <Blocked>0</Blocked>
+                  <TotalDue>0</TotalDue>
+                  <PastDue>0</PastDue>
+                  <ShadowAuthLimit>0</ShadowAuthLimit>
+                  <Client>84560;Anh Ha Truong (OPenWay)</Client>
+                  <ContractNumber>1000050145036151</ContractNumber>
+                  <SafeContractNumber>366270;100005______6151</SafeContractNumber>
+                  <ContractName>Card Contract</ContractName>
+                  <ContractLevel>.1.1.</ContractLevel>
+                  <ParentContract>365860;001-MCR-65955952</ParentContract>
+                  <BillingContract>365860;001-MCR-65955952</BillingContract>
+                  <TopContract>365850;001-P-LIB-2810963869</TopContract>
+                  <CBSNumber>213245566000</CBSNumber>
+                  <OpenDate>2022-02-02</OpenDate>
+                  <CheckUsage>Y;Main and Own</CheckUsage>
+                  <LastBillingDate>2022-02-02</LastBillingDate>
+                  <NextBillingDate>2022-03-01</NextBillingDate>
+                  <PastDueDays>0</PastDueDays>
+                  <AddParmString>AS=&lt;ASV211116230852>&lt;SOV211116230852>&lt;INT_TRF>;SP=&lt;SPV211219023334>&lt;SPA5010>;INIT_EVNT;</AddParmString>
+                  <Status>14;Active</Status>
+                  <StatusCode>00;Active</StatusCode>
+                  <ExternalCode>ACT01;Active</ExternalCode>
+                  <LastApplicationDate>2021-12-20</LastApplicationDate>
+                  <LastApplicationOfficer>210;WX Administrator</LastApplicationOfficer>
+                  <LastApplicationStatus>P;Posted</LastApplicationStatus>
+                  <LastActivityDate>2022-02-02</LastActivityDate>
+                  <Ready>Y;Yes</Ready>
+                  <AmendmentDate>2021-12-20T00:07:51</AmendmentDate>
+                  <AmendmentOfficer>210;WX Administrator</AmendmentOfficer>
+                  <ID>366270</ID>
+                  <AccountingParent>365860;001-MCR-65955952</AccountingParent>
+                  <ClientFullName>Anh Ha Truong (OPenWay)</ClientFullName>
+                  <ProductCode>MC_CR_GLD_M</ProductCode>
+                  <ParentProductCode>MC_CR_GLD</ParentProductCode>
+                  <MainProductCode>ISS_CR_P_LIB</MainProductCode>
+               </IssContractDetailsAPIOutputV2Record>
+               <IssContractDetailsAPIOutputV2Record>
+                  <Institution>1;SVFC</Institution>
+                  <Branch>9999;Hoi So</Branch>
+                  <ClientCategory>P;Private</ClientCategory>
+                  <ClientType>3;Private Resident</ClientType>
+                  <ProductCategory>C;Issuing</ProductCategory>
+                  <RedefinedProductCategory>C;Issuing</RedefinedProductCategory>
+                  <ContractCategory>C;Card</ContractCategory>
+                  <ParentProduct>191120000000000000000607;001-MasterCard Credit Gold</ParentProduct>
+                  <MainProductCorrected>430;001-Liability Account Contract Private</MainProductCorrected>
+                  <MainProductIDT>181225000000000000208010</MainProductIDT>
+                  <Product>211217000000000000003270;001-MC Credit Gold Main Card</Product>
+                  <ContractSubtype>1238;001-MC GOLD</ContractSubtype>
+                  <ReportType>C;Cardholder Default</ReportType>
+                  <Role>See main</Role>
+                  <Icon>contract.png</Icon>
+                  <Leaf>Y;Yes</Leaf>
+                  <Currency>704;VND</Currency>
+                  <Available>0</Available>
+                  <Balance>0</Balance>
+                  <CreditLimit>50000000</CreditLimit>
+                  <AddLimit>0</AddLimit>
+                  <Blocked>0</Blocked>
+                  <TotalDue>0</TotalDue>
+                  <PastDue>0</PastDue>
+                  <ShadowAuthLimit>0</ShadowAuthLimit>
+                  <Client>84560;Anh Ha Truong (OPenWay)</Client>
+                  <ContractNumber>1000050189738688</ContractNumber>
+                  <SafeContractNumber>366290;100005______8688</SafeContractNumber>
+                  <ContractName>Supp Card Contract</ContractName>
+                  <ContractLevel>.1.2.</ContractLevel>
+                  <ParentContract>365860;001-MCR-65955952</ParentContract>
+                  <BillingContract>365860;001-MCR-65955952</BillingContract>
+                  <TopContract>365850;001-P-LIB-2810963869</TopContract>
+                  <CBSNumber>213245566000</CBSNumber>
+                  <OpenDate>2022-02-02</OpenDate>
+                  <CheckUsage>Y;Main and Own</CheckUsage>
+                  <LastBillingDate>2022-02-02</LastBillingDate>
+                  <NextBillingDate>2022-03-01</NextBillingDate>
+                  <PastDueDays>0</PastDueDays>
+                  <AddParmString>AS=&lt;ASV211116230852>&lt;SOV211116230852>&lt;INT_TRF>;SP=&lt;SPV211219023334>&lt;SPA5010>;INIT_EVNT;</AddParmString>
+                  <Status>14;Active</Status>
+                  <StatusCode>00;Active</StatusCode>
+                  <ExternalCode>ACT01;Active</ExternalCode>
+                  <LastApplicationDate>2021-12-20</LastApplicationDate>
+                  <LastApplicationOfficer>210;WX Administrator</LastApplicationOfficer>
+                  <LastApplicationStatus>P;Posted</LastApplicationStatus>
+                  <LastActivityDate>2022-02-02</LastActivityDate>
+                  <Ready>Y;Yes</Ready>
+                  <AmendmentDate>2021-12-20T00:21:24</AmendmentDate>
+                  <AmendmentOfficer>210;WX Administrator</AmendmentOfficer>
+                  <ID>366290</ID>
+                  <AccountingParent>365860;001-MCR-65955952</AccountingParent>
+                  <ClientFullName>Anh Ha Truong (OPenWay)</ClientFullName>
+                  <ProductCode>MC_CR_GLD_M</ProductCode>
+                  <ParentProductCode>MC_CR_GLD</ParentProductCode>
+                  <MainProductCode>ISS_CR_P_LIB</MainProductCode>
+               </IssContractDetailsAPIOutputV2Record>
+            </OutObject>
+         </GetContractsByClientV2Result>
+      </GetContractsByClientV2Response>
+   </s:Body>
+</s:Envelope>

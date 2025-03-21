@@ -296,10 +296,10 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Client ID</p>
                       <p className="font-medium text-gray-900 dark:text-white">
-                        {contract.oracleData?.CLIENT_ID || 'N/A'}
+                        {contract.oracleData?.CLIENT__ID || 'N/A'}
                       </p>
-                      {contract.oracleData?.CLIENT_ID && (
-                        <Link href={`/clients/${contract.oracleData.CLIENT_ID}`} className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 hover:dark:text-indigo-300 transition-colors mt-1 inline-block">
+                      {contract.oracleData?.CLIENT__ID && (
+                        <Link href={`/clients/${contract.oracleData.CLIENT__ID}`} className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 hover:dark:text-indigo-300 transition-colors mt-1 inline-block">
                           View Client Details →
                         </Link>
                       )}

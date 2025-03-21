@@ -1,4 +1,4 @@
-import { Client } from './mock_clients';
+import { Client } from '@/services/api';
 
 export interface ValidationRule {
   required: boolean;
@@ -23,6 +23,7 @@ export interface ValidationErrors {
   contractsCount?: string;
   cityzenship?: string;
   dateOpen?: string;
+  ID?: string;
 }
 
 export const validationRules: Record<string, ValidationRule> = {
@@ -71,15 +72,18 @@ export const validateField = (name: string, value: string): string => {
   return '';
 };
 
-export const validateForm = (data: Omit<Client, 'id'>): ValidationErrors => {
+export const validateForm = (data: Omit<Client, 'ID'>): ValidationErrors => {
   const errors: ValidationErrors = {};
   
   // Validate each field
   Object.keys(validationRules).forEach(field => {
-    const key = field as keyof Omit<Client, 'id'>;
-    const error = validateField(field, data[key] as string);
-    if (error) {
-      errors[key] = error;
+    // Ensure field is a valid key for both validationRules and ValidationErrors
+    if (field in validationRules) {
+      const key = field as keyof ValidationErrors;
+      const error = validateField(field, data[field as keyof Omit<Client, 'ID'>] as string);
+      if (error) {
+        errors[key] = error;
+      }
     }
   });
   

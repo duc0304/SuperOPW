@@ -229,6 +229,28 @@ export default function ContractTree({
 
   // Tổ chức contracts thành cấu trúc cây phân cấp ba cấp
   const organizeContractsHierarchy = useCallback(() => {
+    console.log("ContractTree received: ", contracts.length, "contracts");
+    
+    // Nếu các contracts đã có cấu trúc phân cấp (có children), giữ nguyên cấu trúc đó
+    const hasStructure = contracts.some(c => c.children && c.children.length > 0);
+    if (hasStructure) {
+      console.log("ContractTree: Input already has hierarchy, using it directly");
+      // Làm phẳng các contracts để đếm số lượng
+      let total = contracts.length;
+      contracts.forEach(c => {
+        if (c.children) {
+          total += c.children.length;
+          c.children.forEach(cc => {
+            if (cc.children) total += cc.children.length;
+          });
+        }
+      });
+      console.log(`ContractTree: Using existing hierarchy with ${total} total contracts`);
+      return [...contracts];
+    }
+    
+    console.log("ContractTree: Building hierarchy from scratch");
+    
     // Hàm phân loại và tạo map cho liabilities
     const categorizeLiabilityContracts = (contracts: ContractNode[]) => {
       const map: Record<string, ContractNode> = {};
@@ -296,6 +318,8 @@ export default function ContractTree({
     const { map: liabilityMap, list: result } = categorizeLiabilityContracts(contracts);
     const issueMap = assignIssueContracts(contracts, liabilityMap);
     assignCardContracts(contracts, liabilityMap, issueMap);
+    
+    console.log(`ContractTree: Organized ${result.length} top-level contracts from ${contracts.length} input contracts`);
     
     return result;
   }, [contracts, getContractType]);
@@ -684,7 +708,6 @@ export default function ContractTree({
                         level === 1 ? 'pl-6 ml-1.5 relative' :
                         level === 2 ? 'pl-9 ml-3 relative' :
                         level >= 3 ? 'pl-12 ml-4.5 relative' : 'px-3',
-                        level > 0 && 'before:absolute before:left-2 before:top-1/2 before:w-2 before:h-px before:bg-gray-200 dark:before:bg-gray-700',
                         hoveredRow === contract.id ? 'shadow-md dark:shadow-gray-900/50 z-10 scale-[1.01]' : '',
                       )}
                     >
@@ -757,7 +780,7 @@ export default function ContractTree({
                       </div>
                       
                       <div className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap relative z-10" onClick={() => handleSelectContract(contract)}>
-                        {contract.oracleData?.CLIENT_ID ? `Client: ${contract.oracleData.CLIENT_ID}` : ''}
+                        {contract.oracleData?.CLIENT_ID ? `Client: ${contract.oracleData.CLIENT__ID}` : ''}
                       </div>
                     </div>
                   </div>

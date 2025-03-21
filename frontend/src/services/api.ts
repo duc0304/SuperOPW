@@ -39,14 +39,22 @@ interface LoginData {
 }
 
 // Interface cho dữ liệu Client từ API
-export interface ApiClient {
-  id: string;
+export interface Client {
+  ID: string;
   companyName: string;
   shortName: string;
   clientNumber: string;
   cityzenship: string;
   dateOpen: string | null;
   status: 'active' | 'inactive';
+  contractsCount?: number;
+  clientTypeCode?: string;
+  reasonCode?: string;
+  reason?: string;
+  institutionCode?: string;
+  branch?: string;
+  clientCategory?: string;
+  productCategory?: string;
 }
 
 // Các hàm gọi API Auth
@@ -80,12 +88,12 @@ export const clientService = {
   },
   
   // Thêm client mới
-  createClient: async (clientData: Omit<ApiClient, 'id'>) => {
+  createClient: async (clientData: Omit<Client, 'ID'>) => {
     return api.post('/clients', clientData);
   },
   
   // Cập nhật client
-  updateClient: async (id: string, clientData: Partial<Omit<ApiClient, 'id'>>) => {
+  updateClient: async (id: string, clientData: Partial<Omit<Client, 'ID'>>) => {
     return api.put(`/clients/${id}`, clientData);
   },
   

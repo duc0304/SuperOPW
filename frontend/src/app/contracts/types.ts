@@ -1,12 +1,8 @@
-import { Client as AppClient } from '../clients/mock_clients';
+import { Client } from '@/services/api';
 
 /**
- * Trong ứng dụng này, có 2 loại Client:
- * 1. Client từ clients/mock_clients.ts (AppClient) - sử dụng trong module Clients
- * 2. Client được định nghĩa trong contracts/types.ts - là phiên bản đơn giản hơn sử dụng trong module Contracts
- * 
- * Không được sử dụng lẫn lộn 2 loại này.
- * Nếu cần lấy dữ liệu từ một Client dạng này sang dạng kia, hãy chuyển đổi bằng hàm map.
+ * Trong ứng dụng này, sử dụng Client từ services/api.ts
+ * Không sử dụng định nghĩa Client riêng cho contracts nữa
  */
 
 /**
@@ -18,33 +14,13 @@ export interface OracleContract {
   BRANCH?: string;
   CONTRACT_NUMBER?: string;
   CONTRACT_NAME?: string;
-  CLIENT_ID?: string;
+  CLIENT__ID?: string;
   TR_FIRST_NAM?: string;
   TR_LAST_NAM?: string;
   LIAB_CONTRACT?: string;
   ACNT_CONTRACT__OID?: string;
   CARD_NUMBER?: string;
   [key: string]: any; // Cho phép các trường khác từ API
-}
-
-/**
- * Interface đơn giản hóa cho Client
- */
-export interface Client {
-  id: string;
-  name: string;
-  clientNumber?: string;
-}
-
-/**
- * Hàm chuyển đổi từ AppClient sang Client
- */
-export function mapAppClientToContractClient(appClient: AppClient): Client {
-  return {
-    id: appClient.id,
-    name: appClient.companyName,
-    clientNumber: appClient.clientNumber
-  };
 }
 
 /**
@@ -60,6 +36,7 @@ export interface ContractNode {
   liability?: {
     contractNumber: string;
   };
+  client?: Client; // Client từ API
 }
 
 /**
@@ -69,13 +46,34 @@ export interface ContractNode {
 export function mapOracleContractToContractNode(oracleContract: OracleContract): ContractNode {
   // Tạo ID duy nhất từ CONTRACT_NUMBER hoặc ID để tránh trùng lặp
   const uniqueId = oracleContract.ID || 
-                   (oracleContract.CONTRACT_NUMBER ? `contract-${oracleContract.CONTRACT_NUMBER}` : '') || 
-                   `oracle-contract-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+                  (oracleContract.CONTRACT_NUMBER ? `contract-${oracleContract.CONTRACT_NUMBER}` : '') || 
+                  `oracle-contract-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  
+  // Xác định loại contract dựa vào dữ liệu
+  // LIAB contracts: không có LIAB_CONTRACT và không có ACNT_CONTRACT__OID
+  let contractType: 'liability' | 'issue' | 'card' = 'liability';
+  
+  // Debug các trường quan trọng
+  console.log(`Contract ${oracleContract.CONTRACT_NUMBER || uniqueId} info:`, {
+    id: uniqueId,
+    acntOid: oracleContract.ACNT_CONTRACT__OID,
+    liabContract: oracleContract.LIAB_CONTRACT
+  });
+  
+  if (oracleContract.ACNT_CONTRACT__OID) {
+    contractType = 'card';
+    console.log(`Contract ${oracleContract.CONTRACT_NUMBER || uniqueId} is a CARD contract`);
+  } else if (oracleContract.LIAB_CONTRACT) {
+    contractType = 'issue';
+    console.log(`Contract ${oracleContract.CONTRACT_NUMBER || uniqueId} is an ISSUE contract`);
+  } else {
+    console.log(`Contract ${oracleContract.CONTRACT_NUMBER || uniqueId} is a LIABILITY contract`);
+  }
   
   return {
     id: uniqueId,
     title: oracleContract.CONTRACT_NAME || oracleContract.CONTRACT_NUMBER || 'Unnamed Contract',
-    type: 'liability', // Mặc định là liability, sẽ được xác định lại trong getContractType
+    type: contractType,
     liability: {
       contractNumber: oracleContract.CONTRACT_NUMBER || '',
     },

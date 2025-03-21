@@ -33,7 +33,7 @@ export function useContracts() {
   // Lấy clientId từ URL nếu có
   const clientId = searchParams.get('clientId');
   
-  // Fetch contracts từ Oracle API
+  //Fetch contracts từ Oracle API
   useEffect(() => {
     const fetchOracleContracts = async () => {
       setOracleLoading(true);
@@ -67,6 +67,10 @@ export function useContracts() {
     
     fetchOracleContracts();
   }, []);
+  // useEffect(() => {
+  //   setOracleContracts([]); // Không fetch API, chỉ set mảng rỗng
+  //   setOracleLoading(false);
+  // }, []);
   
   // Load mock contracts khi không có Oracle data hoặc nếu có clientId
   useEffect(() => {

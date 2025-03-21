@@ -5,7 +5,7 @@ const oracleContractController = require('../controllers/oracle.contract.control
 // Route để lấy tất cả contracts
 router.get('/', oracleContractController.getAllContracts);
 
-// Route để lấy contract theo ID
-router.get('/:id', oracleContractController.getContractById);
+// Route để lấy contracts theo client ID
+router.get('/client/:clientId', oracleContractController.getContractsByClientId);
 
 module.exports = router; 

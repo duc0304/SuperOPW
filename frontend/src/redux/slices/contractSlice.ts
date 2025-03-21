@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '@/redux/store';
 import { ContractNode } from '@/app/contracts/types';
-import type { Client } from '@/app/contracts/types';
-import { MOCK_CONTRACTS, MOCK_CLIENTS } from '@/app/contracts/mock_data';
+import { Client } from '@/services/api';
+// Mock data is no longer used, all data comes from API
 
 // Định nghĩa state type
 interface ContractState {
@@ -27,9 +27,10 @@ export const fetchContracts = createAsyncThunk(
   'contracts/fetchContracts',
   async (_, { rejectWithValue }) => {
     try {
-      // Giả lập API call
+      // TODO: Replace with real API call
+      // This thunk should call the real API endpoint to fetch contracts
       await new Promise(resolve => setTimeout(resolve, 500));
-      return MOCK_CONTRACTS;
+      return []; // Return empty array for now until API integration is complete
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to fetch contracts');
     }
@@ -40,24 +41,12 @@ export const fetchContractsByClient = createAsyncThunk(
   'contracts/fetchContractsByClient', 
   async (clientId: string, { rejectWithValue }) => {
     try {
-      // Giả lập API call
+      // TODO: Replace with real API call
+      // This thunk should call the real API endpoint to fetch contracts by client ID
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Tìm client dựa vào id
-      const client = MOCK_CLIENTS.find(c => c.id === clientId);
-      
-      if (!client) {
-        return rejectWithValue('Client not found');
-      }
-      
-      // Lọc các contract thuộc về client
-      const filteredContracts = MOCK_CONTRACTS.filter(
-        contract => contract.client?.id === clientId || 
-                   (contract.children && 
-                    contract.children.some(sub => sub.client?.id === clientId))
-      );
-      
-      return { contracts: filteredContracts, client };
+      // Return empty data until API integration is complete
+      return { contracts: [], client: null };
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to fetch contracts for client');
     }
@@ -76,6 +65,8 @@ export const contractSlice = createSlice({
       state.selectedClient = null;
     },
     addContract: (state, action: PayloadAction<ContractNode>) => {
+      // Contract data is now simplified, focusing only on the properties defined in ContractNode interface
+      // We expect at minimum: id, title, type, and possibly liability.contractNumber
       state.contracts.unshift(action.payload);
     }
   },
