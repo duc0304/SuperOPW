@@ -86,7 +86,7 @@ export default function AddContractModal({
       title: soapContractData.contractName,
       type: 'liability',
       liability: {
-        contractNumber: soapContractData.cbsNumber || `001-L-${Math.floor(Math.random() * 100000)}`
+        contractNumber: soapContractData.cbsNumber
       },
       children: []
     };
