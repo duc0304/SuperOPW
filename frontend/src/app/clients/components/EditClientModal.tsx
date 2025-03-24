@@ -9,8 +9,8 @@ interface EditClientModalProps {
   isOpen: boolean;
   onClose: () => void;
   client: Client | null;
-  formData: Omit<Client, 'id'>;
-  setFormData: (data: Omit<Client, 'id'>) => void;
+  formData: Omit<Client, 'ID'>;
+  setFormData: (data: Omit<Client, 'ID'>) => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 

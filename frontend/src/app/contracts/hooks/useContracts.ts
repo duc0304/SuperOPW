@@ -106,7 +106,7 @@ export function useContracts() {
   return {
     contracts: allContracts,
     selectedContract: currentSelectedContract,
-    clientName: selectedClient?.name,
+    clientName: selectedClient?.shortName,
     loading: isCurrentlyLoading,
     error: currentError,
     setSelectedContract: handleSelectContract,

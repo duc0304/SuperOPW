@@ -10,8 +10,8 @@ import type { Client } from '@/redux/slices/clientSlice';
 interface AddClientModalProps {
   isOpen: boolean;
   onClose: () => void;
-  formData: Omit<Client, 'id'>;
-  setFormData: (data: Omit<Client, 'id'>) => void;
+  formData: Omit<Client, 'ID'>;
+  setFormData: (data: Omit<Client, 'ID'>) => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 
