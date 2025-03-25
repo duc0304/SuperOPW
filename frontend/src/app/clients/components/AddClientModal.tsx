@@ -72,9 +72,9 @@ export default function AddClientModal({
     clientNumber: '',
     customData: [
       { 
-        addInfoType: 'AddInfo01', 
-        tagName: 'DefaultTag', 
-        tagValue: 'DefaultValue' 
+        addInfoType: '', 
+        tagName: '', 
+        tagValue: '' 
       }
     ]
   });
@@ -104,7 +104,7 @@ export default function AddClientModal({
       ...prev,
       customData: [
         ...prev.customData,
-        { addInfoType: 'AddInfo01', tagName: '', tagValue: '' }
+        { addInfoType: '', tagName: '', tagValue: '' }
       ]
     }));
   };
@@ -209,9 +209,9 @@ export default function AddClientModal({
         clientNumber: '',
         customData: [
           { 
-            addInfoType: 'AddInfo01', 
-            tagName: 'DefaultTag', 
-            tagValue: 'DefaultValue' 
+            addInfoType: '', 
+            tagName: '', 
+            tagValue: '' 
           }
         ]
       });

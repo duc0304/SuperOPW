@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RiFileTextLine, RiCalendarLine, RiExchangeFundsLine, RiInformationLine, RiArrowRightSLine, RiParentLine, RiIdCardLine, RiUser3Line, RiBankLine, RiHashtag, RiFileUserLine } from 'react-icons/ri';
+import { RiFileTextLine, RiCalendarLine, RiExchangeFundsLine, RiInformationLine, RiArrowRightSLine, RiIdCardLine, RiUser3Line, RiBankLine, RiHashtag, RiFileUserLine } from 'react-icons/ri';
 import Link from 'next/link';
 import { ContractNode } from '../types';
 
@@ -11,10 +11,9 @@ interface ContractDetailProps {
 
 export default function ContractDetail({ contract }: ContractDetailProps) {
   const [animateIn, setAnimateIn] = useState(false);
-  const [parentContract, setParentContract] = useState<any>(null);
-  const [loadingParent, setLoadingParent] = useState(false);
-  
-  // Kiểm tra xem contract hiện tại có phải là Issuing contract không
+  const [showAdditionalDetails, setShowAdditionalDetails] = useState(false);
+
+  // Kiểm tra loại contract
   const isIssueContract = contract.oracleData?.LIAB_CONTRACT !== undefined && 
                           contract.oracleData?.LIAB_CONTRACT !== null && 
                           contract.oracleData?.LIAB_CONTRACT !== '';
@@ -24,35 +23,7 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                          (contract.oracleData?.CONTRACT_NUMBER?.length === 16 && 
                          contract.oracleData?.CONTRACT_NUMBER?.startsWith('10000'));
 
-  // Fetch parent contract data if this is an issuing contract
-  useEffect(() => {
-    const fetchParentContract = async () => {
-      if (!isIssueContract) return;
-      
-      const parentId = contract.oracleData?.LIAB_CONTRACT;
-      if (!parentId) return;
-      
-      setLoadingParent(true);
-      try {
-        // Fetch from Oracle API
-        const response = await fetch(`http://localhost:5000/api/oracle/contracts/${parentId}`);
-        if (!response.ok) throw new Error('Failed to fetch parent contract');
-        
-        const data = await response.json();
-        if (data.success && data.data) {
-          setParentContract(data.data);
-        }
-      } catch (error) {
-        console.error('Error fetching parent contract:', error);
-      } finally {
-        setLoadingParent(false);
-      }
-    };
-    
-    fetchParentContract();
-  }, [contract.oracleData?.LIAB_CONTRACT, isIssueContract]);
-
-  // Animation effect when contract changes
+  // Animation effect khi contract thay đổi
   useEffect(() => {
     setAnimateIn(false);
     const timer = setTimeout(() => {
@@ -89,6 +60,62 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
     }
   };
 
+  // Get color scheme based on contract type
+  const getColorScheme = () => {
+    if (isIssueContract) {
+      return {
+        bg: 'bg-purple-100 dark:bg-purple-900/30',
+        text: 'text-purple-600 dark:text-purple-400',
+        badgeBg: 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300',
+        selectedBg: 'bg-purple-100 dark:bg-purple-900/40 border-purple-300 dark:border-purple-700/50', // Đồng bộ với ContractTree
+        fieldBg: 'bg-purple-50/50 dark:bg-purple-900/20',
+        fieldBorder: 'border-purple-100 dark:border-purple-800/30',
+      };
+    } else if (isCardContract) {
+      return {
+        bg: 'bg-emerald-100 dark:bg-emerald-900/30',
+        text: 'text-emerald-600 dark:text-emerald-400',
+        badgeBg: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300',
+        selectedBg: 'bg-emerald-100 dark:bg-emerald-900/40 border-emerald-300 dark:border-emerald-700/50', // Đồng bộ với ContractTree
+        fieldBg: 'bg-emerald-50/50 dark:bg-emerald-900/20',
+        fieldBorder: 'border-emerald-100 dark:border-emerald-800/30',
+      };
+    } else {
+      return {
+        bg: 'bg-indigo-100 dark:bg-indigo-900/30',
+        text: 'text-indigo-600 dark:text-indigo-400',
+        badgeBg: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300',
+        selectedBg: 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-300 dark:border-indigo-700/50', // Đồng bộ với ContractTree
+        fieldBg: 'bg-indigo-50/50 dark:bg-indigo-900/20',
+        fieldBorder: 'border-indigo-100 dark:border-indigo-800/30',
+      };
+    }
+  };
+
+  const colors = getColorScheme();
+
+  // Hàm để render dữ liệu JSON dưới dạng danh sách key-value
+  const renderJsonData = (data: any) => {
+    if (!data) return <p className="text-gray-500 dark:text-gray-400">No additional data available.</p>;
+
+    const entries = Object.entries(data);
+
+    return (
+      <ul className="space-y-2">
+        {entries.map(([key, value]) => (
+          <li key={key} className="flex items-start">
+            <span className="font-medium text-gray-700 dark:text-gray-300 min-w-[150px]">{key}:</span>
+            <span className="text-gray-600 dark:text-gray-400">
+              {typeof value === 'object' && value !== null
+                ? JSON.stringify(value).slice(0, 50) + (JSON.stringify(value).length > 50 ? '...' : '')
+                : value?.toString() || 'N/A'}
+            </span>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
   return (
     <div className="overflow-hidden rounded-2xl shadow-xl border-2 border-purple-200/60 dark:border-purple-700/30 bg-white/80 backdrop-blur-sm dark:bg-gray-800/90 transition-all duration-300 h-auto md:h-[calc(100vh-180px)]">
       {/* Decorative elements */}
@@ -96,22 +123,16 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
       <div className="absolute bottom-20 left-40 w-48 h-48 bg-gradient-to-br from-indigo-300/20 to-purple-400/20 rounded-full blur-3xl -z-10"></div>
       
       <div className="p-6 h-full flex flex-col overflow-hidden">
-        {/* Header with animation */}
-        <div className={`flex flex-col md:flex-row md:items-center justify-between mb-6 transition-all duration-500 ease-out ${animateIn ? 'opacity-100 transform-none' : 'opacity-0 -translate-y-4'}`}>
+        {/* Header with animation - Sử dụng selectedBg để đồng bộ màu với ContractTree */}
+        <div className={`flex flex-col md:flex-row md:items-center justify-between mb-6 transition-all duration-500 ease-out ${animateIn ? 'opacity-100 transform-none' : 'opacity-0 -translate-y-4'} border-4 ${colors.fieldBorder} rounded-xl p-4 shadow-lg ${colors.selectedBg}`}>
           <div className="flex items-start md:items-center mb-4 md:mb-0">
-            <div className={`p-2 rounded-xl mr-3 shadow-md ${
-              isIssueContract 
-                ? 'bg-purple-100 dark:bg-purple-900/30' 
-                : isCardContract
-                  ? 'bg-emerald-100 dark:bg-emerald-900/30'
-                  : 'bg-indigo-100 dark:bg-indigo-900/30'
-            }`}>
+            <div className={`p-2 rounded-xl mr-3 shadow-md ${colors.bg}`}>
               {isIssueContract ? (
-                <RiExchangeFundsLine className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <RiExchangeFundsLine className={`w-5 h-5 ${colors.text}`} />
               ) : isCardContract ? (
-                <RiIdCardLine className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                <RiIdCardLine className={`w-5 h-5 ${colors.text}`} />
               ) : (
-                <RiFileTextLine className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <RiFileTextLine className={`w-5 h-5 ${colors.text}`} />
               )}
             </div>
             <div>
@@ -120,13 +141,7 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
               </h2>
               <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
                 <span className="mr-2">{getContractTypeTitle()}</span>
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                  isIssueContract 
-                    ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300' 
-                    : isCardContract
-                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300'
-                      : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300'
-                }`}>
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${colors.badgeBg}`}>
                   {contract.oracleData?.CONTRACT_NUMBER || contract.liability?.contractNumber || 'No number'}
                 </span>
               </div>
@@ -138,100 +153,27 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
         <div className="overflow-y-auto flex-1 pr-1 custom-scrollbar">
           <div className={`space-y-6 transition-all duration-500 ease-out ${animateIn ? 'opacity-100 transform-none' : 'opacity-0 translate-y-4'}`}>
             
-            {/* Parent Contract Information (Only for Issue contracts) */}
-            {isIssueContract && (
-              <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-5 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                  <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg mr-3">
-                    <RiParentLine className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                  </div>
-                  <span className="bg-indigo-50 dark:bg-indigo-900/50 px-3 py-1 rounded-lg">PARENT LIABILITY CONTRACT</span>
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                  {loadingParent ? (
-                    <div className="flex justify-center p-4">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
-                    </div>
-                  ) : parentContract ? (
-                    <div className="bg-indigo-50/30 dark:bg-indigo-900/10 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/20">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Parent Contract ID */}
-                        <div className="flex flex-col">
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Parent Contract ID</p>
-                          <p className="font-medium text-gray-900 dark:text-white bg-white/60 dark:bg-gray-700/60 p-2 rounded-lg">
-                            {parentContract.ID || contract.oracleData?.LIAB_CONTRACT || 'N/A'}
-                          </p>
-                        </div>
-                        
-                        {/* Parent Contract Number */}
-                        <div className="flex flex-col">
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Parent Contract Number</p>
-                          <p className="font-medium text-gray-900 dark:text-white bg-white/60 dark:bg-gray-700/60 p-2 rounded-lg">
-                            {parentContract.CONTRACT_NUMBER || 'N/A'}
-                          </p>
-                        </div>
-                
-                        {/* Parent Contract Name */}
-                        <div className="flex flex-col">
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Parent Contract Name</p>
-                          <p className="font-medium text-gray-900 dark:text-white bg-white/60 dark:bg-gray-700/60 p-2 rounded-lg">
-                            {parentContract.CONTRACT_NAME || 'N/A'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="mt-3 text-right">
-                        <Link href={`/contracts?id=${parentContract.ID}`} className="text-xs bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900/50 dark:hover:bg-indigo-900/70 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded-lg inline-flex items-center transition-all duration-200">
-                          <span>View Parent Contract</span>
-                          <RiArrowRightSLine className="ml-1 w-4 h-4" />
-                        </Link>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-yellow-50 dark:bg-yellow-900/10 p-4 rounded-xl border border-yellow-100 dark:border-yellow-800/20">
-                      <div className="flex items-center text-yellow-700 dark:text-yellow-400">
-                        <RiInformationLine className="mr-2 w-5 h-5" />
-                        <p>Parent contract information (ID: {contract.oracleData?.LIAB_CONTRACT}) could not be loaded.</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-                
             {/* Main Contract Information */}
             <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-5 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                <div className={`p-2 rounded-lg mr-3 ${
-                  isIssueContract 
-                    ? 'bg-purple-100 dark:bg-purple-900/30' 
-                    : isCardContract
-                      ? 'bg-emerald-100 dark:bg-emerald-900/30'
-                      : 'bg-indigo-100 dark:bg-indigo-900/30'
-                }`}>
+                <div className={`p-2 rounded-lg mr-3 ${colors.bg}`}>
                   {isIssueContract ? (
-                    <RiExchangeFundsLine className={`w-5 h-5 text-purple-600 dark:text-purple-400`} />
+                    <RiExchangeFundsLine className={`w-5 h-5 ${colors.text}`} />
                   ) : isCardContract ? (
-                    <RiIdCardLine className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                    <RiIdCardLine className={`w-5 h-5 ${colors.text}`} />
                   ) : (
-                    <RiFileTextLine className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                    <RiFileTextLine className={`w-5 h-5 ${colors.text}`} />
                   )}
                 </div>
-                <span className={`px-3 py-1 rounded-lg ${
-                  isIssueContract 
-                    ? 'bg-purple-50 dark:bg-purple-900/50' 
-                    : isCardContract
-                      ? 'bg-emerald-50 dark:bg-emerald-900/50'
-                      : 'bg-indigo-50 dark:bg-indigo-900/50'
-                }`}>CONTRACT DETAILS</span>
+                <span className={`px-3 py-1 rounded-lg ${colors.bg}`}>CONTRACT DETAILS</span>
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Contract ID */}
-                <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+                <div className={`p-4 rounded-xl border ${colors.fieldBorder} ${colors.fieldBg}`}>
                   <div className="flex items-start">
-                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
-                      <RiHashtag className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <div className={`p-2 rounded-lg mr-3 ${colors.bg}`}>
+                      <RiHashtag className={`w-4 h-4 ${colors.text}`} />
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Contract ID</p>
@@ -243,10 +185,10 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                 </div>
                     
                 {/* Contract Name */}
-                <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+                <div className={`p-4 rounded-xl border ${colors.fieldBorder} ${colors.fieldBg}`}>
                   <div className="flex items-start">
-                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
-                      <RiFileUserLine className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <div className={`p-2 rounded-lg mr-3 ${colors.bg}`}>
+                      <RiFileUserLine className={`w-4 h-4 ${colors.text}`} />
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Contract Name</p>
@@ -258,10 +200,10 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                 </div>
                 
                 {/* Contract Number */}
-                <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+                <div className={`p-4 rounded-xl border ${colors.fieldBorder} ${colors.fieldBg}`}>
                   <div className="flex items-start">
-                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
-                      <RiFileTextLine className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <div className={`p-2 rounded-lg mr-3 ${colors.bg}`}>
+                      <RiFileTextLine className={`w-4 h-4 ${colors.text}`} />
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Contract Number</p>
@@ -273,10 +215,10 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                 </div>
                 
                 {/* Branch */}
-                <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+                <div className={`p-4 rounded-xl border ${colors.fieldBorder} ${colors.fieldBg}`}>
                   <div className="flex items-start">
-                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
-                      <RiBankLine className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <div className={`p-2 rounded-lg mr-3 ${colors.bg}`}>
+                      <RiBankLine className={`w-4 h-4 ${colors.text}`} />
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Branch</p>
@@ -288,10 +230,10 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                 </div>
                   
                 {/* Client ID */}
-                <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+                <div className={`p-4 rounded-xl border ${colors.fieldBorder} ${colors.fieldBg}`}>
                   <div className="flex items-start">
-                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
-                      <RiUser3Line className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <div className={`p-2 rounded-lg mr-3 ${colors.bg}`}>
+                      <RiUser3Line className={`w-4 h-4 ${colors.text}`} />
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Client ID</p>
@@ -308,10 +250,10 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                 </div>
                 
                 {/* Amendment Date */}
-                <div className="bg-indigo-50/50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800/30">
+                <div className={`p-4 rounded-xl border ${colors.fieldBorder} ${colors.fieldBg}`}>
                   <div className="flex items-start">
-                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg mr-3">
-                      <RiCalendarLine className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <div className={`p-2 rounded-lg mr-3 ${colors.bg}`}>
+                      <RiCalendarLine className={`w-4 h-4 ${colors.text}`} />
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Amendment Date</p>
@@ -328,18 +270,18 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
             {isCardContract && (
               <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-5 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                  <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg mr-3">
-                    <RiIdCardLine className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  <div className={`p-2 rounded-lg mr-3 ${colors.bg}`}>
+                    <RiIdCardLine className={`w-5 h-5 ${colors.text}`} />
                   </div>
-                  <span className="bg-emerald-50 dark:bg-emerald-900/50 px-3 py-1 rounded-lg">CARD REGISTRATION</span>
+                  <span className={`px-3 py-1 rounded-lg ${colors.bg}`}>CARD REGISTRATION</span>
                 </h3>
               
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* First Name */}
-                  <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
+                  <div className={`p-4 rounded-xl border ${colors.fieldBorder} ${colors.fieldBg}`}>
                     <div className="flex items-start">
-                      <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg mr-3">
-                        <RiUser3Line className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <div className={`p-2 rounded-lg mr-3 ${colors.bg}`}>
+                        <RiUser3Line className={`w-4 h-4 ${colors.text}`} />
                       </div>
                       <div>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">First Name</p>
@@ -351,10 +293,10 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                   </div>
                   
                   {/* Last Name */}
-                  <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
+                  <div className={`p-4 rounded-xl border ${colors.fieldBorder} ${colors.fieldBg}`}>
                     <div className="flex items-start">
-                      <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg mr-3">
-                        <RiUser3Line className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <div className={`p-2 rounded-lg mr-3 ${colors.bg}`}>
+                        <RiUser3Line className={`w-4 h-4 ${colors.text}`} />
                       </div>
                       <div>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Last Name</p>
@@ -367,10 +309,10 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                   
                   {/* Card Number - Only if present */}
                   {contract.oracleData?.CARD_NUMBER && (
-                    <div className="bg-emerald-50/50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-100 dark:border-emerald-800/30">
+                    <div className={`p-4 rounded-xl border ${colors.fieldBorder} ${colors.fieldBg}`}>
                       <div className="flex items-start">
-                        <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg mr-3">
-                          <RiIdCardLine className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        <div className={`p-2 rounded-lg mr-3 ${colors.bg}`}>
+                          <RiIdCardLine className={`w-4 h-4 ${colors.text}`} />
                         </div>
                         <div>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Card Number</p>
@@ -385,26 +327,32 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
               </div>
             )}
             
-            {/* Additional Details/Raw Data */}
+            {/* Additional Details with View More/View Less */}
             <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-5 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg mr-3">
-                  <RiInformationLine className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg mr-3">
+                    <RiInformationLine className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <span className="bg-purple-50 dark:bg-purple-900/50 px-3 py-1 rounded-lg">ADDITIONAL DETAILS</span>
                 </div>
-                <span className="bg-purple-50 dark:bg-purple-900/50 px-3 py-1 rounded-lg">ADDITIONAL DETAILS</span>
+                <button
+                  onClick={() => setShowAdditionalDetails(!showAdditionalDetails)}
+                  className="text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 hover:dark:text-indigo-300 transition-colors"
+                >
+                  {showAdditionalDetails ? 'View Less' : 'View More'}
+                </button>
               </h3>
               
-              <div className="grid grid-cols-1 gap-4">
-                {/* Raw JSON Data */}
-                <div className="bg-purple-50/30 dark:bg-purple-900/10 p-4 rounded-xl border border-purple-100 dark:border-purple-800/20">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">All Contract Data</p>
-                  <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-lg overflow-x-auto max-h-40">
-                    <pre className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
-                      {JSON.stringify(contract.oracleData, null, 2)}
-                    </pre>
+              {showAdditionalDetails && (
+                <div className="grid grid-cols-1 gap-4 animate-fadeIn">
+                  {/* Hiển thị dữ liệu JSON dưới dạng danh sách key-value */}
+                  <div className="bg-purple-50/30 dark:bg-purple-900/10 p-4 rounded-xl border border-purple-100 dark:border-purple-800/20">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">All Contract Data</p>
+                    {renderJsonData(contract.oracleData)}
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -412,4 +360,3 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
     </div>
   );
 }
-

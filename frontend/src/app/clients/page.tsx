@@ -64,11 +64,12 @@ export default function ClientsPage() {
   const [page, setPage] = useState(1);
   const itemsPerPageOracle = 10;
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [isSearching, setIsSearching] = useState(false);
 
   // Fetch clients data from Oracle when component mounts
   useEffect(() => {
     fetchOracleClients();
-  }, []);
+  }, []); // Chỉ fetch khi component mount, không phụ thuộc vào searchQuery
 
   // Fetch dữ liệu khi component mount và currentPage thay đổi
   useEffect(() => {
@@ -96,6 +97,8 @@ export default function ClientsPage() {
   // Fetch clients from Oracle
   const fetchOracleClients = async () => {
     setLoading(true);
+    if (searchQuery) setIsSearching(true);
+    
     try {
       const response = await fetch('http://localhost:5000/api/oracle/clients');
       
@@ -112,14 +115,44 @@ export default function ClientsPage() {
         ID: client.ID != null ? client.ID.toString() : ""  // Check if ID exists before calling toString()
       }));
       
+      // Chỉ lọc dữ liệu khi có tìm kiếm
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        clientsData = clientsData.filter((client: any) => 
+          (client.companyName && client.companyName.toLowerCase().includes(query)) ||
+          (client.shortName && client.shortName.toLowerCase().includes(query)) ||
+          (client.clientNumber && client.clientNumber.toLowerCase().includes(query))
+        );
+      }
+      
+      // Filter by status if needed (chỉ áp dụng khi statusFilter không phải 'all')
+      if (statusFilter !== 'all') {
+        clientsData = clientsData.filter((client: any) => 
+          client.status === statusFilter
+        );
+      }
+      
       // Sort clients by date opened
       const sortedClients = sortClientsByDate(clientsData, sortOrder);
       setClients(sortedClients);
+      
+      // Show success toast for search if applicable
+      if (searchQuery) {
+        const resultsCount = clientsData.length;
+        toast.success(`Found ${resultsCount} result${resultsCount !== 1 ? 's' : ''} for "${searchQuery}"`);
+      }
+      
+      return clientsData; // Trả về dữ liệu để promise chaining
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch clients');
       console.error('Error fetching clients:', err);
+      if (searchQuery) {
+        toast.error(`Error searching for "${searchQuery}"`);
+      }
+      throw err; // Ném lỗi để promise chaining
     } finally {
       setLoading(false);
+      setIsSearching(false);
     }
   };
 
@@ -135,9 +168,22 @@ export default function ClientsPage() {
 
   // Toggle sort order
   const toggleSortOrder = () => {
+    setIsSearching(true);
     const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
     setSortOrder(newOrder);
-    setClients(sortClientsByDate(clients, newOrder));
+    
+    // Fetch data with new sort order
+    fetchOracleClients()
+      .then(clientsData => {
+        // Sort the fetched data manually as well
+        setClients(sortClientsByDate(clientsData, newOrder));
+        setIsSearching(false);
+        toast.success(`Sorted by date ${newOrder === 'asc' ? 'ascending' : 'descending'}`);
+      })
+      .catch(() => {
+        setIsSearching(false);
+        toast.error('Error sorting clients');
+      });
   };
 
   // Oracle pagination calculations
@@ -153,11 +199,64 @@ export default function ClientsPage() {
 
   // Handlers for Client components
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Chỉ cập nhật state, không thực hiện tìm kiếm
     dispatch(setSearchQuery(e.target.value));
+  };
+
+  const handleSearchSubmit = (query: string, clientID?: string) => {
+    setIsSearching(true);
+    dispatch(setSearchQuery(query));
+    
+    // Thực hiện tìm kiếm bằng cách gọi fetchOracleClients()
+    fetchOracleClients()
+      .then(clientsData => {
+        setIsSearching(false);
+        
+        // Nếu có clientID (từ suggestion), chỉ giữ lại client có ID tương ứng
+        if (clientID) {
+          const selectedClient = clientsData.find((client: Client) => client.ID === clientID);
+          if (selectedClient) {
+            setClients([selectedClient]); // Chỉ hiển thị client được chọn
+            toast.success(`Selected client: ${selectedClient.shortName || selectedClient.companyName}`);
+            return;
+          }
+        }
+        
+        // Show a toast notification
+        if (query) {
+          toast.success(`Searching for "${query}"`);
+        } else {
+          toast.success('Cleared search filters');
+        }
+      })
+      .catch(() => {
+        setIsSearching(false);
+        toast.error('Error searching clients');
+      });
   };
 
   const handleStatusFilterChange = (status: typeof statusFilter) => {
     dispatch(setStatusFilter(status));
+    
+    // Thực hiện tìm kiếm khi người dùng thay đổi trạng thái
+    setIsSearching(true);
+    
+    // Nếu chọn 'all', reset tìm kiếm trước để tải lại tất cả dữ liệu
+    if (status === 'all') {
+      // Reset search query khi chọn 'all' (tùy chọn)
+      // dispatch(setSearchQuery(''));
+    }
+    
+    // Fetch lại dữ liệu với bộ lọc mới
+    fetchOracleClients()
+      .then(() => {
+        setIsSearching(false);
+        toast.success(`Filtered by status: ${status === 'all' ? 'All' : status}`);
+      })
+      .catch(() => {
+        setIsSearching(false);
+        toast.error('Error filtering clients');
+      });
   };
 
   const handleReduxPageChange = (page: number) => {
@@ -172,8 +271,31 @@ export default function ClientsPage() {
   };
 
   const handleRefreshData = () => {
+    // Xóa trạng thái tìm kiếm và bộ lọc trước khi làm mới dữ liệu
+    setIsSearching(true);
+    
+    // Reset bộ lọc search và status (optional - tùy theo yêu cầu)
+    // dispatch(setSearchQuery(''));
+    // dispatch(setStatusFilter('all'));
+    
     // Refresh Oracle data
-    fetchOracleClients();
+    fetchOracleClients()
+      .then(() => {
+        setIsSearching(false);
+        
+        // Thông báo thành công phù hợp với bộ lọc hiện tại
+        if (statusFilter !== 'all') {
+          toast.success(`Data refreshed with status filter: ${statusFilter}`);
+        } else if (searchQuery) {
+          toast.success(`Data refreshed with search: "${searchQuery}"`);
+        } else {
+          toast.success('All client data refreshed successfully');
+        }
+      })
+      .catch(() => {
+        setIsSearching(false);
+        toast.error('Error refreshing data');
+      });
   };
 
   const handleAddClient = async (e: React.FormEvent) => {
@@ -235,10 +357,13 @@ export default function ClientsPage() {
         <ClientHeader 
           onAddClick={() => setIsAddModalOpen(true)}
           onSearchChange={handleSearchChange}
+          onSearchSubmit={handleSearchSubmit}
           searchQuery={searchQuery}
           onStatusChange={handleStatusFilterChange}
           statusFilter={statusFilter}
           totalItems={clients.length}
+          isSearching={isSearching}
+          allClients={clients}
         />
 
         {/* Main Content */}

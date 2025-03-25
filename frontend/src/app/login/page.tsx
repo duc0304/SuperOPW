@@ -34,7 +34,7 @@ export default function LoginPage() {
       if (response.ok) {
         // Đăng nhập thành công
         login(data.data.token, data.data.user);
-        router.push('/dashboard');
+        router.push('/clients');
       } else {
         // Đăng nhập thất bại
         setError(data.message || 'Đăng nhập thất bại');
