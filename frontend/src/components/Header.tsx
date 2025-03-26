@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { RiMenu2Line, RiNotification3Line, RiTranslate2, RiLogoutBoxLine, RiUserSettingsLine } from 'react-icons/ri';
+import { RiNotification3Line, RiTranslate2, RiLogoutBoxLine, RiUserSettingsLine } from 'react-icons/ri';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
@@ -49,11 +49,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
         <div className="flex items-center gap-4">
           <button 
             onClick={onMenuClick}
-            className="p-2 rounded-lg bg-indigo-100/30 backdrop-blur-sm hover:bg-indigo-200/40 transition-colors md:hidden"
+            className="p-2 rounded-lg bg-indigo-100/30 backdrop-blur-sm hover:bg-indigo-200/40 transition-colors hidden md:block"
           >
-            <RiMenu2Line className="w-5 h-5 text-indigo-700" />
+            <h1 className="text-indigo-700 font-bold text-xl">Way4 Pro</h1>
           </button>
-          <h1 className="text-indigo-700 font-bold text-xl hidden md:block">Way4 Pro</h1>
+          <h1 className="text-indigo-700 font-bold text-xl md:hidden">Way4 Pro</h1>
         </div>
 
         {/* Right section */}
@@ -84,24 +84,24 @@ export default function Header({ onMenuClick }: HeaderProps) {
             
             {/* User dropdown menu */}
             {isUserDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-indigo-50 rounded-xl shadow-lg py-2 z-50 border border-indigo-200">
-                <div className="px-4 py-3 border-b border-indigo-200">
-                  <p className="font-medium text-indigo-800">John Doe</p>
-                  <p className="text-sm text-indigo-500">john.doe@example.com</p>
+              <div className="absolute right-0 mt-2 w-56 md:w-64 bg-indigo-50 rounded-xl shadow-lg py-2 z-50 border border-indigo-200">
+                <div className="px-3 py-2 border-b border-indigo-200">
+                  <p className="font-medium text-indigo-800 text-sm">John Doe</p>
+                  <p className="text-xs text-indigo-500">john.doe@example.com</p>
                 </div>
                 <ul className="py-1">
                   <li>
-                    <button className="w-full text-left px-4 py-2.5 hover:bg-indigo-100 flex items-center gap-2 text-indigo-700">
-                      <RiUserSettingsLine className="w-5 h-5 text-indigo-500" />
+                    <button className="w-full text-left px-3 py-2 hover:bg-indigo-100 flex items-center gap-2 text-indigo-700 text-sm">
+                      <RiUserSettingsLine className="w-4 h-4 text-indigo-500" />
                       <span>Profile</span>
                     </button>
                   </li>
                   <li>
                     <button 
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2.5 hover:bg-red-50 text-red-600 flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 hover:bg-red-50 text-red-600 flex items-center gap-2 text-sm"
                     >
-                      <RiLogoutBoxLine className="w-5 h-5" />
+                      <RiLogoutBoxLine className="w-4 h-4" />
                       <span>Logout</span>
                     </button>
                   </li>
