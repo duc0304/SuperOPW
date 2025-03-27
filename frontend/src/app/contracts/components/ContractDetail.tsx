@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RiFileTextLine, RiCalendarLine, RiExchangeFundsLine, RiInformationLine, RiArrowRightSLine, RiIdCardLine, RiUser3Line, RiBankLine, RiHashtag, RiFileUserLine } from 'react-icons/ri';
+import { RiFileTextLine, RiCalendarLine, RiExchangeFundsLine, RiInformationLine, RiArrowRightSLine, RiIdCardLine, RiUser3Line, RiBankLine, RiHashtag, RiFileUserLine, RiCloseLine } from 'react-icons/ri';
 import Link from 'next/link';
 import { ContractNode } from '../types';
+import { createPortal } from 'react-dom';
 
 interface ContractDetailProps {
   contract: ContractNode;
@@ -12,6 +13,8 @@ interface ContractDetailProps {
 export default function ContractDetail({ contract }: ContractDetailProps) {
   const [animateIn, setAnimateIn] = useState(false);
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(false);
+  const [showCardModal, setShowCardModal] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Kiểm tra loại contract
   const isIssueContract = contract.oracleData?.LIAB_CONTRACT !== undefined && 
@@ -31,6 +34,11 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
     }, 100);
     return () => clearTimeout(timer);
   }, [contract.id]);
+
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
 
   // Format date
   const formatDate = (dateString: string | undefined) => {
@@ -276,6 +284,71 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                   <span className={`px-3 py-1 rounded-lg ${colors.bg}`}>CARD REGISTRATION</span>
                 </h3>
               
+                {/* Thẻ vật lý */}
+                <div className="mb-6">
+                  <div 
+                    className="relative w-full max-w-[425px] h-[270px] mx-auto rounded-xl overflow-hidden shadow-xl transform transition-all duration-300 hover:scale-105 group cursor-pointer"
+                    onClick={() => setShowCardModal(true)}
+                  >
+                    {/* Nền thẻ */}
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center" 
+                      style={{ backgroundImage: 'url(/card-bg.jpg)' }}
+                    />
+                    
+                    {/* Hiệu ứng lớp phủ */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+                    
+                    {/* Hiệu ứng phản chiếu nhẹ */}
+                    <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-white/10 to-transparent"></div>
+                    
+                    {/* Tên ngân hàng */}
+                    <div className="absolute top-[25px] left-[30px]">
+                      <p className="text-white font-bold text-2xl tracking-wider">HAICHANBANK</p>
+                    </div>
+                    
+                    {/* Logo - phóng to */}
+                    <div className="absolute top-[-5px] right-[20px]">
+                      <img src="/mastercard.svg" alt="MasterCard" className="w-[90px] h-[90px]" />
+                    </div>
+                    
+                    {/* Chip - phóng to */}
+                    <div className="absolute top-[100px] left-[30px]">
+                      <img src="/chip.png" alt="Card Chip" className="w-[60px] h-auto object-contain drop-shadow-md" />
+                    </div>
+                    
+                    {/* Biểu tượng contactless - sử dụng hình ảnh */}
+                    <div className="absolute top-[102px] left-[95px]">
+                      <img src="/contactless-indicator.png" alt="Contactless" className="w-[35px] h-auto opacity-70" />
+                    </div>
+                    
+                    {/* Số thẻ với font OCR-A */}
+                    <div className="absolute top-[160px] left-[30px] right-[30px]">
+                      <p className="font-['OCR-A'] text-[22px] text-white tracking-[0.15em] whitespace-nowrap overflow-hidden">
+                        {contract.oracleData?.CARD_NUMBER ? 
+                          contract.oracleData.CARD_NUMBER.replace(/(\d{4})/g, '$1 ').trim() : 
+                          '1000 0101 3559 6630'}
+                      </p>
+                    </div>
+                    
+                    {/* Tên chủ thẻ */}
+                    <div className="absolute bottom-[25px] left-[30px]">
+                      <p className="text-xs text-white/80 uppercase tracking-wider mb-0.5">CARD HOLDER</p>
+                      <p className="text-white uppercase font-medium text-sm">
+                        {contract.oracleData?.TR_FIRST_NAM && contract.oracleData?.TR_LAST_NAM ? 
+                          `${contract.oracleData.TR_FIRST_NAM} ${contract.oracleData.TR_LAST_NAM}` : 
+                          'NAM DINH'}
+                      </p>
+                    </div>
+                    
+                    {/* Ngày hết hạn */}
+                    <div className="absolute bottom-[25px] right-[30px] text-right">
+                      <p className="text-xs text-white/80 uppercase tracking-wider mb-0.5">EXPIRES</p>
+                      <p className="text-white font-medium text-sm">MM/YY</p>
+                    </div>
+                  </div>
+                </div>
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* First Name */}
                   <div className={`p-4 rounded-xl border ${colors.fieldBorder} ${colors.fieldBg}`}>
@@ -357,6 +430,86 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
           </div>
         </div>
       </div>
+      
+      {/* Render modal with portal */}
+      {isMounted && showCardModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm" onClick={() => setShowCardModal(false)}>
+          <div className="absolute top-4 right-4 z-50">
+            <button 
+              className="bg-white/20 hover:bg-white/30 p-3 rounded-full transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowCardModal(false);
+              }}
+            >
+              <RiCloseLine className="w-8 h-8 text-white" />
+            </button>
+          </div>
+          
+          <div 
+            className="relative w-[90vw] max-w-[1000px] h-auto aspect-[16/10] m-4 rounded-2xl overflow-hidden shadow-2xl transform transition-all duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Nền thẻ */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center" 
+              style={{ backgroundImage: 'url(/card-bg.jpg)' }}
+            />
+            
+            {/* Hiệu ứng lớp phủ */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+            
+            {/* Hiệu ứng phản chiếu nhẹ */}
+            <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-white/20 to-transparent"></div>
+            
+            {/* Tên ngân hàng */}
+            <div className="absolute top-[8%] left-[5%]">
+              <p className="text-white font-bold text-4xl md:text-6xl tracking-wider">HAICHANBANK</p>
+            </div>
+            
+            {/* Logo - tăng kích thước */}
+            <div className="absolute top-[-3%] right-[3%]">
+              <img src="/mastercard.svg" alt="MasterCard" className="w-[200px] md:w-[200px] h-auto" />
+            </div>
+            
+            {/* Chip - tăng kích thước */}
+            <div className="absolute top-[38%] left-[5%]">
+              <img src="/chip.png" alt="Card Chip" className="w-[150px] md:w-[150px] h-auto object-contain drop-shadow-md" />
+            </div>
+            
+            {/* Biểu tượng contactless - tăng kích thước */}
+            <div className="absolute top-[38%] left-[21%]">
+              <img src="/contactless-indicator.png" alt="Contactless" className="w-[90px] md:w-[90px] h-auto opacity-80" />
+            </div>
+            
+            {/* Số thẻ với font OCR-A */}
+            <div className="absolute top-[60%] left-[5%] right-[5%]">
+              <p className="font-['OCR-A'] text-[5vmin] md:text-[5vmin] text-white tracking-[0.15em] whitespace-nowrap overflow-hidden">
+                {contract.oracleData?.CARD_NUMBER ? 
+                  contract.oracleData.CARD_NUMBER.replace(/(\d{4})/g, '$1 ').trim() : 
+                  '1000 0101 3559 6630'}
+              </p>
+            </div>
+            
+            {/* Tên chủ thẻ */}
+            <div className="absolute bottom-[8%] left-[5%]">
+              <p className="text-lg md:text-xl text-white/80 uppercase tracking-wider mb-2">CARD HOLDER</p>
+              <p className="text-white uppercase font-medium text-2xl md:text-4xl">
+                {contract.oracleData?.TR_FIRST_NAM && contract.oracleData?.TR_LAST_NAM ? 
+                  `${contract.oracleData.TR_FIRST_NAM} ${contract.oracleData.TR_LAST_NAM}` : 
+                  'NAM DINH'}
+              </p>
+            </div>
+            
+            {/* Ngày hết hạn */}
+            <div className="absolute bottom-[8%] right-[5%] text-right">
+              <p className="text-lg md:text-xl text-white/80 uppercase tracking-wider mb-2">EXPIRES</p>
+              <p className="text-white font-medium text-2xl md:text-4xl">MM/YY</p>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

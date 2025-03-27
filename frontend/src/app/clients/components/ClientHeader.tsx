@@ -252,7 +252,7 @@ export default function ClientHeader({
                 value={searchQuery}
                 onChange={handleSearchChange}
                 onKeyDown={handleKeyDown}
-                placeholder="Search clients..."
+                placeholder="Search clients"
                 className="py-2 pl-3.5 pr-10 w-full bg-white shadow-sm dark:bg-gray-700 border-gray-200 dark:border-gray-600 dark:placeholder-gray-400 rounded-xl transition-all duration-300 focus:border-primary-400 dark:focus:border-primary-500 text-sm"
                 onFocus={() => {
                   if (justSelected) {
@@ -390,7 +390,7 @@ export default function ClientHeader({
                 value={searchQuery}
                   onChange={handleSearchChange}
                   onKeyDown={handleKeyDown}
-                placeholder="Search clients..."
+                placeholder="Search clients by name, cpname or number..."
                   className="py-2.5 pl-10 pr-14 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500 text-base"
                   onFocus={() => {
                     if (justSelected) {

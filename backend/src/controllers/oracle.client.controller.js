@@ -57,7 +57,7 @@ exports.getClientById = async (req, res) => {
     
     // Trả về client với đầy đủ thông tin từ Oracle
     const clientData = {
-      ID: client.ID, // ID từ Oracle database là định danh chính
+      ID: client.ID, 
       companyName: client.COMPANY_NAM || 'Unknown',
       shortName: client.SHORT_NAME || (client.CLIENT_NAME?.substring(0, 10) + '...') || 'Unknown',
       clientNumber: client.CLIENT_NUMBER || `CL-${client.ID}`,

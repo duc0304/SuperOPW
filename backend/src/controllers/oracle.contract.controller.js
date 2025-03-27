@@ -7,12 +7,11 @@ exports.getAllContracts = async (req, res) => {
   try {
     const contracts = await contractModel.getAllContracts();
     
-    // Log dữ liệu của contract đầu tiên để kiểm tra cấu trúc
+
     if (contracts.length > 0) {
       console.log('First contract raw data:', JSON.stringify(contracts[0], null, 2));
     }
     
-    // Format datetime nếu cần
     const formattedContracts = contracts.map(contract => {
       return {
         ...contract,
@@ -52,7 +51,6 @@ exports.getContractsByClientId = async (req, res) => {
     // Log số lượng contracts tìm thấy
     console.log(`Found ${contracts.length} contracts for client ID: ${clientId}`);
     
-    // Format datetime nếu cần
     const formattedContracts = contracts.map(contract => {
       return {
         ...contract,

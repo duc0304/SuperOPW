@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense, lazy } from 'react';
 import ClientHeader from './components/ClientHeader';
 import ClientTable from './components/ClientTable';
 import Pagination from './components/Pagination';
-import AddClientModal from './components/AddClientModal';
-import EditClientModal from './components/EditClientModal';
-import DeleteClientModal from './components/DeleteClientModal';
+// Dynamic import cho modal components (components nặng)
+const AddClientModal = lazy(() => import('./components/AddClientModal'));
+const EditClientModal = lazy(() => import('./components/EditClientModal'));
+const DeleteClientModal = lazy(() => import('./components/DeleteClientModal'));
+
 import Button from '@/components/ui/Button';
 import { DEFAULT_FORM_DATA } from './mock_clients';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
@@ -33,6 +35,14 @@ import {
 } from '@/redux/slices/clientSlice';
 import { RiRefreshLine, RiSortAsc } from 'react-icons/ri';
 import toast from 'react-hot-toast';
+
+// Component hiển thị khi đang tải modal components
+const LoadingFallback = () => (
+  <div className="flex justify-center items-center py-8">
+    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500"></div>
+    <p className="ml-3 text-sm text-gray-500">Loading...</p>
+  </div>
+);
 
 export default function ClientsPage() {
   const dispatch = useAppDispatch();
@@ -61,10 +71,33 @@ export default function ClientsPage() {
   const itemsPerPageOracle = 10;
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isSearching, setIsSearching] = useState(false);
+  
+  // Thêm state để theo dõi các trang đã tải
+  const [loadedPages, setLoadedPages] = useState<Set<number>>(new Set([1]));
+  const [pageData, setPageData] = useState<Record<number, Client[]>>({});
+
+  // Tính toán giá trị totalPagesOracle trước khi sử dụng
+  const indexOfLastItem = page * itemsPerPageOracle;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPageOracle;
+  const totalPagesOracle = Math.ceil(clients.length / itemsPerPageOracle);
+  // Sử dụng dữ liệu từ pageData nếu có, ngược lại sử dụng slice từ clients
+  const currentClients = pageData[page] || clients.slice(indexOfFirstItem, indexOfLastItem);
 
   useEffect(() => {
     fetchOracleClients();
   }, []);
+
+  // Theo dõi trang hiện tại và tải dữ liệu khi cần
+  useEffect(() => {
+    if (!loadedPages.has(page)) {
+      fetchPageData(page);
+    }
+    
+    // Preload trang kế tiếp nếu chưa tải
+    if (page < totalPagesOracle && !loadedPages.has(page + 1)) {
+      fetchPageData(page + 1);
+    }
+  }, [page, loadedPages, totalPagesOracle]);
 
   useEffect(() => {
     if (!isPageLoaded) {
@@ -83,6 +116,40 @@ export default function ClientsPage() {
       setFormData(DEFAULT_FORM_DATA);
     }
   }, [isAddModalOpen]);
+
+  // Hàm tải dữ liệu cho trang cụ thể
+  const fetchPageData = async (pageNum: number) => {
+    // Nếu trang này đã được tải, không cần tải lại
+    if (loadedPages.has(pageNum)) return;
+
+    setLoading(true);
+    try {
+      // Đây là nơi bạn sẽ tải dữ liệu cho trang cụ thể
+      // Ví dụ: const response = await fetch(`/api/clients?page=${pageNum}`);
+      
+      // Giả định dữ liệu đã có trong state clients
+      const start = (pageNum - 1) * itemsPerPageOracle;
+      const end = start + itemsPerPageOracle;
+      const pageClients = clients.slice(start, end);
+      
+      // Lưu dữ liệu trang vào state
+      setPageData(prev => ({
+        ...prev,
+        [pageNum]: pageClients
+      }));
+      
+      // Đánh dấu trang đã được tải
+      setLoadedPages(prev => new Set([...prev, pageNum]));
+      
+      console.log(`Loaded data for page ${pageNum}`);
+      
+    } catch (err) {
+      console.error(`Error loading page ${pageNum}:`, err);
+      // Xử lý lỗi tải trang
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchOracleClients = async () => {
     setLoading(true);
@@ -120,6 +187,18 @@ export default function ClientsPage() {
       
       const sortedClients = sortClientsByDate(clientsData, sortOrder);
       setClients(sortedClients);
+      
+      // Reset loadedPages và pageData khi fetch dữ liệu mới
+      setLoadedPages(new Set([1]));
+      
+      // Tải dữ liệu cho trang hiện tại
+      const start = (page - 1) * itemsPerPageOracle;
+      const end = start + itemsPerPageOracle;
+      const currentPageData = sortedClients.slice(start, end);
+      
+      setPageData({
+        [page]: currentPageData
+      });
       
       if (searchQuery) {
         const resultsCount = clientsData.length;
@@ -164,13 +243,24 @@ export default function ClientsPage() {
       });
   };
 
-  const indexOfLastItem = page * itemsPerPageOracle;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPageOracle;
-  const currentClients = clients.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPagesOracle = Math.ceil(clients.length / itemsPerPageOracle);
-
   const handlePageChange = (pageNumber: number) => {
+    // Lưu lại trang hiện tại trước khi thay đổi
+    const previousPage = page;
+    
+    // Đặt trang mới
     setPage(pageNumber);
+    
+    // Nếu trang mới chưa được tải và khác với trang hiện tại và trang kế tiếp
+    if (!loadedPages.has(pageNumber) && pageNumber !== previousPage && pageNumber !== previousPage + 1) {
+      // Tải dữ liệu cho trang mới
+      fetchPageData(pageNumber);
+    }
+    
+    // Nếu trang tiếp theo của trang mới chưa được tải
+    if (pageNumber < totalPagesOracle && !loadedPages.has(pageNumber + 1)) {
+      // Tải trước dữ liệu cho trang tiếp theo
+      fetchPageData(pageNumber + 1);
+    }
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -229,6 +319,10 @@ export default function ClientsPage() {
 
   const handleRefreshData = () => {
     setIsSearching(true);
+    // Reset lại loadedPages khi refresh
+    setLoadedPages(new Set());
+    setPageData({});
+    
     fetchOracleClients()
       .then(() => {
         setIsSearching(false);
@@ -250,6 +344,8 @@ export default function ClientsPage() {
     e.preventDefault();
     await dispatch(addClientAction(formData));
     setIsAddModalOpen(false);
+    // Refresh data after adding
+    handleRefreshData();
   };
 
   const handleEditClient = async (e: React.FormEvent) => {
@@ -261,6 +357,8 @@ export default function ClientsPage() {
       }));
       setIsEditModalOpen(false);
       setSelectedClient(null);
+      // Refresh data after editing
+      handleRefreshData();
     }
   };
 
@@ -269,6 +367,8 @@ export default function ClientsPage() {
       await dispatch(deleteClientAction(selectedClient.ID));
       setIsDeleteModalOpen(false);
       setSelectedClient(null);
+      // Refresh data after deleting
+      handleRefreshData();
     }
   };
 
@@ -350,7 +450,7 @@ export default function ClientsPage() {
             </Button>
           </div>
 
-          {loading ? (
+          {loading && !pageData[page] ? (
             <div className="mt-4 mb-4 text-center">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-primary-500 border-opacity-50"></div>
               <p className="text-sm text-gray-500 mt-2">Loading clients...</p>
@@ -368,6 +468,14 @@ export default function ClientsPage() {
                 onEdit={openEditModal} 
                 onDelete={openDeleteModal}
               />
+              
+              {/* Hiển thị trạng thái loading cho trang */}
+              {(loading && !loadedPages.has(page)) && (
+                <div className="p-4 text-center">
+                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-t-2 border-primary-500 border-opacity-50"></div>
+                  <p className="text-xs text-gray-500 mt-1">Loading page {page}...</p>
+                </div>
+              )}
             </div>
           )}
 
@@ -550,27 +658,42 @@ export default function ClientsPage() {
         {/* Mobile navigation spacing */}
         <div className="h-16 md:hidden"></div>
 
-        <AddClientModal 
-          isOpen={isAddModalOpen} 
-          onClose={() => setIsAddModalOpen(false)}
-          formData={formData}
-          setFormData={setFormData}
-          onSubmit={handleAddClient}
-        />
-        <EditClientModal 
-          isOpen={isEditModalOpen} 
-          onClose={() => setIsEditModalOpen(false)}
-          client={selectedClient}
-          formData={formData}
-          setFormData={setFormData}
-          onSubmit={handleEditClient}
-        />
-        <DeleteClientModal 
-          isOpen={isDeleteModalOpen} 
-          onClose={() => setIsDeleteModalOpen(false)}
-          client={selectedClient}
-          onDelete={handleDeleteClient}
-        />
+        {/* Lazy load modals với Suspense */}
+        {isAddModalOpen && (
+          <Suspense fallback={<LoadingFallback />}>
+            <AddClientModal 
+              isOpen={isAddModalOpen} 
+              onClose={() => setIsAddModalOpen(false)}
+              formData={formData}
+              setFormData={setFormData}
+              onSubmit={handleAddClient}
+            />
+          </Suspense>
+        )}
+        
+        {isEditModalOpen && (
+          <Suspense fallback={<LoadingFallback />}>
+            <EditClientModal 
+              isOpen={isEditModalOpen} 
+              onClose={() => setIsEditModalOpen(false)}
+              client={selectedClient}
+              formData={formData}
+              setFormData={setFormData}
+              onSubmit={handleEditClient}
+            />
+          </Suspense>
+        )}
+        
+        {isDeleteModalOpen && (
+          <Suspense fallback={<LoadingFallback />}>
+            <DeleteClientModal 
+              isOpen={isDeleteModalOpen} 
+              onClose={() => setIsDeleteModalOpen(false)}
+              client={selectedClient}
+              onDelete={handleDeleteClient}
+            />
+          </Suspense>
+        )}
       </div>
     </div>
   );

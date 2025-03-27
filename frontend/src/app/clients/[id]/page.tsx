@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 import Input from '@/components/ui/Input';
 
 interface ExtendedClient extends Omit<Client, 'ID'> {
-  ID: string; // Oracle database ID (bắt buộc)
+  ID: string; // Oracle database ID 
   FIRST_NAM?: string;
   LAST_NAM?: string;
   FATHER_S_NAM?: string;
@@ -139,7 +139,7 @@ export default function ClientDetailsPage() {
     }
   };
 
-  // Format date to display in a user-friendly format
+  // Format date 
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return 'N/A';
     try {
