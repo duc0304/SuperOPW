@@ -276,126 +276,134 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
             
             {/* Card Registration Info - Only show if it's a card contract */}
             {isCardContract && (
-              <div className="bg-white/90 dark:bg-gray-800/90 rounded-xl p-5 border border-purple-200/50 dark:border-purple-800/30 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                  <div className={`p-2 rounded-lg mr-3 ${colors.bg}`}>
-                    <RiIdCardLine className={`w-5 h-5 ${colors.text}`} />
-                  </div>
-                  <span className={`px-3 py-1 rounded-lg ${colors.bg}`}>CARD REGISTRATION</span>
-                </h3>
-              
-                {/* Thẻ vật lý */}
-                <div className="mb-6">
-                  <div 
-                    className="relative w-full max-w-[425px] h-[270px] mx-auto rounded-xl overflow-hidden shadow-xl transform transition-all duration-300 hover:scale-105 group cursor-pointer"
-                    onClick={() => setShowCardModal(true)}
-                  >
-                    {/* Nền thẻ */}
-                    <div 
-                      className="absolute inset-0 bg-cover bg-center" 
-                      style={{ backgroundImage: 'url(/card-bg.jpg)' }}
-                    />
-                    
-                    {/* Hiệu ứng lớp phủ */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
-                    
-                    {/* Hiệu ứng phản chiếu nhẹ */}
-                    <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-white/10 to-transparent"></div>
-                    
-                    {/* Tên ngân hàng */}
-                    <div className="absolute top-[25px] left-[30px]">
-                      <p className="text-white font-bold text-2xl tracking-wider">HAICHANBANK</p>
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                {/* Header */}
+                <div className={`px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-emerald-50 dark:bg-emerald-900/20`}>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                    <div className={`p-2 rounded-lg mr-3 bg-emerald-100 dark:bg-emerald-800/50`}>
+                      <RiIdCardLine className={`w-5 h-5 text-emerald-600 dark:text-emerald-400`} />
                     </div>
-                    
-                    {/* Logo - phóng to */}
-                    <div className="absolute top-[-5px] right-[20px]">
-                      <img src="/mastercard.svg" alt="MasterCard" className="w-[90px] h-[90px]" />
-                    </div>
-                    
-                    {/* Chip - phóng to */}
-                    <div className="absolute top-[100px] left-[30px]">
-                      <img src="/chip.png" alt="Card Chip" className="w-[60px] h-auto object-contain drop-shadow-md" />
-                    </div>
-                    
-                    {/* Biểu tượng contactless - sử dụng hình ảnh */}
-                    <div className="absolute top-[102px] left-[95px]">
-                      <img src="/contactless-indicator.png" alt="Contactless" className="w-[35px] h-auto opacity-70" />
-                    </div>
-                    
-                    {/* Số thẻ với font OCR-A */}
-                    <div className="absolute top-[160px] left-[30px] right-[30px]">
-                      <p className="font-['OCR-A'] text-[22px] text-white tracking-[0.15em] whitespace-nowrap overflow-hidden">
-                        {contract.oracleData?.CARD_NUMBER ? 
-                          contract.oracleData.CARD_NUMBER.replace(/(\d{4})/g, '$1 ').trim() : 
-                          '1000 0101 3559 6630'}
-                      </p>
-                    </div>
-                    
-                    {/* Tên chủ thẻ */}
-                    <div className="absolute bottom-[25px] left-[30px]">
-                      <p className="text-xs text-white/80 uppercase tracking-wider mb-0.5">CARD HOLDER</p>
-                      <p className="text-white uppercase font-medium text-sm">
-                        {contract.oracleData?.TR_FIRST_NAM && contract.oracleData?.TR_LAST_NAM ? 
-                          `${contract.oracleData.TR_FIRST_NAM} ${contract.oracleData.TR_LAST_NAM}` : 
-                          'NAM DINH'}
-                      </p>
-                    </div>
-                    
-                    {/* Ngày hết hạn */}
-                    <div className="absolute bottom-[25px] right-[30px] text-right">
-                      <p className="text-xs text-white/80 uppercase tracking-wider mb-0.5">EXPIRES</p>
-                      <p className="text-white font-medium text-sm">MM/YY</p>
-                    </div>
-                  </div>
+                    <span>CARD REGISTRATION</span>
+                  </h3>
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* First Name */}
-                  <div className={`p-4 rounded-xl border ${colors.fieldBorder} ${colors.fieldBg}`}>
-                    <div className="flex items-start">
-                      <div className={`p-2 rounded-lg mr-3 ${colors.bg}`}>
-                        <RiUser3Line className={`w-4 h-4 ${colors.text}`} />
+              
+                {/* Card Preview */}
+                <div className="p-5 bg-gradient-to-b from-emerald-50/50 to-white dark:from-emerald-900/10 dark:to-gray-800">
+                  {/* Thẻ vật lý */}
+                  <div className="mb-6">
+                    <div 
+                      className="relative w-full max-w-[425px] h-[270px] mx-auto rounded-xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-700 transform transition-all duration-300 hover:shadow-xl cursor-pointer"
+                      onClick={() => setShowCardModal(true)}
+                    >
+                      {/* Nền thẻ */}
+                      <div 
+                        className="absolute inset-0 bg-cover bg-center" 
+                        style={{ backgroundImage: 'url(/card-bg.jpg)' }}
+                      />
+                      
+                      {/* Hiệu ứng lớp phủ */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+                      
+                      {/* Tên ngân hàng */}
+                      <div className="absolute top-[25px] left-[30px]">
+                        <p className="text-white font-bold text-2xl tracking-wider">HAICHANBANK</p>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">First Name</p>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {contract.oracleData?.TR_FIRST_NAM || 'N/A'}
+                      
+                      {/* Logo */}
+                      <div className="absolute top-[-5px] right-[20px]">
+                        <img src="/mastercard.svg" alt="MasterCard" className="w-[90px] h-[90px]" />
+                      </div>
+                      
+                      {/* Chip */}
+                      <div className="absolute top-[100px] left-[30px]">
+                        <img src="/chip.png" alt="Card Chip" className="w-[60px] h-auto object-contain drop-shadow-md" />
+                      </div>
+                      
+                      {/* Biểu tượng contactless */}
+                      <div className="absolute top-[102px] left-[95px]">
+                        <img src="/contactless-indicator.png" alt="Contactless" className="w-[35px] h-auto opacity-70" />
+                      </div>
+                      
+                      {/* Số thẻ với font OCR-A */}
+                      <div className="absolute top-[160px] left-[30px] right-[30px]">
+                        <p className="font-['OCR-A'] text-[22px] text-white tracking-[0.15em] whitespace-nowrap overflow-hidden">
+                          {contract.oracleData?.CARD_NUMBER ? 
+                            contract.oracleData.CARD_NUMBER.replace(/(\d{4})/g, '$1 ').trim() : 
+                            '1000 0101 3559 6630'}
                         </p>
+                      </div>
+                      
+                      {/* Tên chủ thẻ */}
+                      <div className="absolute bottom-[25px] left-[30px]">
+                        <p className="text-xs text-white/80 uppercase tracking-wider mb-0.5">CARD HOLDER</p>
+                        <p className="text-white uppercase font-medium text-sm">
+                          {contract.oracleData?.TR_FIRST_NAM && contract.oracleData?.TR_LAST_NAM ? 
+                            `${contract.oracleData.TR_FIRST_NAM} ${contract.oracleData.TR_LAST_NAM}` : 
+                            'NAM DINH'}
+                        </p>
+                      </div>
+                      
+                      {/* Ngày hết hạn */}
+                      <div className="absolute bottom-[25px] right-[30px] text-right">
+                        <p className="text-xs text-white/80 uppercase tracking-wider mb-0.5">EXPIRES</p>
+                        <p className="text-white font-medium text-sm">MM/YY</p>
+                      </div>
+                      
+                      {/* View indicator */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="bg-white/20 text-white px-4 py-2 rounded-lg backdrop-blur-sm">Click to view full screen</span>
                       </div>
                     </div>
                   </div>
                   
-                  {/* Last Name */}
-                  <div className={`p-4 rounded-xl border ${colors.fieldBorder} ${colors.fieldBg}`}>
-                    <div className="flex items-start">
-                      <div className={`p-2 rounded-lg mr-3 ${colors.bg}`}>
-                        <RiUser3Line className={`w-4 h-4 ${colors.text}`} />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Last Name</p>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {contract.oracleData?.TR_LAST_NAM || 'N/A'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Card Number - Only if present */}
-                  {contract.oracleData?.CARD_NUMBER && (
-                    <div className={`p-4 rounded-xl border ${colors.fieldBorder} ${colors.fieldBg}`}>
-                      <div className="flex items-start">
-                        <div className={`p-2 rounded-lg mr-3 ${colors.bg}`}>
-                          <RiIdCardLine className={`w-4 h-4 ${colors.text}`} />
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Card Number</p>
-                          <p className="font-medium text-gray-900 dark:text-white">
+                  {/* Card Info Table */}
+                  <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <table className="w-full">
+                      <tbody>
+                        {/* Card Number */}
+                        <tr className="border-b border-gray-200 dark:border-gray-700">
+                          <td className="px-4 py-3 bg-gray-50 dark:bg-gray-800/70 w-1/3 font-medium text-gray-700 dark:text-gray-300">Card Number</td>
+                          <td className="px-4 py-3 text-gray-800 dark:text-gray-200 font-mono">
                             {contract.oracleData?.CARD_NUMBER || 'N/A'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                          </td>
+                        </tr>
+                        
+                        {/* Card Holder */}
+                        <tr className="border-b border-gray-200 dark:border-gray-700">
+                          <td className="px-4 py-3 bg-gray-50 dark:bg-gray-800/70 font-medium text-gray-700 dark:text-gray-300">Card Holder</td>
+                          <td className="px-4 py-3 text-gray-800 dark:text-gray-200">
+                            {contract.oracleData?.TR_FIRST_NAM && contract.oracleData?.TR_LAST_NAM ? 
+                              `${contract.oracleData.TR_FIRST_NAM} ${contract.oracleData.TR_LAST_NAM}` : 
+                              'N/A'}
+                          </td>
+                        </tr>
+                        
+                        {/* First Name */}
+                        <tr className="border-b border-gray-200 dark:border-gray-700">
+                          <td className="px-4 py-3 bg-gray-50 dark:bg-gray-800/70 font-medium text-gray-700 dark:text-gray-300">First Name</td>
+                          <td className="px-4 py-3 text-gray-800 dark:text-gray-200">
+                            {contract.oracleData?.TR_FIRST_NAM || 'N/A'}
+                          </td>
+                        </tr>
+                        
+                        {/* Last Name */}
+                        <tr className="border-b border-gray-200 dark:border-gray-700">
+                          <td className="px-4 py-3 bg-gray-50 dark:bg-gray-800/70 font-medium text-gray-700 dark:text-gray-300">Last Name</td>
+                          <td className="px-4 py-3 text-gray-800 dark:text-gray-200">
+                            {contract.oracleData?.TR_LAST_NAM || 'N/A'}
+                          </td>
+                        </tr>
+                        
+                        {/* Expiry Date */}
+                        <tr>
+                          <td className="px-4 py-3 bg-gray-50 dark:bg-gray-800/70 font-medium text-gray-700 dark:text-gray-300">Expiry Date</td>
+                          <td className="px-4 py-3 text-gray-800 dark:text-gray-200">
+                            {contract.oracleData?.EXPR_DATE || 'MM/YY'}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}
