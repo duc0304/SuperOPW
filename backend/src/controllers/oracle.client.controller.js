@@ -2,27 +2,42 @@ const clientModel = require('../models/oracle/client.model');
 const { ApiResponse } = require('../utils/ApiResponse');
 const { ApiError } = require('../utils/ApiError');
 
-// Lấy tất cả clients với các trường cần thiết cho customer table
+// Lấy tất cả clients với phân trang và tìm kiếm
 exports.getAllClients = async (req, res) => {
   try {
-    const clients = await clientModel.getAllClients();
-    
-    // Chuyển đổi dữ liệu từ Oracle sang định dạng phù hợp với customer table
+    const page = parseInt(req.query.page) || 1; // Mặc định là trang 1
+    const itemsPerPage = parseInt(req.query.itemsPerPage) || 10; // Mặc định 10 items mỗi trang
+    const search = req.query.search || ''; // Lấy từ khóa tìm kiếm từ query parameter
+    const offset = (page - 1) * itemsPerPage; // Tính offset
+
+    // Lấy clients theo trang và từ khóa tìm kiếm
+    const clients = await clientModel.getAllClientsPaginated(offset, itemsPerPage, search);
+    // Lấy tổng số clients phù hợp với từ khóa tìm kiếm
+    const totalClients = await clientModel.getTotalClientsCount(search);
+
+    // Chuyển đổi dữ liệu từ Oracle sang định dạng phù hợp
     const formattedClients = clients.map((client) => {
-      // Sử dụng ID từ database Oracle làm định danh duy nhất
       return {
-        ID: client.ID, // ID từ Oracle database là định danh chính
+        ID: client.ID,
         companyName: client.COMPANY_NAM || 'Unknown',
         shortName: client.SHORT_NAME || (client.CLIENT_NAME?.substring(0, 10) + '...') || 'Unknown',
         clientNumber: client.CLIENT_NUMBER || `CL-${client.ID}`,
         cityzenship: client.CITIZENSHIP || 'N/A',
         dateOpen: client.DATE_OPEN || null,
-        status: client.STATUS?.toLowerCase() === 'inactive' ? 'inactive' : 'active'
+        status: client.STATUS?.toLowerCase() === 'inactive' ? 'inactive' : 'active',
       };
     });
-    
+
+    // Tạo response với thông tin phân trang
+    const responseData = {
+      clients: formattedClients,
+      totalItems: totalClients,
+      currentPage: page,
+      totalPages: Math.ceil(totalClients / itemsPerPage),
+    };
+
     return res.status(200).json(
-      new ApiResponse(200, formattedClients, 'Clients retrieved successfully')
+      new ApiResponse(200, responseData, 'Clients retrieved successfully')
     );
   } catch (error) {
     console.error('Controller error - getAllClients:', error);
@@ -76,7 +91,7 @@ exports.getClientById = async (req, res) => {
       ADDRESS_LINE_2: client.ADDRESS_LINE_2 || null,
       ADDRESS_LINE_3: client.ADDRESS_LINE_3 || null,
       PHONE_H: client.PHONE_H || null,
-      E_MAIL: client.E_MAIL || null
+      E_MAIL: client.E_MAIL || null,
     };
     
     return res.status(200).json(
@@ -88,4 +103,4 @@ exports.getClientById = async (req, res) => {
       new ApiError(500, 'Failed to retrieve client', [error.message])
     );
   }
-}; 
+};
