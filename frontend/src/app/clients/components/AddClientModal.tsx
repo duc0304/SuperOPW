@@ -3,7 +3,8 @@ import Modal from '@/components/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import axios from 'axios';
-import { toast } from 'react-hot-toast';
+import { useDispatch } from 'react-redux'; // Import useDispatch
+import { showToast } from '@/redux/slices/toastSlice'; // Import showToast action
 import { RiAddLine, RiBuilding2Line, RiUser3Line, RiFileList2Line, RiInformationLine, RiSaveLine } from 'react-icons/ri';
 import type { Client } from '@/redux/slices/clientSlice';
 
@@ -50,6 +51,8 @@ export default function AddClientModal({
   setFormData,
   onSubmit
 }: AddClientModalProps) {
+  const dispatch = useDispatch(); // Khởi tạo dispatch
+
   const [soapClientData, setSoapClientData] = useState<SoapClientData>({
     institutionCode: '9999',
     branch: '9999',
@@ -137,48 +140,37 @@ export default function AddClientModal({
       if (response.data.success) {
         // Thành công
         setResponse("Tạo khách hàng thành công!");
-        toast.success('Tạo khách hàng thành công!', {
+        dispatch(showToast({
+          message: 'Tạo khách hàng thành công!',
+          type: 'success',
           duration: 5000,
-          position: 'top-center',
-          style: {
-            background: '#10B981',
-            color: '#fff',
-            fontSize: '16px',
-            padding: '16px'
-          },
-        });
+        }));
+
+        // Gọi onSubmit để chạy logic từ ClientsPage (bao gồm làm mới dữ liệu)
+        onSubmit(e);
+        // Đóng modal
+        onClose();
       } else {
         // Thất bại
         const errorMessage = `Lỗi (${response.data.retCode}): ${response.data.message}`;
         setResponse(errorMessage);
-        toast.error(errorMessage, {
+        dispatch(showToast({
+          message: errorMessage,
+          type: 'error',
           duration: 5000,
-          position: 'top-center',
-          style: {
-            background: '#EF4444',
-            color: '#fff',
-            fontSize: '16px',
-            padding: '16px'
-          },
-        });
+        }));
       }
-
     } catch (error: any) {
       console.error('Error:', error);
       
       // Lỗi kết nối hoặc lỗi khác
       const errorMessage = error.response?.data?.message || 'Không thể kết nối đến server';
       setResponse(`Lỗi: ${errorMessage}`);
-      toast.error(errorMessage, {
+      dispatch(showToast({
+        message: errorMessage,
+        type: 'error',
         duration: 5000,
-        position: 'top-center',
-        style: {
-          background: '#EF4444',
-          color: '#fff',
-          fontSize: '16px',
-          padding: '16px'
-        },
-      });
+      }));
     } finally {
       setIsSubmitting(false);
     }

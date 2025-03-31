@@ -127,9 +127,9 @@ export default function ClientTable({ clients, onEdit, onDelete }: ClientTablePr
                 onMouseEnter={() => setHoveredRow(client.ID)}
                 onMouseLeave={() => setHoveredRow(null)}
               >
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-3 whitespace-nowrap">
                   <div className="flex items-center">
-                    <div className="flex-shrink-0 h-12 w-12 rounded-xl bg-gradient-to-br from-purple-400 to-indigo-500 dark:from-purple-600 dark:to-indigo-700 flex items-center justify-center text-white font-medium shadow-md transition-all duration-300 group-hover:shadow-lg transform group-hover:scale-105">
+                    <div className="flex-shrink-0 h-11 w-11 rounded-xl bg-gradient-to-br from-purple-400 to-indigo-500 dark:from-purple-600 dark:to-indigo-700 flex items-center justify-center text-white font-medium shadow-md transition-all duration-300 group-hover:shadow-lg transform group-hover:scale-105">
                       {getInitial(client)}
                     </div>
                     <div className="ml-4">
@@ -137,25 +137,25 @@ export default function ClientTable({ clients, onEdit, onDelete }: ClientTablePr
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-3 whitespace-nowrap">
                   <div className="text-sm text-gray-700 dark:text-gray-300">{client?.companyName || 'N/A'}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-3 whitespace-nowrap">
                   <div className="text-sm text-gray-700 dark:text-gray-300 font-medium bg-gray-50 dark:bg-gray-700/50 px-3 py-1 rounded-lg inline-block shadow-sm">{client?.clientNumber || 'N/A'}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-3 whitespace-nowrap">
                   <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50/80 dark:bg-gray-700/30 px-3 py-1 rounded-lg inline-block shadow-sm">{client?.cityzenship || 'N/A'}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-3 whitespace-nowrap">
                   <div className="text-sm font-medium bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-3 py-1 rounded-full inline-block text-center shadow-sm">{formatDate(client?.dateOpen)}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-3 whitespace-nowrap">
                   <span className={`px-3 py-1.5 text-xs font-medium rounded-lg inline-flex items-center bg-gradient-to-r ${getStatusGradient(client?.status)} text-white shadow-sm transform transition-all duration-300 hover:scale-105 hover:shadow-md`}>
                     <span className="h-1.5 w-1.5 rounded-full bg-white/80 mr-1.5 animate-pulse"></span>
                     {client?.status || 'N/A'}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap transition-colors text-right border-b border-gray-200 dark:border-gray-700">
+                <td className="px-6 py-3 whitespace-nowrap transition-colors text-right border-b border-gray-200 dark:border-gray-700">
                   <div className="flex justify-end items-center space-x-3">
                     <Link href={`/clients/${client.ID}`}>
                       <button

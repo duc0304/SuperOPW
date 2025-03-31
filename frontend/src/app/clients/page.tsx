@@ -4,11 +4,13 @@ import { useEffect, useState, Suspense, lazy } from "react";
 import ClientHeader from "./components/ClientHeader";
 import ClientTable from "./components/ClientTable";
 import Pagination from "./components/Pagination";
+import ToastContainer from "@/components/ToastContainer";
 const AddClientModal = lazy(() => import("./components/AddClientModal"));
 const EditClientModal = lazy(() => import("./components/EditClientModal"));
 const DeleteClientModal = lazy(() => import("./components/DeleteClientModal"));
 
 import Button from "@/components/ui/Button";
+
 import { DEFAULT_FORM_DATA } from "./mock_clients";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import {
@@ -27,6 +29,8 @@ import {
 } from "@/redux/slices/clientSlice";
 import { RiRefreshLine } from "react-icons/ri";
 import toast from "react-hot-toast";
+import { showToast } from "@/redux/slices/toastSlice"; // Import showToast
+
 
 const LoadingFallback = () => (
   <div className="flex justify-center items-center py-8">
@@ -80,14 +84,32 @@ export default function ClientsPage() {
       .then(() => {
         setIsSearching(false);
         if (query) {
-          toast.success(`Searching for "${query}"`);
+          dispatch(
+            showToast({
+              message: `Searching for "${query}"`,
+              type: "success",
+              duration: 1000,
+            })
+          );
         } else {
-          toast.success("Cleared search filters");
+          dispatch(
+            showToast({
+              message: "Cleared search filters",
+              type: "success",
+              duration: 1000,
+            })
+          );
         }
       })
       .catch(() => {
         setIsSearching(false);
-        toast.error("Error searching clients");
+        dispatch(
+          showToast({
+            message: "Error searching clients",
+            type: "error",
+            duration: 1000,
+          })
+        );
       });
   };
 
@@ -113,16 +135,40 @@ export default function ClientsPage() {
       .then(() => {
         setIsSearching(false);
         if (statusFilter !== "all") {
-          toast.success(`Data refreshed with status filter: ${statusFilter}`);
+          dispatch(
+            showToast({
+              message: `Data refreshed with status filter: ${statusFilter}`,
+              type: "success",
+              duration: 1000,
+            })
+          );
         } else if (searchQuery) {
-          toast.success(`Data refreshed with search: "${searchQuery}"`);
+          dispatch(
+            showToast({
+              message: `Data refreshed with search: "${searchQuery}"`,
+              type: "success",
+              duration: 1000,
+            })
+          );
         } else {
-          toast.success("All client data refreshed successfully");
+          dispatch(
+            showToast({
+              message: "All client data refreshed successfully",
+              type: "success",
+              duration: 1000,
+            })
+          );
         }
       })
       .catch(() => {
         setIsSearching(false);
-        toast.error("Error refreshing data");
+        dispatch(
+          showToast({
+            message: "Error refreshing data",
+            type: "error",
+            duration: 1000,
+          })
+        );
       });
   };
 
@@ -171,6 +217,7 @@ export default function ClientsPage() {
 
   return (
     <div className="p-4 pt-20 min-h-screen">
+      <ToastContainer/>
       <div className="container mx-auto max-w-7xl">
         <ClientHeader
           onAddClick={() => setIsAddModalOpen(true)}

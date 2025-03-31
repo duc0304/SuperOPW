@@ -1,4 +1,4 @@
-import { Client } from '@/services/api';
+
 
 /**
  * Trong ứng dụng này, sử dụng Client từ services/api.ts
@@ -36,7 +36,7 @@ export interface ContractNode {
   liability?: {
     contractNumber: string;
   };
-  client?: Client; // Client từ API
+ 
 }
 
 /**
