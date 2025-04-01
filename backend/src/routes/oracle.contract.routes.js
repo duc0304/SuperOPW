@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const oracleContractController = require('../controllers/oracle.contract.controller');
+const contractController = require('../controllers/oracle.contract.controller');
 
-// Route để lấy tất cả contracts
-router.get('/', oracleContractController.getAllContracts);
+// Route để lấy contracts theo client ID dưới dạng cây phân cấp đầy đủ
+router.get('/client/:clientId', contractController.getContractsByClientId);
 
-// Route để lấy contracts theo client ID
-router.get('/client/:clientId', oracleContractController.getContractsByClientId);
+// Routes cho cấu trúc cây hợp đồng
+router.get('/top-level', contractController.getTopLevelContracts);
+router.get('/:parentId/issue-children', contractController.getIssueContracts);
+router.get('/:parentId/card-children', contractController.getCardContracts);
+router.get('/full-hierarchy', contractController.getFullContractHierarchy);
 
-module.exports = router; 
+module.exports = router;

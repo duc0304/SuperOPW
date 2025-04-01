@@ -17,13 +17,19 @@ import {
   fetchContracts,
   fetchContractsByClient,
   setSelectedContract,
+  setTreeCurrentPage,
   selectContracts,
   selectSelectedContract,
   selectIsLoading,
   selectError,
+  selectTreeCurrentPage,
+  selectTreeTotalPages,
+  selectTreeItemsPerPage,
+  selectTreeSearchQuery,
 } from "@/redux/slices/contractSlice";
+import { showToast } from "@/redux/slices/toastSlice";
+import ToastContainer from "@/components/ToastContainer";
 
-// Tạo component Skeleton đơn giản
 const Skeleton = ({ className = "" }: { className?: string }) => (
   <div
     className={`animate-pulse bg-gray-200 dark:bg-gray-700 rounded-md ${className}`}
@@ -37,117 +43,174 @@ export default function ContractsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showDetailPanel, setShowDetailPanel] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
-  // Lấy state từ Redux
   const contracts = useAppSelector(selectContracts);
   const selectedContract = useAppSelector(selectSelectedContract);
   const loading = useAppSelector(selectIsLoading);
   const error = useAppSelector(selectError);
+  const currentPage = useAppSelector(selectTreeCurrentPage);
+  const totalPages = useAppSelector(selectTreeTotalPages);
+  const itemsPerPage = useAppSelector(selectTreeItemsPerPage);
+  const searchQuery = useAppSelector(selectTreeSearchQuery);
 
-  // Lấy clientId và clientName từ URL nếu có
   const clientId = searchParams.get("clientId");
   const clientName = searchParams.get("clientName") || undefined;
 
-  // Kiểm tra nếu là mobile và hiển thị panel chi tiết khi có contract được chọn
   useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    // Kiểm tra lần đầu
+    const checkIfMobile = () => setIsMobile(window.innerWidth < 768);
     checkIfMobile();
-
-    // Thêm event listener
     window.addEventListener("resize", checkIfMobile);
-
-    // Cleanup
     return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
-  // Hiển thị panel chi tiết khi có contract được chọn trên mobile
   useEffect(() => {
-    if (isMobile && selectedContract) {
-      setShowDetailPanel(true);
-    }
+    if (isMobile && selectedContract) setShowDetailPanel(true);
   }, [selectedContract, isMobile]);
 
-  // Load dữ liệu khi component được mount
   useEffect(() => {
     if (clientId) {
-      dispatch(fetchContractsByClient(clientId));
+      setIsSearching(true);
+      dispatch(
+        fetchContractsByClient({ clientId, page: currentPage, searchQuery })
+      )
+        .then(() => {
+          setIsSearching(false);
+        })
+        .catch(() => {
+          setIsSearching(false);
+          dispatch(
+            showToast({
+              message: "Error loading client contracts",
+              type: "error",
+              duration: 3000,
+            })
+          );
+        });
     } else {
-      dispatch(fetchContracts());
+      setIsSearching(true);
+      dispatch(fetchContracts({ page: currentPage, searchQuery }))
+        .then(() => {
+          setIsSearching(false);
+        })
+        .catch(() => {
+          setIsSearching(false);
+          dispatch(
+            showToast({
+              message: "Error loading contracts",
+              type: "error",
+              duration: 3000,
+            })
+          );
+        });
     }
-  }, [dispatch, clientId]);
+  }, [dispatch, clientId, currentPage, searchQuery, itemsPerPage]);
 
-  // Xử lý chọn contract
   const handleSelectContract = (contract: ContractNode) => {
     dispatch(setSelectedContract(contract));
-    if (isMobile) {
-      setShowDetailPanel(true);
-    }
+    if (isMobile) setShowDetailPanel(true);
   };
 
-  // Xử lý xóa bộ lọc khách hàng
   const handleClearClientFilter = () => {
-    dispatch(fetchContracts());
+    dispatch(setSelectedContract(null)); // Xóa contract đã chọn khi clear filter
+    dispatch(fetchContracts({ page: 1, searchQuery: "" }));
     router.push("/contracts");
   };
 
-  // Xử lý thêm mới hợp đồng
-  const handleAddContract = () => {
-    setIsAddModalOpen(true);
-  };
-
-  // Đóng panel chi tiết
+  const handleAddContract = () => setIsAddModalOpen(true);
   const handleCloseDetailPanel = () => {
     setShowDetailPanel(false);
+    if (isMobile) dispatch(setSelectedContract(null)); // Xóa contract đã chọn khi đóng panel trên mobile
   };
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="p-4 pt-20 min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
-      </div>
-    );
-  }
+  const handleRefreshData = () => {
+    setIsSearching(true);
+    if (clientId) {
+      dispatch(
+        fetchContractsByClient({ clientId, page: currentPage, searchQuery })
+      )
+        .then(() => {
+          setIsSearching(false);
+          dispatch(
+            showToast({
+              message: searchQuery
+                ? `Refreshed data with search: "${searchQuery}"`
+                : "Refreshed client contracts",
+              type: "success",
+              duration: 2000,
+            })
+          );
+        })
+        .catch(() => {
+          setIsSearching(false);
+          dispatch(
+            showToast({
+              message: "Error refreshing data",
+              type: "error",
+              duration: 3000,
+            })
+          );
+        });
+    } else {
+      dispatch(fetchContracts({ page: currentPage, searchQuery }))
+        .then(() => {
+          setIsSearching(false);
+          dispatch(
+            showToast({
+              message: searchQuery
+                ? `Refreshed data with search: "${searchQuery}"`
+                : "Refreshed all contracts",
+              type: "success",
+              duration: 2000,
+            })
+          );
+        })
+        .catch(() => {
+          setIsSearching(false);
+          dispatch(
+            showToast({
+              message: "Error refreshing data",
+              type: "error",
+              duration: 3000,
+            })
+          );
+        });
+    }
+  };
 
-  // Error state
-  if (error) {
+  if (loading && contracts.length === 0) {
     return (
       <div className="p-4 pt-20 min-h-screen flex items-center justify-center">
-        <div className="text-red-500 dark:text-red-400">Error: {error}</div>
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+          <p className="mt-4 text-gray-500">Loading contracts...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="p-4 pt-20 min-h-screen relative overflow-hidden">
-      {/* Decorative background elements */}
+      <ToastContainer />
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-purple-300/10 to-indigo-400/10 rounded-full blur-3xl -z-10"></div>
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-indigo-300/10 to-purple-400/10 rounded-full blur-3xl -z-10"></div>
       <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-br from-primary-300/10 to-indigo-400/10 rounded-full blur-3xl -z-10"></div>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Header */}
         <ContractHeader
           clientName={clientName}
           clearClientFilter={clientId ? handleClearClientFilter : undefined}
           onAddContract={handleAddContract}
         />
-
-        {/* Main Content - Responsive Layout */}
         <div
           className={`relative ${
             isMobile ? "flex flex-col" : "flex flex-row gap-6"
           }`}
         >
-          {/* Left Sidebar - Contract Tree */}
           <div
             className={`${isMobile ? "w-full" : "w-1/3"} ${
               isMobile && showDetailPanel ? "hidden md:block" : "block"
-            }`}
+            } transition-all duration-300 ease-in-out`}
           >
             <ContractTree
               contracts={contracts}
@@ -155,41 +218,39 @@ export default function ContractsPage() {
               onSelect={handleSelectContract}
             />
           </div>
-
-          {/* Right Content - Contract Detail (Desktop) */}
           {!isMobile && (
-            <div className="flex-1">
+            <div className="flex-1 transition-all duration-300 ease-in-out">
               {selectedContract ? (
-                <ContractDetail contract={selectedContract} />
+                <div className="animate-fadeIn">
+                  <ContractDetail contract={selectedContract} />
+                </div>
               ) : (
-                <div className="overflow-hidden rounded-2xl shadow-xl border-2 border-purple-200/60 dark:border-purple-700/30 bg-white/80 backdrop-blur-sm dark:bg-gray-800/90 transition-all duration-300 h-[calc(100vh-180px)] flex flex-col items-center justify-center text-center p-6">
+                <div className="overflow-hidden rounded-2xl shadow-xl border-2 border-purple-200/60 dark:border-purple-700/30 bg-white/80 backdrop-blur-sm dark:bg-gray-800/90 transition-all duration-300 h-[calc(100vh-180px)] flex flex-col items-center justify-center text-center p-6 animate-fadeIn">
                   <div className="p-6 bg-indigo-100/50 dark:bg-indigo-900/30 rounded-full mb-6">
                     <RiFileTextLine className="w-16 h-16 text-indigo-500 dark:text-indigo-400" />
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-                    Chọn hợp đồng để xem chi tiết
+                    Select a contract to view details
                   </h3>
                   <p className="text-base text-gray-500 dark:text-gray-400 max-w-md">
-                    Chọn một hợp đồng từ danh sách bên trái để xem thông tin chi
-                    tiết.
+                    Choose a contract from the list on the left to view detailed
+                    information.
                   </p>
                   <div className="mt-8 flex space-x-4">
                     <button className="px-5 py-2.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200">
-                      Nhập hợp đồng
+                      Import contract
                     </button>
                     <button
                       className="px-5 py-2.5 bg-primary-600 text-white rounded-lg shadow-sm hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition-colors duration-200"
                       onClick={handleAddContract}
                     >
-                      Tạo hợp đồng mới
+                      Create new contract
                     </button>
                   </div>
                 </div>
               )}
             </div>
           )}
-
-          {/* Sliding Panel for Contract Detail (Mobile) */}
           {isMobile && (
             <div
               className={`fixed inset-0 bg-gray-900/50 z-40 transition-opacity duration-300 ${
@@ -205,10 +266,9 @@ export default function ContractsPage() {
                 } h-[90vh] overflow-hidden`}
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* Panel Header with Close Button */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {selectedContract?.title || "Chi tiết hợp đồng"}
+                    {selectedContract?.title || "Contract Details"}
                   </h3>
                   <button
                     onClick={handleCloseDetailPanel}
@@ -217,21 +277,21 @@ export default function ContractsPage() {
                     <RiArrowLeftLine className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                   </button>
                 </div>
-
-                {/* Panel Content */}
                 <div className="h-[calc(90vh-60px)] overflow-auto">
                   {selectedContract ? (
-                    <ContractDetail contract={selectedContract} />
+                    <div className="animate-fadeIn">
+                      <ContractDetail contract={selectedContract} />
+                    </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+                    <div className="flex flex-col items-center justify-center h-full p-6 text-center animate-fadeIn">
                       <div className="p-6 bg-indigo-100/50 dark:bg-indigo-900/30 rounded-full mb-6">
                         <RiFileTextLine className="w-16 h-16 text-indigo-500 dark:text-indigo-400" />
                       </div>
                       <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-                        Chưa chọn hợp đồng
+                        No contract selected
                       </h3>
                       <p className="text-base text-gray-500 dark:text-gray-400 max-w-md">
-                        Chọn một hợp đồng từ danh sách để xem chi tiết
+                        Choose a contract from the list to view details
                       </p>
                     </div>
                   )}
@@ -239,8 +299,6 @@ export default function ContractsPage() {
               </div>
             </div>
           )}
-
-          {/* Floating Action Button to show details (Mobile) */}
           {isMobile && selectedContract && !showDetailPanel && (
             <button
               onClick={() => setShowDetailPanel(true)}
@@ -251,8 +309,6 @@ export default function ContractsPage() {
           )}
         </div>
       </div>
-
-      {/* Add Contract Modal */}
       {isAddModalOpen && (
         <AddContractModal
           isOpen={isAddModalOpen}

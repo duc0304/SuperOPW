@@ -200,7 +200,6 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
           {/* Contract circle icon with ripple effect */}
           <div className="relative z-10 flex items-start md:items-center mb-4 md:mb-0">
             <div className="relative flex-shrink-0">
-              <div className="absolute inset-0 bg-white/20 rounded-full animate-ping-slow opacity-60"></div>
               <div
                 className={`p-3 rounded-xl mr-4 shadow-md bg-white/20 backdrop-blur-sm transform transition-transform hover:scale-110 duration-300`}
               >
