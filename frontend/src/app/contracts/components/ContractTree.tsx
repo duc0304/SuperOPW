@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useRef, useEffect, useState } from "react";
 import {
   RiArrowRightSLine,
   RiArrowDownSLine,
@@ -36,7 +36,7 @@ interface ContractStyle {
   selectedBg: string;
   badge: string;
   marginLeft: string;
-  parentBg?: string; // Thêm từ file dài hơn để highlight tổ tiên
+  parentBg?: string;
 }
 
 const contractStyles: Record<string, ContractStyle> = {
@@ -94,12 +94,61 @@ interface ContractTreeProps {
 }
 
 const animationStyles = `
-  @keyframes ping-slow {
-    0% { transform: scale(1); opacity: 0.8; }
-    75%, 100% { transform: scale(1.8); opacity: 0; }
+  @keyframes page-flip {
+    0% {
+      opacity: 0;
+      transform: translateY(20px) rotateX(-10deg);
+      transform-origin: bottom;
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) rotateX(0deg);
+      transform-origin: bottom;
+    }
   }
-  .animate-ping-slow { animation: ping-slow 3s cubic-bezier(0, 0, 0.2, 1) infinite; }
+
+  @keyframes ripple {
+    0% {
+      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2);
+    }
+    100% {
+      box-shadow: 0 0 0 15px rgba(0, 0, 0, 0);
+    }
+  }
+
+  .animate-ripple {
+    animation: ripple 0.6s ease-out;
+  }
+
+  .animate-page-in {
+    animation: page-flip 0.5s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+  }
+
+  @keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out forwards;
+  }
+  
+  /* Styles for contract children */
+  .contract-children {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease-in-out, opacity 0.25s ease-in-out;
+  }
+  
+  .contract-children.expanded {
+    max-height: 2000px; /* Đủ lớn để chứa tất cả con */
+    opacity: 1;
+  }
 `;
+
+const SCROLL_DELAY_MS = 50;
+const SCROLL_PADDING_PX = 15;
 
 export default function ContractTree({
   contracts,
@@ -114,6 +163,37 @@ export default function ContractTree({
   const totalItems = useAppSelector(selectTreeTotalItems);
   const itemsPerPage = useAppSelector(selectTreeItemsPerPage);
   const highlightedAncestors = useAppSelector(selectHighlightedAncestors);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const contractRefs = useRef(new Map<string, HTMLDivElement | null>());
+  const [isPageAnimating, setIsPageAnimating] = useState(false);
+  const [collapsingNodes, setCollapsingNodes] = useState<
+    Record<string, boolean>
+  >({});
+
+  useEffect(() => {
+    setIsPageAnimating(true);
+    const timer = setTimeout(() => setIsPageAnimating(false), 500);
+    return () => clearTimeout(timer);
+  }, [currentPage]);
+
+  useEffect(() => {
+    const currentIds = new Set<string>();
+    const collectIds = (nodes: ContractNode[]) => {
+      nodes.forEach((contract) => {
+        currentIds.add(contract.id);
+        if (contract.children && contract.children.length > 0) {
+          collectIds(contract.children);
+        }
+      });
+    };
+    collectIds(contracts);
+    contractRefs.current.forEach((_, id) => {
+      if (!currentIds.has(id)) {
+        contractRefs.current.delete(id);
+      }
+    });
+  }, [contracts]);
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "";
@@ -140,7 +220,49 @@ export default function ContractTree({
     event: React.MouseEvent
   ) => {
     event.stopPropagation();
-    dispatch(toggleExpandContract(contractId));
+    const wasExpanded = expandedContracts[contractId] ?? false;
+
+    if (wasExpanded) {
+      setCollapsingNodes((prev) => ({ ...prev, [contractId]: true }));
+      setTimeout(() => {
+        dispatch(toggleExpandContract(contractId));
+        setCollapsingNodes((prev) => {
+          const newState = { ...prev };
+          delete newState[contractId];
+          return newState;
+        });
+      }, 300);
+    } else {
+      dispatch(toggleExpandContract(contractId));
+    }
+
+    if (!wasExpanded && scrollContainerRef.current) {
+      const contractElement = contractRefs.current.get(contractId);
+      if (contractElement) {
+        setTimeout(() => {
+          const container = scrollContainerRef.current;
+          if (!container) return;
+
+          const rect = contractElement.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+
+          const scrollBottom = container.scrollTop + containerRect.height;
+          const elementBottom =
+            rect.bottom - containerRect.top + container.scrollTop;
+          const elementHeight = rect.height;
+
+          if (elementBottom + elementHeight * 2 > scrollBottom) {
+            container.scrollTo({
+              top:
+                container.scrollTop +
+                (elementBottom - scrollBottom) +
+                SCROLL_PADDING_PX,
+              behavior: "smooth",
+            });
+          }
+        }, SCROLL_DELAY_MS);
+      }
+    }
   };
 
   const handleSelectContract = (contract: ContractNode) => {
@@ -162,6 +284,10 @@ export default function ContractTree({
       contract.children.length > 0;
     const isExpanded = expandedContracts[contract.id] ?? false;
 
+    const handleExpand = (e: React.MouseEvent) => {
+      handleToggleExpandContract(contract.id, e);
+    };
+
     const getBackgroundGradient = () => {
       if (isSelected) {
         switch (contract.type) {
@@ -175,27 +301,79 @@ export default function ContractTree({
             return "bg-gradient-to-br from-blue-500 to-cyan-600 dark:from-blue-600 dark:to-cyan-800";
         }
       } else if (isAncestor) {
-        return (
-          contractStyles[contract.type]?.parentBg ||
-          "bg-transparent border-transparent"
-        );
+        switch (contract.type) {
+          case "liability":
+            return "bg-indigo-50/90 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800/30";
+          case "issue":
+            return "bg-purple-50/90 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800/30";
+          case "card":
+            return "bg-emerald-50/90 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800/30";
+          default:
+            return "bg-gray-50/90 dark:bg-gray-800/30 border-gray-200 dark:border-gray-700/30";
+        }
       }
       return "bg-white/0 dark:bg-gray-800/0 border-transparent";
     };
 
+    const getAncestorStyles = () => {
+      if (!isAncestor) return null;
+      switch (contract.type) {
+        case "liability":
+          return {
+            icon: "bg-indigo-100/80 dark:bg-indigo-900/40",
+            text: "text-indigo-700 dark:text-indigo-300",
+            badge:
+              "bg-indigo-100/80 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300",
+          };
+        case "issue":
+          return {
+            icon: "bg-purple-100/80 dark:bg-purple-900/40",
+            text: "text-purple-700 dark:text-purple-300",
+            badge:
+              "bg-purple-100/80 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300",
+          };
+        case "card":
+          return {
+            icon: "bg-emerald-100/80 dark:bg-emerald-900/40",
+            text: "text-emerald-700 dark:text-emerald-300",
+            badge:
+              "bg-emerald-100/80 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300",
+          };
+        default:
+          return {
+            icon: "bg-gray-100/80 dark:bg-gray-800/40",
+            text: "text-gray-700 dark:text-gray-300",
+            badge:
+              "bg-gray-100/80 dark:bg-gray-800/40 text-gray-700 dark:text-gray-300",
+          };
+      }
+    };
+
+    const ancestorStyles = getAncestorStyles();
+
     return (
-      <div key={contract.id}>
+      <div
+        key={contract.id}
+        ref={(el) => {
+          if (el) {
+            contractRefs.current.set(contract.id, el);
+          } else {
+            contractRefs.current.delete(contract.id);
+          }
+          return undefined;
+        }}
+      >
         <div
           role="button"
           tabIndex={0}
           className={clsx(
             "group flex items-center py-2 px-3 my-1 cursor-pointer rounded-lg transition-all duration-200 relative",
             contractStyles[contract.type]?.marginLeft || "ml-0",
-            isSelected && "shadow-lg border-0 z-20 transform-gpu scale-[1.02]",
-            isAncestor && !isSelected && "shadow-md z-10"
+            {
+              "shadow-lg border-0 z-20 transform-gpu scale-[1.02]": isSelected,
+              "shadow-sm z-10 border-0": isAncestor && !isSelected,
+            }
           )}
-          onMouseEnter={() => {}}
-          onMouseLeave={() => {}}
         >
           <div
             className={clsx(
@@ -205,38 +383,15 @@ export default function ContractTree({
           ></div>
           {hasChildren ? (
             <button
-              onClick={(e) => handleToggleExpandContract(contract.id, e)}
+              onClick={handleExpand}
               className={clsx(
-                "mr-1 p-1 rounded-md transition-colors relative z-10",
+                "mr-1 p-1 rounded-md transition-colors relative z-10 overflow-hidden",
                 isSelected
                   ? "hover:bg-white/40 text-white"
                   : isAncestor
-                  ? `text-${
-                      contract.type === "liability"
-                        ? "blue"
-                        : contract.type === "issue"
-                        ? "purple"
-                        : "emerald"
-                    }-700 dark:text-${
-                      contract.type === "liability"
-                        ? "blue"
-                        : contract.type === "issue"
-                        ? "purple"
-                        : "emerald"
-                    }-300 hover:bg-${
-                      contract.type === "liability"
-                        ? "blue"
-                        : contract.type === "issue"
-                        ? "purple"
-                        : "emerald"
-                    }-100 dark:hover:bg-${
-                      contract.type === "liability"
-                        ? "blue"
-                        : contract.type === "issue"
-                        ? "purple"
-                        : "emerald"
-                    }-900/30`
-                  : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+                  ? `${ancestorStyles?.text} hover:bg-opacity-80`
+                  : "hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400",
+                !isExpanded && "animate-ripple"
               )}
               aria-label={isExpanded ? "Collapse" : "Expand"}
             >
@@ -254,11 +409,23 @@ export default function ContractTree({
             tabIndex={0}
             className={clsx(
               "p-1.5 rounded-lg mr-3 relative z-10 shadow-sm",
-              isSelected ? "bg-white/30" : getIconBackground(contract)
+              isSelected
+                ? "bg-white/30"
+                : isAncestor
+                ? ancestorStyles?.icon
+                : getIconBackground(contract)
             )}
             onClick={() => handleSelectContract(contract)}
           >
-            <div className={isSelected ? "text-white" : getIconColor(contract)}>
+            <div
+              className={
+                isSelected
+                  ? "text-white"
+                  : isAncestor
+                  ? ancestorStyles?.text
+                  : getIconColor(contract)
+              }
+            >
               {getContractIcon(contract)}
             </div>
           </div>
@@ -273,7 +440,11 @@ export default function ContractTree({
             <div
               className={clsx(
                 "font-medium truncate flex items-center",
-                isSelected ? "text-white" : "text-gray-900 dark:text-white"
+                isSelected
+                  ? "text-white"
+                  : isAncestor
+                  ? ancestorStyles?.text
+                  : "text-gray-900 dark:text-white"
               )}
             >
               {contract.title}
@@ -282,6 +453,8 @@ export default function ContractTree({
                   "ml-2 text-xs px-2 py-0.5 rounded-full",
                   isSelected
                     ? "bg-white/30 text-white"
+                    : isAncestor
+                    ? ancestorStyles?.badge
                     : contractStyles[contract.type]?.badge || ""
                 )}
               >
@@ -291,7 +464,11 @@ export default function ContractTree({
             <div
               className={clsx(
                 "text-xs truncate flex items-center",
-                isSelected ? "text-white" : "text-gray-500 dark:text-gray-400"
+                isSelected
+                  ? "text-white/80"
+                  : isAncestor
+                  ? ancestorStyles?.text
+                  : "text-gray-500 dark:text-gray-400"
               )}
             >
               <span className="mr-2">
@@ -308,6 +485,8 @@ export default function ContractTree({
                     "flex items-center text-xs px-1.5 py-0.5 rounded-md",
                     isSelected
                       ? "bg-white/30 text-white"
+                      : isAncestor
+                      ? ancestorStyles?.badge
                       : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
                   )}
                 >
@@ -318,9 +497,11 @@ export default function ContractTree({
             </div>
           </div>
         </div>
-        {isExpanded &&
-          hasChildren &&
-          contract.children?.map((child) => renderContractNode(child))}
+        {hasChildren && (
+          <div className={`contract-children ${isExpanded ? "expanded" : ""}`}>
+            {contract.children?.map((child) => renderContractNode(child))}
+          </div>
+        )}
       </div>
     );
   };
@@ -329,16 +510,15 @@ export default function ContractTree({
     if (totalPages <= 1) return null;
 
     const buttons = [];
-
     buttons.push(
       <button
         key="prev"
         onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
         disabled={currentPage === 1}
         className={clsx(
-          "px-3 py-1 rounded-md",
+          "px-3 py-1.5 rounded-md flex items-center justify-center text-sm",
           currentPage === 1
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500"
+            ? "bg-gray-100 hooktext-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500"
             : "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300"
         )}
       >
@@ -358,7 +538,7 @@ export default function ContractTree({
             key={`page-${pageNum}`}
             onClick={() => handlePageChange(pageNum)}
             className={clsx(
-              "w-8 h-8 rounded-md",
+              "min-w-[2rem] h-9 rounded-md flex items-center justify-center text-sm font-medium",
               pageNum === currentPage
                 ? "bg-primary-600 text-white dark:bg-primary-700"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
@@ -372,7 +552,10 @@ export default function ContractTree({
         (pageNum === totalPages - 1 && currentPage < totalPages - 2)
       ) {
         buttons.push(
-          <span key={`ellipsis-${pageNum}`} className="px-2 self-end pb-1">
+          <span
+            key={`ellipsis-${pageNum}`}
+            className="px-2 flex items-center text-gray-500 dark:text-gray-400"
+          >
             ...
           </span>
         );
@@ -385,7 +568,7 @@ export default function ContractTree({
         onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
         disabled={currentPage === totalPages}
         className={clsx(
-          "px-3 py-1 rounded-md",
+          "px-3 py-1.5 rounded-md flex items-center justify-center text-sm",
           currentPage === totalPages
             ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-gray-700 dark:text-gray-500"
             : "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300"
@@ -395,14 +578,15 @@ export default function ContractTree({
       </button>
     );
 
-    return <div className="mt-4 flex justify-center space-x-2">{buttons}</div>;
+    return <div className="flex justify-center space-x-2">{buttons}</div>;
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl shadow-xl border-2 border-gray-200/60 dark:border-gray-700/30 bg-white dark:bg-gray-800/90 transition-all duration-300 h-[calc(100vh-250px)] md:h-[calc(100vh-180px)]">
+    <div className="overflow-hidden rounded-2xl shadow-xl border-2 border-gray-200/60 dark:border-gray-700/30 bg-white dark:bg-gray-800/90 transition-all duration-300 h-[750px] flex flex-col">
       <style jsx>{animationStyles}</style>
-      <div className="p-4 flex flex-col h-full">
-        <div className="mb-4 relative">
+
+      <div className="p-4 pb-3">
+        <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <RiSearchLine className="text-gray-400 dark:text-gray-500" />
           </div>
@@ -414,36 +598,44 @@ export default function ContractTree({
             className="pl-10 w-full bg-white dark:bg-gray-700/70 border-gray-200 dark:border-gray-700/50 rounded-lg hover:border-indigo-300 dark:hover:border-indigo-600 transition-all duration-300 focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-400 dark:focus:border-indigo-500"
           />
         </div>
+      </div>
 
-        <div className="overflow-y-auto flex-1 pr-1 custom-scrollbar rounded-xl border border-gray-200/60 dark:border-gray-700/30 bg-white/80 dark:bg-gray-800/50">
-          {contracts.length > 0 ? (
-            <div className="space-y-1 p-2">
-              {contracts.map((contract) => renderContractNode(contract))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400 flex flex-col items-center justify-center h-full">
-              <RiFileTextLine className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
-              <p>No contracts found</p>
-              {searchQuery && (
-                <p className="text-sm mt-1">Try adjusting your search</p>
-              )}
-            </div>
-          )}
-        </div>
-
-        {contracts.length > 0 && (
-          <div className="mt-4 flex flex-col">
-            <div className="flex items-center justify-between mb-1">
-              <div className="text-xs text-gray-500 dark:text-gray-400">
-                Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-                {Math.min(currentPage * itemsPerPage, totalItems)} of{" "}
-                {totalItems} contracts
-              </div>
-            </div>
-            {renderPaginationButtons()}
+      <div
+        ref={scrollContainerRef}
+        className="px-4 overflow-y-auto flex-1 custom-scrollbar rounded-md border border-gray-200/60 dark:border-gray-700/30 bg-white/80 dark:bg-gray-800/50 mx-4 mb-3"
+      >
+        {contracts.length > 0 ? (
+          <div
+            className={clsx(
+              "space-y-1 py-2",
+              isPageAnimating ? "animate-page-in" : ""
+            )}
+          >
+            {contracts.map((contract) => renderContractNode(contract))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400 flex flex-col items-center justify-center h-full animate-fade-in">
+            <RiFileTextLine className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
+            <p>No contracts found</p>
+            {searchQuery && (
+              <p className="text-sm mt-1">Try adjusting your search</p>
+            )}
           </div>
         )}
       </div>
+
+      {contracts.length > 0 && (
+        <div className="px-4 py-3 border-t border-gray-200/60 dark:border-gray-700/30 bg-white dark:bg-gray-800/90 shadow-inner">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+              {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}{" "}
+              contracts
+            </div>
+          </div>
+          <div className="animate-fade-in">{renderPaginationButtons()}</div>
+        </div>
+      )}
     </div>
   );
 }

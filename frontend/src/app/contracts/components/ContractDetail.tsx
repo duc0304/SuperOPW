@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   RiFileTextLine,
   RiCalendarLine,
@@ -14,10 +14,38 @@ import {
   RiFileUserLine,
   RiCloseLine,
   RiFileListLine,
+  RiLockLine,
+  RiLockUnlockLine,
+  RiCheckboxCircleLine,
+  RiCheckLine,
+  RiCloseFill,
 } from "react-icons/ri";
 import Link from "next/link";
 import { ContractNode } from "../types";
+import Image from "next/image";
+import InfoCard from "./InfoCard";
+import { getColorScheme } from "../utils/getColorScheme";
+import CreditCardModal from "./CreditCardModal";
 import { createPortal } from "react-dom";
+import Modal from "@/components/Modal";
+import Button from "@/components/ui/Button";
+import { useDispatch } from "react-redux";
+import { showToast } from "@/redux/slices/toastSlice";
+
+// Khởi tạo state lockedContracts từ localStorage
+const getInitialLockedState = () => {
+  if (typeof window === "undefined") return {};
+  try {
+    const savedState = localStorage.getItem("lockedContracts");
+    return savedState ? JSON.parse(savedState) : {};
+  } catch (error) {
+    console.error("Error loading locked contracts state:", error);
+    return {};
+  }
+};
+
+// State chia sẻ giữa các instance của component
+const lockedContractsState = getInitialLockedState();
 
 // Custom animation keyframes
 const animationStyles = `
@@ -35,6 +63,15 @@ const animationStyles = `
   .animate-ping-slow {
     animation: ping-slow 3s cubic-bezier(0, 0, 0.2, 1) infinite;
   }
+  
+  @keyframes flash {
+    0%, 50%, 100% { opacity: 1; }
+    25%, 75% { opacity: 0.5; }
+  }
+  
+  .animate-flash {
+    animation: flash 1s ease-in-out;
+  }
 `;
 
 interface ContractDetailProps {
@@ -42,37 +79,75 @@ interface ContractDetailProps {
 }
 
 export default function ContractDetail({ contract }: ContractDetailProps) {
+  const dispatch = useDispatch();
   const [animateIn, setAnimateIn] = useState(false);
-  const [showAdditionalDetails, setShowAdditionalDetails] = useState(false);
   const [showCardModal, setShowCardModal] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const [showFullDetails, setShowFullDetails] = useState(false);
+  const [animateIcon, setAnimateIcon] = useState(false);
+
+  // State để lưu trữ tất cả các hợp đồng đang bị khóa
+  const [lockedContracts, setLockedContracts] = useState<{
+    [key: string]: boolean;
+  }>(lockedContractsState);
+  // State local có được tính toán từ lockedContracts
+  const isLocked = lockedContracts[contract.id] || false;
+
+  // State cho chức năng xác thực mã số
+  const [showCodeInput, setShowCodeInput] = useState(false);
+  const [codeInput, setCodeInput] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // Mã xác thực cố định (trong thực tế, nên được lấy từ API hoặc một nguồn an toàn)
+  const VERIFICATION_CODE = "123456";
+
+  // Ref cho input ẩn
+  const codeInputRef = useRef<HTMLInputElement>(null);
 
   // Kiểm tra loại contract
   const isIssueContract =
     contract.oracleData?.LIAB_CONTRACT !== undefined &&
     contract.oracleData?.LIAB_CONTRACT !== null &&
-    contract.oracleData?.LIAB_CONTRACT !== "";
+    String(contract.oracleData?.LIAB_CONTRACT) !== "";
 
   const isCardContract =
-    (contract.oracleData?.CARD_NUMBER?.length === 16 &&
-      contract.oracleData?.CARD_NUMBER?.startsWith("10000")) ||
-    (contract.oracleData?.CONTRACT_NUMBER?.length === 16 &&
-      contract.oracleData?.CONTRACT_NUMBER?.startsWith("10000"));
+    (contract.oracleData?.CARD_NUMBER &&
+      contract.oracleData?.CARD_NUMBER.length === 16 &&
+      contract.oracleData?.CARD_NUMBER.startsWith("10000")) ||
+    (contract.oracleData?.CONTRACT_NUMBER &&
+      contract.oracleData?.CONTRACT_NUMBER.length === 16 &&
+      contract.oracleData?.CONTRACT_NUMBER.startsWith("10000"));
+
+  // State cho modal portal
+  const [isBrowserReady, setIsBrowserReady] = useState(false);
+
+  // Kiểm tra môi trường
+  useEffect(() => {
+    setIsBrowserReady(true);
+  }, []);
 
   // Animation effect khi contract thay đổi
   useEffect(() => {
     setAnimateIn(false);
+    setShowFullDetails(false);
     const timer = setTimeout(() => {
       setAnimateIn(true);
     }, 100);
     return () => clearTimeout(timer);
   }, [contract.id]);
 
+  // Lưu trạng thái vào localStorage khi lockedContracts thay đổi
   useEffect(() => {
-    setIsMounted(true);
-    return () => setIsMounted(false);
-  }, []);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(
+          "lockedContracts",
+          JSON.stringify(lockedContracts)
+        );
+      } catch (error) {
+        console.error("Error saving locked contracts state:", error);
+      }
+    }
+  }, [lockedContracts]);
 
   // Format date
   const formatDate = (dateString: string | undefined) => {
@@ -102,113 +177,251 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
     }
   };
 
-  // Helper function to get color scheme based on contract type
-  const getColorScheme = (contractType: string) => {
-    switch (contractType) {
-      case "issue":
-        return {
-          bg: "bg-gradient-to-br from-purple-500 to-indigo-600 dark:from-purple-600 dark:to-indigo-700",
-          text: "text-white",
-          borderLight: "border-indigo-200/50 dark:border-indigo-700/40",
-          iconFill: "fill-indigo-500 dark:fill-indigo-400",
-          cardBorder: "border-indigo-200/50 dark:border-indigo-700/40",
-          cardBg: "bg-indigo-50/50 dark:bg-indigo-900/20",
-          cardHoverBorder: "border-indigo-300 dark:border-indigo-600",
-          barFill: "bg-indigo-500 dark:bg-indigo-600",
-        };
-      case "card":
-        return {
-          bg: "bg-gradient-to-br from-emerald-500 to-teal-600 dark:from-emerald-600 dark:to-teal-800",
-          text: "text-white",
-          borderLight: "border-emerald-200/50 dark:border-emerald-700/40",
-          iconFill: "fill-emerald-500 dark:fill-emerald-400",
-          cardBorder: "border-emerald-200/50 dark:border-emerald-700/40",
-          cardBg: "bg-emerald-50/50 dark:bg-emerald-900/20",
-          cardHoverBorder: "border-emerald-300 dark:border-emerald-600",
-          barFill: "bg-emerald-500 dark:bg-emerald-600",
-        };
-      case "liability":
-      default:
-        return {
-          bg: "bg-gradient-to-br from-blue-500 to-cyan-600 dark:from-blue-600 dark:to-cyan-800",
-          text: "text-white",
-          borderLight: "border-blue-200/50 dark:border-blue-700/40",
-          iconFill: "fill-blue-500 dark:fill-blue-400",
-          cardBorder: "border-blue-200/50 dark:border-blue-700/40",
-          cardBg: "bg-blue-50/50 dark:bg-blue-900/20",
-          cardHoverBorder: "border-blue-300 dark:border-blue-600",
-          barFill: "bg-blue-500 dark:bg-blue-600",
-        };
-    }
-  };
-
   const colors = getColorScheme(
     isIssueContract ? "issue" : isCardContract ? "card" : "liability"
   );
 
-  // Hàm để render dữ liệu JSON dưới dạng danh sách key-value
-  const renderJsonData = (data: any) => {
-    if (!data)
-      return (
-        <p className="text-gray-500 dark:text-gray-400">
-          No additional data available.
-        </p>
-      );
+  // Hàm để toggle chế độ nhập mã
+  const toggleCodeInput = () => {
+    setShowCodeInput(true);
+    setCodeInput("");
+    setErrorMessage("");
+    // Focus vào input
+    setTimeout(() => {
+      if (codeInputRef.current) {
+        codeInputRef.current.focus();
+      }
+    }, 100);
+  };
 
-    const entries = Object.entries(data);
+  // Xử lý thay đổi input mã số
+  const handleCodeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Chỉ cho phép nhập số
+    if (/^\d*$/.test(value) && value.length <= 6) {
+      setCodeInput(value);
+      setErrorMessage("");
+    }
+  };
+
+  // Xử lý khi nhấn nút Submit
+  const handleSubmitCode = () => {
+    if (codeInput.length < 6) {
+      setErrorMessage("Please enter all 6 digits");
+      return;
+    }
+
+    if (codeInput === VERIFICATION_CODE) {
+      // Mã đúng - mở khóa contract
+      setLockedContracts((prev) => {
+        const newState = { ...prev };
+        delete newState[contract.id];
+        return newState;
+      });
+
+      // Cập nhật state shared
+      delete lockedContractsState[contract.id];
+
+      // Reset state
+      setShowCodeInput(false);
+      setCodeInput("");
+      setErrorMessage("");
+
+      // Hiển thị toast thông báo thành công
+      dispatch(
+        showToast({
+          message: `Successfully unlocked contract ${
+            contract.oracleData?.CONTRACT_NUMBER || contract.id
+          }!`,
+          type: "success",
+          duration: 3000,
+        })
+      );
+    } else {
+      // Mã sai
+      setErrorMessage("Invalid verification code. Please try again.");
+
+      // Hiển thị toast thông báo lỗi
+      dispatch(
+        showToast({
+          message: "The verification code is incorrect. Please try again!",
+          type: "error",
+          duration: 3000,
+        })
+      );
+    }
+  };
+
+  // Xử lý khi nhấn nút Cancel
+  const handleCancelCode = () => {
+    setShowCodeInput(false);
+    setCodeInput("");
+    setErrorMessage("");
+  };
+
+  // Hàm để toggle trạng thái lock
+  const toggleLockStatus = () => {
+    if (isLocked) {
+      // Nếu đang bị khóa, hiển thị màn hình nhập mã
+      toggleCodeInput();
+    } else {
+      // Nếu đang mở, khóa lại ngay lập tức
+      const newIsLocked = true;
+      console.log("Locking contract:", contract.id);
+
+      // Cập nhật state lockedContracts
+      setLockedContracts((prev) => {
+        const newState = { ...prev };
+        newState[contract.id] = true;
+        return newState;
+      });
+
+      // Cập nhật state shared
+      lockedContractsState[contract.id] = true;
+
+      // Hiển thị toast thông báo đã khóa
+      dispatch(
+        showToast({
+          message: `Contract ${
+            contract.oracleData?.CONTRACT_NUMBER || contract.id
+          } has been locked!`,
+          type: "info",
+          duration: 3000,
+        })
+      );
+    }
+  };
+
+  // Thêm useEffect để log khi state thay đổi
+  useEffect(() => {
+    console.log("isLocked state changed to:", isLocked);
+  }, [isLocked]);
+
+  // Thêm useEffect để kích hoạt hiệu ứng khi isLocked thay đổi
+  useEffect(() => {
+    setAnimateIcon(true);
+    const timer = setTimeout(() => setAnimateIcon(false), 1000);
+    return () => clearTimeout(timer);
+  }, [isLocked]);
+
+  // Hàm để xử lý khi nhấn phím
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      // Khi nhấn Enter, tiến hành xác thực nếu đã nhập đủ 6 số
+      if (codeInput.length === 6) {
+        handleSubmitCode();
+      }
+    }
+  };
+
+  // Render modal xác thực mã số
+  const renderVerificationModal = () => {
+    if (!showCodeInput) return null;
 
     return (
-      <ul className="space-y-2">
-        {entries.map(([key, value]) => (
-          <li key={key} className="flex items-start">
-            <span className="font-medium text-gray-700 dark:text-gray-300 min-w-[150px]">
-              {key}:
-            </span>
-            <span className="text-gray-600 dark:text-gray-400">
-              {typeof value === "object" && value !== null
-                ? JSON.stringify(value).slice(0, 50) +
-                  (JSON.stringify(value).length > 50 ? "..." : "")
-                : value?.toString() || "N/A"}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <Modal
+        isOpen={showCodeInput}
+        onClose={handleCancelCode}
+        title="Enter the damn code, bro. (Hint: 123456 🤡)"
+        maxWidth="max-w-[480px]"
+      >
+        <div className="space-y-6">
+          {/* Input ẩn để nhận input */}
+          <input
+            ref={codeInputRef}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={codeInput}
+            onChange={handleCodeInputChange}
+            onKeyDown={handleKeyDown}
+            className="opacity-0 absolute pointer-events-auto w-px h-px"
+            autoFocus
+            aria-label="Verification code input"
+          />
+
+          {/* Hiển thị các ô số */}
+          <div className="flex justify-between gap-2">
+            {Array(6)
+              .fill(0)
+              .map((_, index) => (
+                <div
+                  key={index}
+                  onClick={() => codeInputRef.current?.focus()}
+                  className={`w-12 h-16 flex items-center justify-center rounded-lg text-2xl font-bold border-2 shadow-sm
+                ${
+                  codeInput.length === index
+                    ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
+                    : "border-gray-300 dark:border-gray-600"
+                } 
+                ${
+                  index < codeInput.length
+                    ? "bg-gray-100 dark:bg-gray-700"
+                    : "bg-white dark:bg-gray-800"
+                } 
+                transition-all duration-200 cursor-text`}
+                >
+                  {index < codeInput.length ? codeInput[index] : ""}
+                </div>
+              ))}
+          </div>
+
+          {/* Hiển thị thông báo lỗi */}
+          {errorMessage && (
+            <div className="text-red-500 text-sm font-medium">
+              {errorMessage}
+            </div>
+          )}
+
+          <div className="flex justify-end pt-2">
+            <Button
+              onClick={handleSubmitCode}
+              variant="primary"
+              type="button"
+              icon={RiCheckLine}
+              className="min-w-[120px]"
+            >
+              Verify Code
+            </Button>
+          </div>
+        </div>
+      </Modal>
     );
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl shadow-xl border-2 border-gray-200/60 dark:border-gray-700/30 bg-white dark:bg-gray-800/90 transition-all duration-300 h-auto md:h-[calc(100vh-180px)]">
+    <div className="overflow-hidden rounded-2xl shadow-xl border-2 border-gray-200/60 dark:border-gray-700/30 bg-white dark:bg-gray-800/90 transition-all duration-300 h-[750px] flex flex-col relative">
       {/* Inject custom animation styles */}
       <style jsx>{animationStyles}</style>
 
-      <div className="p-6 h-full flex flex-col overflow-hidden">
-        {/* Header with animation */}
+      <div className="p-4 flex flex-col overflow-hidden h-full">
+        {/* Header with animation - Giảm padding và kích thước */}
         <div
-          className={`flex flex-col md:flex-row md:items-center justify-between mb-6 transition-all duration-500 ease-out ${
+          className={`flex flex-col md:flex-row md:items-center justify-between mb-4 transition-all duration-500 ease-out ${
             animateIn
               ? "opacity-100 transform-none"
               : "opacity-0 -translate-y-4"
-          } rounded-xl p-5 shadow-lg relative overflow-hidden
+          } rounded-xl p-4 shadow-lg relative overflow-hidden
           ${colors.bg}
           `}
         >
           {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-xl"></div>
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12 blur-xl"></div>
-          <div className="absolute top-1/2 right-1/4 w-12 h-12 bg-white/10 rounded-full blur-lg"></div>
+          <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12 blur-xl"></div>
+          <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/10 rounded-full -ml-10 -mb-10 blur-xl"></div>
+          <div className="absolute top-1/2 right-1/4 w-10 h-10 bg-white/10 rounded-full blur-lg"></div>
 
-          {/* Contract circle icon with ripple effect */}
-          <div className="relative z-10 flex items-start md:items-center mb-4 md:mb-0">
+          {/* Contract circle icon with ripple effect - Tăng kích thước */}
+          <div className="relative z-10 flex items-start md:items-center mb-2 md:mb-0">
             <div className="relative flex-shrink-0">
               <div
-                className={`p-3 rounded-xl mr-4 shadow-md bg-white/20 backdrop-blur-sm transform transition-transform hover:scale-110 duration-300`}
+                className={`p-2.5 rounded-xl mr-3 shadow-md bg-white/20 backdrop-blur-sm transform transition-transform hover:scale-110 duration-300`}
               >
                 {isIssueContract ? (
-                  <RiExchangeFundsLine className="w-7 h-7 text-white" />
+                  <RiExchangeFundsLine className="w-6 h-6 text-white" />
                 ) : isCardContract ? (
-                  <RiIdCardLine className="w-7 h-7 text-white" />
+                  <RiIdCardLine className="w-6 h-6 text-white" />
                 ) : (
-                  <RiFileTextLine className="w-7 h-7 text-white" />
+                  <RiFileTextLine className="w-6 h-6 text-white" />
                 )}
               </div>
             </div>
@@ -217,56 +430,81 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
               <h2 className="text-xl md:text-2xl font-bold text-white drop-shadow-md">
                 {contract.oracleData?.CONTRACT_NAME || contract.title}
               </h2>
-              <div className="flex items-center text-xs text-white/80 mt-1">
+              <div className="flex items-center text-sm text-white/80 mt-0.5">
                 <span className="mr-2 flex items-center">
-                  <span className="h-1.5 w-1.5 rounded-full bg-white/80 mr-1.5 animate-pulse"></span>
+                  <span className="h-1 w-1 rounded-full bg-white/80 mr-1 animate-pulse"></span>
                   {getContractTypeTitle()}
                 </span>
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-white/20 backdrop-blur-sm text-white shadow-sm">
-                  {contract.oracleData?.CONTRACT_NUMBER ||
-                    contract.liability?.contractNumber ||
-                    "No number"}
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium bg-white/20 backdrop-blur-sm text-white shadow-sm">
+                  {contract.oracleData?.CONTRACT_NUMBER || "No number"}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Right side decorative pattern */}
-          <div className="hidden md:block relative z-10">
-            <div className="absolute top-0 right-0 w-16 h-16 border-4 border-white/20 rounded-xl rotate-12"></div>
-            <div className="absolute top-8 right-8 w-6 h-6 bg-white/30 rounded-full"></div>
-            <div className="text-white/80 text-sm ml-5">
-              {formatDate(contract.oracleData?.AMND_DATE)}
+          {/* Thay thế phần decorative pattern bằng Lock/Available image */}
+          <div className="hidden md:flex flex-col items-center relative z-10">
+            <div className="hidden md:flex flex-col items-center relative z-10">
+              <button
+                onClick={toggleLockStatus}
+                className="transition-all duration-300 transform hover:scale-105 active:scale-95"
+              >
+                <div className="relative w-15 h-15 flex items-center justify-center overflow-hidden">
+                  {isLocked ? (
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                      <Image
+                        src={`/locked.png?v=${Date.now()}`}
+                        alt="Locked"
+                        width={45}
+                        height={45}
+                        className="opacity-90 rounded-full"
+                        priority
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Image
+                        src={`/unlock.png?v=${Date.now()}`}
+                        alt="Available"
+                        width={45}
+                        height={45}
+                        priority
+                      />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 rounded-full animate-ping-slow"></div>
+                </div>
+              </button>
             </div>
           </div>
         </div>
 
         {/* Scrollable content */}
-        <div className="overflow-y-auto flex-1 pr-1 custom-scrollbar">
+        <div className="overflow-y-auto flex-1 pr-1 custom-scrollbar relative">
           <div
-            className={`space-y-6 transition-all duration-500 ease-out ${
+            className={`space-y-4 transition-all duration-500 ease-out ${
               animateIn
                 ? "opacity-100 transform-none"
                 : "opacity-0 translate-y-4"
-            }`}
+            } ${isLocked ? "blur-sm opacity-60 pointer-events-none" : ""}`}
           >
             {/* Main Contract Information */}
             <div
               className={`overflow-hidden rounded-xl shadow-lg border ${colors.cardBorder}`}
             >
-              {/* Header */}
+              {/* Header - Giảm padding */}
               <div
-                className={`px-5 py-4 ${colors.bg} relative overflow-hidden rounded-t-xl shadow-md`}
+                className={`px-4 py-3 ${colors.bg} relative overflow-hidden rounded-t-xl shadow-md`}
               >
                 {/* Trang trí */}
-                <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10 blur-xl"></div>
-                <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full -ml-8 -mb-8 blur-xl"></div>
+                <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8 blur-xl"></div>
+                <div className="absolute bottom-0 left-0 w-12 h-12 bg-white/10 rounded-full -ml-6 -mb-6 blur-xl"></div>
 
                 <h3
                   className={`text-lg font-semibold text-white flex items-center relative z-10`}
                 >
                   <div
-                    className={`p-2 rounded-lg mr-3 bg-white/20 backdrop-blur-sm`}
+                    className={`p-2 rounded-lg mr-2 bg-white/20 backdrop-blur-sm`}
                   >
                     {isIssueContract ? (
                       <RiExchangeFundsLine className={`w-5 h-5 text-white`} />
@@ -280,156 +518,66 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                 </h3>
               </div>
 
-              {/* Contract Info */}
+              {/* Contract Info - Tăng padding và kích thước */}
               <div
-                className={`p-5 rounded-b-xl border-x border-b ${colors.cardBorder} ${colors.cardBg} hover:shadow-md transition-all duration-300 bg-white dark:bg-gray-800`}
+                className={`p-4 rounded-b-xl border-x border-b ${colors.cardBorder} ${colors.cardBg} hover:shadow-md transition-all duration-300 bg-white dark:bg-gray-800`}
               >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {/* Contract ID */}
-                  <div
-                    className={`p-4 rounded-xl border ${colors.cardBorder} ${colors.cardBg} hover:shadow-md hover:${colors.cardHoverBorder} transition-all duration-300 transform hover:translate-y-[-2px]`}
-                  >
-                    <div className="flex items-start">
-                      <div
-                        className={`p-2 rounded-lg mr-3 shadow-sm text-white ${colors.bg}`}
-                      >
-                        <RiHashtag className={`w-4 h-4`} />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                          Contract ID
-                        </p>
-                        <p className="font-medium text-gray-800 dark:text-gray-100">
-                          {contract.oracleData?.ID || contract.id || "N/A"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <InfoCard
+                    icon={RiHashtag}
+                    label="Contract ID"
+                    value={contract.oracleData?.ID || contract.id}
+                    colors={colors}
+                  />
 
                   {/* Contract Name */}
-                  <div
-                    className={`p-4 rounded-xl border ${colors.cardBorder} ${colors.cardBg} hover:shadow-md hover:${colors.cardHoverBorder} transition-all duration-300 transform hover:translate-y-[-2px]`}
-                  >
-                    <div className="flex items-start">
-                      <div
-                        className={`p-2 rounded-lg mr-3 shadow-sm text-white ${colors.bg}`}
-                      >
-                        <RiFileUserLine className={`w-4 h-4`} />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                          Contract Name
-                        </p>
-                        <p className="font-medium text-gray-800 dark:text-gray-100">
-                          {contract.oracleData?.CONTRACT_NAME || "N/A"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <InfoCard
+                    icon={RiFileUserLine}
+                    label="Contract Name"
+                    value={contract.oracleData?.CONTRACT_NAME}
+                    colors={colors}
+                  />
 
                   {/* Contract Number */}
-                  <div
-                    className={`p-4 rounded-xl border ${colors.cardBorder} ${colors.cardBg} hover:shadow-md hover:${colors.cardHoverBorder} transition-all duration-300 transform hover:translate-y-[-2px]`}
-                  >
-                    <div className="flex items-start">
-                      <div
-                        className={`p-2 rounded-lg mr-3 shadow-sm text-white ${colors.bg}`}
-                      >
-                        <RiFileTextLine className={`w-4 h-4`} />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                          Contract Number
-                        </p>
-                        <p className="font-medium text-gray-800 dark:text-gray-100">
-                          {contract.oracleData?.CONTRACT_NUMBER || "N/A"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <InfoCard
+                    icon={RiFileTextLine}
+                    label="Contract Number"
+                    value={contract.oracleData?.CONTRACT_NUMBER}
+                    colors={colors}
+                  />
 
                   {/* Branch */}
-                  <div
-                    className={`p-4 rounded-xl border ${colors.cardBorder} ${colors.cardBg} hover:shadow-md hover:${colors.cardHoverBorder} transition-all duration-300 transform hover:translate-y-[-2px]`}
-                  >
-                    <div className="flex items-start">
-                      <div
-                        className={`p-2 rounded-lg mr-3 shadow-sm text-white ${colors.bg}`}
-                      >
-                        <RiBankLine className={`w-4 h-4`} />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                          Branch
-                        </p>
-                        <p className="font-medium text-gray-800 dark:text-gray-100">
-                          {contract.oracleData?.BRANCH || "N/A"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <InfoCard
+                    icon={RiBankLine}
+                    label="Branch"
+                    value={contract.oracleData?.BRANCH}
+                    colors={colors}
+                  />
 
-                  {/* Client ID */}
-                  <div
-                    className={`p-4 rounded-xl border ${colors.cardBorder} ${colors.cardBg} hover:shadow-md hover:${colors.cardHoverBorder} transition-all duration-300 transform hover:translate-y-[-2px]`}
-                  >
-                    <div className="flex items-start">
-                      <div
-                        className={`p-2 rounded-lg mr-3 shadow-sm text-white ${colors.bg}`}
-                      >
-                        <RiUser3Line className={`w-4 h-4`} />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                          Client ID
-                        </p>
-                        <p className="font-medium text-gray-800 dark:text-gray-100">
-                          {contract.oracleData?.CLIENT__ID || "N/A"}
-                        </p>
-                        {contract.oracleData?.CLIENT__ID && (
-                          <Link
-                            href={`/clients/${contract.oracleData.CLIENT__ID}`}
-                            className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors mt-1 inline-flex items-center hover:underline"
-                          >
-                            View Client Details
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-3 w-3 ml-1"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  {/* Client ID with Link */}
+                  <InfoCard
+                    icon={RiUser3Line}
+                    label="Client ID"
+                    value={contract.oracleData?.CLIENT__ID}
+                    colors={colors}
+                    link={
+                      contract.oracleData?.CLIENT__ID
+                        ? {
+                            href: `/clients/${contract.oracleData.CLIENT__ID}`,
+                            text: "View Client Details",
+                          }
+                        : undefined
+                    }
+                  />
 
                   {/* Amendment Date */}
-                  <div
-                    className={`p-4 rounded-xl border ${colors.cardBorder} ${colors.cardBg} hover:shadow-md hover:${colors.cardHoverBorder} transition-all duration-300 transform hover:translate-y-[-2px]`}
-                  >
-                    <div className="flex items-start">
-                      <div
-                        className={`p-2 rounded-lg mr-3 shadow-sm text-white ${colors.bg}`}
-                      >
-                        <RiCalendarLine className={`w-4 h-4`} />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                          Amendment Date
-                        </p>
-                        <p className="font-medium text-gray-800 dark:text-gray-100">
-                          {formatDate(contract.oracleData?.AMND_DATE)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <InfoCard
+                    icon={RiCalendarLine}
+                    label="Amendment Date"
+                    value={formatDate(contract.oracleData?.AMND_DATE)}
+                    colors={colors}
+                  />
                 </div>
               </div>
             </div>
@@ -444,7 +592,7 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                   className={`relative px-5 py-4 bg-gradient-to-r from-emerald-500 to-emerald-700 dark:from-emerald-600 dark:to-emerald-800 shadow-md`}
                 >
                   {/* Hiệu ứng ánh sáng quét qua */}
-                  <div className="absolute inset-0 bg-white/10 blur-md opacity-0 animate-[shimmer_2s_infinite]"></div>
+                  <div className="absolute inset-0 bg-white/10 blur-md opacity-0"></div>
 
                   {/* Trang trí */}
                   <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10 blur-xl"></div>
@@ -636,21 +784,21 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
               </div>
             )}
 
-            {/* Additional Details */}
-            <div className="mt-8">
+            {/* Additional Details - Thu nhỏ lại */}
+            <div className="mt-3">
               {/* Additional Details Header */}
               <div
-                className={`px-5 py-4 ${colors.bg} relative overflow-hidden rounded-t-xl shadow-md`}
+                className={`px-4 py-3 ${colors.bg} relative overflow-hidden rounded-t-xl shadow-md`}
               >
                 {/* Trang trí */}
-                <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10 blur-xl"></div>
-                <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full -ml-8 -mb-8 blur-xl"></div>
+                <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8 blur-xl"></div>
+                <div className="absolute bottom-0 left-0 w-12 h-12 bg-white/10 rounded-full -ml-6 -mb-6 blur-xl"></div>
 
                 <h3
                   className={`text-lg font-semibold text-white flex items-center relative z-10`}
                 >
                   <div
-                    className={`p-2 rounded-lg mr-3 bg-white/20 backdrop-blur-sm`}
+                    className={`p-2 rounded-lg mr-2 bg-white/20 backdrop-blur-sm`}
                   >
                     <RiFileListLine className={`w-5 h-5 text-white`} />
                   </div>
@@ -665,21 +813,21 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                   <div>
                     <div className="max-h-[200px] overflow-hidden relative">
                       <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm">
-                        <table className="w-full">
+                        <table className="w-full text-sm">
                           <tbody>
                             {Object.entries(contract?.oracleData || {})
-                              .slice(0, 6)
+                              .slice(0, 7)
                               .map(([key, value]) => (
                                 <tr
                                   key={key}
                                   className={`border-b ${colors.borderLight} hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors`}
                                 >
                                   <td
-                                    className={`px-4 py-3 bg-gray-50 dark:bg-gray-700/50 w-1/3 font-medium text-gray-700 dark:text-gray-300 border-r ${colors.borderLight}`}
+                                    className={`px-3 py-2.5 bg-gray-50 dark:bg-gray-700/50 w-1/3 font-medium text-gray-700 dark:text-gray-300 border-r ${colors.borderLight} text-sm`}
                                   >
                                     {key}
                                   </td>
-                                  <td className="px-4 py-3 text-gray-800 dark:text-gray-200">
+                                  <td className="px-3 py-2.5 text-gray-800 dark:text-gray-200 text-sm">
                                     {typeof value === "object" && value !== null
                                       ? JSON.stringify(value).slice(0, 50) +
                                         (JSON.stringify(value).length > 50
@@ -692,21 +840,21 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                           </tbody>
                         </table>
                       </div>
-                      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white dark:from-gray-800 to-transparent"></div>
+                      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white dark:from-gray-800 to-transparent"></div>
                     </div>
-                    <div className="mt-4 text-center">
+                    <div className="mt-2 text-center">
                       <button
                         onClick={() => setShowFullDetails(true)}
-                        className={`px-4 py-2 rounded-lg ${colors.bg} text-white hover:shadow-md transition-all duration-300`}
+                        className={`px-3 py-1.5 rounded-lg ${colors.bg} text-white text-xs hover:shadow-md transition-all duration-300`}
                       >
-                        View More Details
+                        More Details
                       </button>
                     </div>
                   </div>
                 ) : (
                   <div>
                     <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm">
-                      <table className="w-full">
+                      <table className="w-full text-sm">
                         <tbody>
                           {Object.entries(contract?.oracleData || {}).map(
                             ([key, value]) => (
@@ -715,11 +863,11 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                                 className={`border-b ${colors.borderLight} hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors`}
                               >
                                 <td
-                                  className={`px-4 py-3 bg-gray-50 dark:bg-gray-700/50 w-1/3 font-medium text-gray-700 dark:text-gray-300 border-r ${colors.borderLight}`}
+                                  className={`px-3 py-2 bg-gray-50 dark:bg-gray-700/50 w-1/3 font-medium text-gray-700 dark:text-gray-300 border-r ${colors.borderLight} text-xs`}
                                 >
                                   {key}
                                 </td>
-                                <td className="px-4 py-3 text-gray-800 dark:text-gray-200">
+                                <td className="px-3 py-2 text-gray-800 dark:text-gray-200 text-xs">
                                   {typeof value === "object" && value !== null
                                     ? JSON.stringify(value).slice(0, 100) +
                                       (JSON.stringify(value).length > 100
@@ -733,12 +881,12 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
                         </tbody>
                       </table>
                     </div>
-                    <div className="mt-4 text-center">
+                    <div className="mt-2 text-center">
                       <button
                         onClick={() => setShowFullDetails(false)}
-                        className={`px-4 py-2 rounded-lg ${colors.bg} text-white hover:shadow-md transition-all duration-300`}
+                        className={`px-3 py-1.5 rounded-lg ${colors.bg} text-white text-xs hover:shadow-md transition-all duration-300`}
                       >
-                        Show Less
+                        Less Details
                       </button>
                     </div>
                   </div>
@@ -749,114 +897,53 @@ export default function ContractDetail({ contract }: ContractDetailProps) {
         </div>
       </div>
 
-      {/* Render modal with portal */}
-      {isMounted &&
-        showCardModal &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-sm"
-            onClick={() => setShowCardModal(false)}
-          >
-            <div className="absolute top-4 right-4 z-50">
+      {/* Lớp phủ khi nội dung bị khóa - Được đặt ở cấp cao nhất của component */}
+      {isLocked && (
+        <div className="absolute inset-0 bg-black/30 backdrop-blur-sm z-50 pt-20">
+          <div className="sticky top-1/4 w-full flex justify-center">
+            <div className="bg-white/90 dark:bg-gray-800/90 p-6 rounded-xl shadow-xl max-w-md text-center transform transition-all duration-300 border-2 border-red-500/50">
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                <Image
+                  src="/locked.png"
+                  alt="Locked"
+                  width={40}
+                  height={40}
+                  className="opacity-90"
+                />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+                Content Locked
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
+                This contract has been locked and cannot be edited. Click the
+                button below to unlock it with a verification code.
+              </p>
               <button
-                className="bg-white/20 hover:bg-white/30 p-3 rounded-full transition-colors"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setShowCardModal(false);
+                  toggleCodeInput();
                 }}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
               >
-                <RiCloseLine className="w-8 h-8 text-white" />
+                Unlock Content
               </button>
             </div>
+          </div>
+        </div>
+      )}
 
-            <div
-              className="relative w-[90vw] max-w-[1000px] h-auto aspect-[16/10] m-4 rounded-2xl overflow-hidden shadow-2xl transform transition-all duration-300"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Nền thẻ */}
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: "url(/card-bg.jpg)" }}
-              />
+      {/* Render các modal */}
+      {isBrowserReady &&
+        showCodeInput &&
+        createPortal(renderVerificationModal(), document.body)}
 
-              {/* Hiệu ứng lớp phủ */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
-
-              {/* Hiệu ứng phản chiếu nhẹ */}
-              <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-white/20 to-transparent"></div>
-
-              {/* Tên ngân hàng */}
-              <div className="absolute top-[8%] left-[5%]">
-                <p className="text-white font-bold text-4xl md:text-6xl tracking-wider">
-                  HAICHANBANK
-                </p>
-              </div>
-
-              {/* Logo - tăng kích thước */}
-              <div className="absolute top-[-3%] right-[3%]">
-                <img
-                  src="/mastercard.svg"
-                  alt="MasterCard"
-                  className="w-[200px] md:w-[200px] h-auto"
-                />
-              </div>
-
-              {/* Chip - tăng kích thước */}
-              <div className="absolute top-[38%] left-[5%]">
-                <img
-                  src="/chip.png"
-                  alt="Card Chip"
-                  className="w-[150px] md:w-[150px] h-auto object-contain drop-shadow-md"
-                />
-              </div>
-
-              {/* Biểu tượng contactless - tăng kích thước */}
-              <div className="absolute top-[38%] left-[21%]">
-                <img
-                  src="/contactless-indicator.png"
-                  alt="Contactless"
-                  className="w-[90px] md:w-[90px] h-auto opacity-80"
-                />
-              </div>
-
-              {/* Số thẻ với font OCR-A */}
-              <div className="absolute top-[60%] left-[5%] right-[5%]">
-                <p className="font-['OCR-A'] text-[5vmin] md:text-[5vmin] text-white tracking-[0.15em] whitespace-nowrap overflow-hidden">
-                  {contract.oracleData?.CARD_NUMBER
-                    ? contract.oracleData.CARD_NUMBER.replace(
-                        /(\d{4})/g,
-                        "$1 "
-                      ).trim()
-                    : "1000 0101 3559 6630"}
-                </p>
-              </div>
-
-              {/* Tên chủ thẻ */}
-              <div className="absolute bottom-[8%] left-[5%]">
-                <p className="text-lg md:text-xl text-white/80 uppercase tracking-wider mb-2">
-                  CARD HOLDER
-                </p>
-                <p className="text-white uppercase font-medium text-2xl md:text-4xl">
-                  {contract.oracleData?.TR_FIRST_NAM &&
-                  contract.oracleData?.TR_LAST_NAM
-                    ? `${contract.oracleData.TR_FIRST_NAM} ${contract.oracleData.TR_LAST_NAM}`
-                    : "NAM DINH"}
-                </p>
-              </div>
-
-              {/* Ngày hết hạn */}
-              <div className="absolute bottom-[8%] right-[5%] text-right">
-                <p className="text-lg md:text-xl text-white/80 uppercase tracking-wider mb-2">
-                  EXPIRES
-                </p>
-                <p className="text-white font-medium text-2xl md:text-4xl">
-                  MM/YY
-                </p>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+      {showCardModal && (
+        <CreditCardModal
+          contract={contract}
+          isOpen={showCardModal}
+          onClose={() => setShowCardModal(false)}
+        />
+      )}
     </div>
   );
 }

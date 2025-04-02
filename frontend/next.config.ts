@@ -4,7 +4,13 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactStrictMode: true,
   images: {
-    domains: ['localhost'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000', // Nếu anh chạy local trên cổng khác thì đổi số này
+      },
+    ],
     formats: ['image/avif', 'image/webp'],
   },
   compiler: {

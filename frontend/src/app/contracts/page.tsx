@@ -225,7 +225,7 @@ export default function ContractsPage() {
                   <ContractDetail contract={selectedContract} />
                 </div>
               ) : (
-                <div className="overflow-hidden rounded-2xl shadow-xl border-2 border-purple-200/60 dark:border-purple-700/30 bg-white/80 backdrop-blur-sm dark:bg-gray-800/90 transition-all duration-300 h-[calc(100vh-180px)] flex flex-col items-center justify-center text-center p-6 animate-fadeIn">
+                <div className="overflow-hidden rounded-2xl shadow-xl border-2 border-purple-200/60 dark:border-purple-700/30 bg-white/80 backdrop-blur-sm dark:bg-gray-800/90 transition-all duration-300 h-[750px] flex flex-col items-center justify-center text-center p-6 animate-fadeIn">
                   <div className="p-6 bg-indigo-100/50 dark:bg-indigo-900/30 rounded-full mb-6">
                     <RiFileTextLine className="w-16 h-16 text-indigo-500 dark:text-indigo-400" />
                   </div>
