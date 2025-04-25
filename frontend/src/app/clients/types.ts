@@ -1,4 +1,4 @@
-import { Client } from '@/services/api';
+
 
 export interface ValidationRule {
   required: boolean;
@@ -72,20 +72,3 @@ export const validateField = (name: string, value: string): string => {
   return '';
 };
 
-export const validateForm = (data: Omit<Client, 'ID'>): ValidationErrors => {
-  const errors: ValidationErrors = {};
-  
-  // Validate each field
-  Object.keys(validationRules).forEach(field => {
-    // Ensure field is a valid key for both validationRules and ValidationErrors
-    if (field in validationRules) {
-      const key = field as keyof ValidationErrors;
-      const error = validateField(field, data[field as keyof Omit<Client, 'ID'>] as string);
-      if (error) {
-        errors[key] = error;
-      }
-    }
-  });
-  
-  return errors;
-}; 

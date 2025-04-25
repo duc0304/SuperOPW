@@ -123,61 +123,6 @@ export default function ContractsPage() {
     if (isMobile) dispatch(setSelectedContract(null)); // Xóa contract đã chọn khi đóng panel trên mobile
   };
 
-  const handleRefreshData = () => {
-    setIsSearching(true);
-    if (clientId) {
-      dispatch(
-        fetchContractsByClient({ clientId, page: currentPage, searchQuery })
-      )
-        .then(() => {
-          setIsSearching(false);
-          dispatch(
-            showToast({
-              message: searchQuery
-                ? `Refreshed data with search: "${searchQuery}"`
-                : "Refreshed client contracts",
-              type: "success",
-              duration: 2000,
-            })
-          );
-        })
-        .catch(() => {
-          setIsSearching(false);
-          dispatch(
-            showToast({
-              message: "Error refreshing data",
-              type: "error",
-              duration: 3000,
-            })
-          );
-        });
-    } else {
-      dispatch(fetchContracts({ page: currentPage, searchQuery }))
-        .then(() => {
-          setIsSearching(false);
-          dispatch(
-            showToast({
-              message: searchQuery
-                ? `Refreshed data with search: "${searchQuery}"`
-                : "Refreshed all contracts",
-              type: "success",
-              duration: 2000,
-            })
-          );
-        })
-        .catch(() => {
-          setIsSearching(false);
-          dispatch(
-            showToast({
-              message: "Error refreshing data",
-              type: "error",
-              duration: 3000,
-            })
-          );
-        });
-    }
-  };
-
   if (loading && contracts.length === 0) {
     return (
       <div className="p-4 pt-20 min-h-screen flex items-center justify-center">

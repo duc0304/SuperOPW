@@ -4,7 +4,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import axios from "axios";
-import { toast } from "react-hot-toast";
+
 import {
   RiAddLine,
   RiInformationLine,
@@ -19,13 +19,13 @@ import { addContract } from "@/redux/slices/contractSlice";
 import { ContractNode } from "../types";
 import CardForm from "./CardForm";
 import IssuingContractForm from "./IssuingContractForm";
-import CardCreationOptions from "./CardCreationOptions";
 
 interface AddContractModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave?: (contractData: any) => Promise<void>;
   clientId?: string;
+  clientNumber?: string;
 }
 
 interface SoapContractData {
@@ -50,6 +50,8 @@ export default function AddContractModal({
   isOpen,
   onClose,
   onSave,
+  clientId,
+  clientNumber,
 }: AddContractModalProps) {
   const dispatch = useAppDispatch();
 
@@ -57,14 +59,9 @@ export default function AddContractModal({
   const [selectedContractType, setSelectedContractType] =
     useState<ContractType | null>(null);
 
-  // State to track the card creation step (options or form)
-  const [cardCreationStep, setCardCreationStep] = useState<
-    "options" | "form" | null
-  >(null);
-
   const [soapContractData, setSoapContractData] = useState<SoapContractData>({
     clientSearchMethod: "CLIENT_NUMBER",
-    clientIdentifier: "",
+    clientIdentifier: clientId || "",
     reason: "",
     branch: "",
     institutionCode: "",
@@ -132,7 +129,7 @@ export default function AddContractModal({
         // Call API to create contract via SOAP
         try {
           const response = await axios.post(
-            "http://localhost:5000/api/soap/addContract",
+            "http://localhost:5000/api/soap/createContract",
             soapContractData
           );
 
@@ -149,7 +146,6 @@ export default function AddContractModal({
 
             // Close modal and show success message
             onClose();
-            toast.success("Contract created successfully!");
           } else {
             setError(response.data.message || "Failed to create contract");
           }
@@ -161,20 +157,9 @@ export default function AddContractModal({
           }
           console.error("Error creating contract:", error);
         }
-      } else {
-        // Handle issuing and card contracts
-        // If onSave is provided via props, use it
-        if (onSave) {
-          await onSave(createNewContract());
-        } else {
-          // Dispatch action to add contract
-          dispatch(addContract(createNewContract()));
-        }
-
-        // Close modal and show success message
-        onClose();
-        toast.success("Contract created successfully!");
       }
+      // Issuing and card contracts are handled in their respective components,
+      // they will call onSave and onClose themselves
     } finally {
       setIsSubmitting(false);
     }
@@ -183,22 +168,22 @@ export default function AddContractModal({
   useEffect(() => {
     if (isOpen) {
       setSelectedContractType(null);
-      setCardCreationStep(null);
       setSoapContractData({
         clientSearchMethod: "CLIENT_NUMBER",
-        clientIdentifier: "",
-        reason: "to test",
-        branch: "9999",
-        institutionCode: "9999",
-        productCode: "TEST",
+        clientIdentifier: clientNumber || "",
+        reason: "To Test",
+        branch: "0101",
+        institutionCode: "0001",
+        productCode: "LIAB_TRAINING01",
         productCode2: "",
         productCode3: "",
         contractName: "Liability Contract",
         cbsNumber: "",
       });
       setResponse(null);
+      setError(null);
     }
-  }, [isOpen]);
+  }, [isOpen, clientId]);
 
   // Render the contract type selection screen
   const renderContractTypeSelection = () => {
@@ -283,10 +268,7 @@ export default function AddContractModal({
             className="bg-gradient-to-br from-emerald-50 via-emerald-100 to-emerald-50 dark:from-emerald-900/30 dark:via-emerald-800/20 dark:to-emerald-900/30 
               rounded-2xl shadow-lg border-2 border-emerald-200/60 dark:border-emerald-700/30 overflow-hidden 
               transition-all duration-300 hover:shadow-xl hover:scale-105 cursor-pointer"
-            onClick={() => {
-              setSelectedContractType("card");
-              setCardCreationStep("options");
-            }}
+            onClick={() => setSelectedContractType("card")}
           >
             <div className="p-6 flex flex-col items-center text-center">
               <div className="bg-emerald-100 dark:bg-emerald-900/50 p-4 rounded-full mb-4">
@@ -303,10 +285,7 @@ export default function AddContractModal({
                   variant="primary"
                   className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600"
                   icon={RiArrowRightLine}
-                  onClick={() => {
-                    setSelectedContractType("card");
-                    setCardCreationStep("options");
-                  }}
+                  onClick={() => setSelectedContractType("card")}
                 >
                   Select
                 </Button>
@@ -383,8 +362,9 @@ export default function AddContractModal({
                   onChange={(e) =>
                     handleSoapDataChange("clientIdentifier", e.target.value)
                   }
-                  className="py-2.5 pl-4 w-full bg-white/80 backdrop-blur-sm dark:bg-gray-700/70 border-purple-200 dark:border-purple-700/50 dark:placeholder-gray-400 transition-all duration-300 focus:shadow-md focus:border-purple-400 dark:focus:border-purple-500"
+                  className="py-2.5 pl-4 w-full bg-yellow-100/80 backdrop-blur-sm dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-700/50 dark:placeholder-gray-400 transition-all duration-300"
                   required
+                  readOnly
                 />
               </div>
             </div>
@@ -525,21 +505,19 @@ export default function AddContractModal({
 
   // Render the form to create an Issuing Contract
   const renderIssuingContractForm = () => {
+    console.log(
+      "Rendering IssuingContractForm with clientId:",
+      soapContractData.clientIdentifier
+    );
+    console.log("onSave function available:", !!onSave);
+
     return (
       <IssuingContractForm
         onBack={() => setSelectedContractType(null)}
         onClose={onClose}
-      />
-    );
-  };
-
-  // Render the interface to select the card creation method
-  const renderCardCreationOptions = () => {
-    return (
-      <CardCreationOptions
-        onSelectLiability={() => setCardCreationStep("form")}
-        onSelectIssuing={() => setCardCreationStep("form")}
-        onBack={() => setSelectedContractType(null)}
+        onSave={onSave}
+        clientId={clientId}
+        clientNumber={clientNumber}
       />
     );
   };
@@ -548,8 +526,11 @@ export default function AddContractModal({
   const renderCardForm = () => {
     return (
       <CardForm
-        onBack={() => setCardCreationStep("options")}
+        onBack={() => setSelectedContractType(null)}
         onClose={onClose}
+        onSave={onSave}
+        clientId={clientId}
+        clientNumber={clientNumber}
       />
     );
   };
@@ -566,20 +547,13 @@ export default function AddContractModal({
           ? "Create Liability Contract"
           : selectedContractType === "issuing"
           ? "Create Issuing Contract"
-          : cardCreationStep === "options"
-          ? "Select Card Creation Method"
           : "Create Card"
       }
     >
       {selectedContractType === null && renderContractTypeSelection()}
       {selectedContractType === "liability" && renderLiabilityContractForm()}
       {selectedContractType === "issuing" && renderIssuingContractForm()}
-      {selectedContractType === "card" &&
-        cardCreationStep === "options" &&
-        renderCardCreationOptions()}
-      {selectedContractType === "card" &&
-        cardCreationStep === "form" &&
-        renderCardForm()}
+      {selectedContractType === "card" && renderCardForm()}
     </Modal>
   );
 }

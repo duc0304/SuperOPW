@@ -1,81 +1,113 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import {
   RiFileTextLine,
   RiAddLine,
   RiInformationLine,
   RiArrowLeftLine,
   RiArrowRightLine,
-  RiCloseLine
-} from 'react-icons/ri';
-import Button from '@/components/ui/Button';
-import AddContractModal from '@/app/contracts/components/AddContractModal';
-import ContractTree from '@/app/contracts/components/ContractTree';
-import ContractDetail from '@/app/contracts/components/ContractDetail';
-import { ContractNode, mapOracleContractToContractNode } from '@/app/contracts/types';
-import { Client } from '@/services/api';
+  RiCloseLine,
+} from "react-icons/ri";
+import Button from "@/components/ui/Button";
+import AddContractModal from "@/app/contracts/components/AddContractModal";
+import ContractTree from "@/app/contracts/components/ContractTree";
+import ContractDetail from "@/app/contracts/components/ContractDetail";
+import { ContractNode } from "@/app/contracts/types";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { showToast } from "@/redux/slices/toastSlice";
+import {
+  fetchContractsByClient,
+  setSelectedContract as selectContract,
+  setTreeCurrentPage,
+  resetState,
+} from "@/redux/slices/contractSlice";
+import ToastContainer from "@/components/ToastContainer";
+
+// Định nghĩa kiểu dữ liệu cho Client
+interface Client {
+  ID?: string;
+  shortName?: string;
+  companyName?: string;
+  clientNumber?: string;
+  status?: string;
+  [key: string]: any;
+}
+
+const Skeleton = ({ className = "" }: { className?: string }) => (
+  <div
+    className={`animate-pulse bg-gray-200 dark:bg-gray-700 rounded-md ${className}`}
+  ></div>
+);
 
 export default function CustomerContractsPage() {
   const params = useParams();
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const clientId = params.id as string;
 
+  // Sử dụng Redux state thay vì state cục bộ
+  const {
+    contracts,
+    selectedContract,
+    isLoading,
+    error,
+    tree: { currentPage, totalPages },
+  } = useAppSelector((state) => state.contracts);
+
   const [client, setClient] = useState<Client | null>(null);
-  const [contracts, setContracts] = useState<ContractNode[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [clientNumber, setClientNumber] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [selectedContract, setSelectedContract] = useState<ContractNode | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [showDetailPanel, setShowDetailPanel] = useState(false);
   const [animateBackground, setAnimateBackground] = useState(false);
 
+  // Thêm effect để reset state khi component unmount
+  useEffect(() => {
+    return () => {
+      dispatch(resetState());
+    };
+  }, [dispatch]);
+
   // Fetch client details and contracts
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true);
-      setError(null);
-
       try {
         // Fetch client details
-        const clientResponse = await fetch(`http://localhost:5000/api/oracle/clients/${clientId}`);
+        const clientResponse = await fetch(
+          `http://localhost:5000/api/oracle/clients/${clientId}`
+        );
         if (!clientResponse.ok) {
           throw new Error(`Failed to fetch client: ${clientResponse.status}`);
         }
 
         const clientData = await clientResponse.json();
         setClient(clientData.data);
-
-        // Fetch all client contracts
-        const contractsResponse = await fetch(`http://localhost:5000/api/oracle/contracts/client/${clientId}`);
-        if (!contractsResponse.ok) {
-          throw new Error(`Failed to fetch contracts: ${contractsResponse.status}`);
-        }
-
-        const contractsData = await contractsResponse.json();
-
-        // Map Oracle contracts to ContractNode structure
-        if (contractsData.data && Array.isArray(contractsData.data)) {
-          // Convert to ContractNode structure
-          const contractNodes = contractsData.data.map(mapOracleContractToContractNode);
-          // Organize in hierarchical structure
-          const organizedContracts = organizeContractsHierarchy(contractNodes);
-          setContracts(organizedContracts);
-        } else {
-          setContracts([]);
-        }
+        setClientNumber(clientData.data.clientNumber);
+        console.log("Client number:", clientData.data.clientNumber);
+        // Fetch client contracts using Redux action
+        dispatch(
+          fetchContractsByClient({
+            clientId,
+            page: currentPage,
+          })
+        );
       } catch (err) {
-        console.error("Error fetching data:", err);
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      } finally {
-        setIsLoading(false);
+        console.error("Error fetching client data:", err);
+        dispatch(
+          showToast({
+            message:
+              err instanceof Error ? err.message : "Failed to load client data",
+            type: "error",
+            duration: 3000,
+          })
+        );
       }
     };
 
     fetchData();
-  }, [clientId]);
+  }, [clientId, currentPage, dispatch]);
 
   // Animation effect on mount
   useEffect(() => {
@@ -92,10 +124,10 @@ export default function CustomerContractsPage() {
     checkIfMobile();
 
     // Thêm event listener
-    window.addEventListener('resize', checkIfMobile);
+    window.addEventListener("resize", checkIfMobile);
 
     // Cleanup
-    return () => window.removeEventListener('resize', checkIfMobile);
+    return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
   // Hiển thị panel chi tiết khi có contract được chọn trên mobile
@@ -105,122 +137,17 @@ export default function CustomerContractsPage() {
     }
   }, [selectedContract, isMobile]);
 
-  // Tự động mở rộng tất cả contracts khi có dữ liệu
+  // Log khi load dữ liệu thành công
   useEffect(() => {
     if (contracts.length > 0) {
-      // Logging tổng số contracts được tải
-      console.log(`Loaded ${contracts.length} contracts for client ${clientId}`);
+      console.log(
+        `Loaded ${contracts.length} contracts for client ${clientId}`
+      );
     }
   }, [contracts, clientId]);
 
-  // Organize contracts into a hierarchical structure
-  const organizeContractsHierarchy = (contracts: ContractNode[]): ContractNode[] => {
-    // Nếu không có contracts, trả về mảng rỗng
-    if (!contracts || contracts.length === 0) {
-      return [];
-    }
-    
-    // Maps tổ chức contracts theo ID
-    const liabMap = new Map<string, ContractNode>();
-    const issueMap = new Map<string, ContractNode>();
-    const idMap = new Map<string, ContractNode>();
-    const processedContracts = new Set<string>(); // Theo dõi các contract đã được xử lý
-    
-    // Danh sách kết quả - chỉ chứa liability contracts ở cấp cao nhất
-    const result: ContractNode[] = [];
-    
-    // Bước 1: Xây dựng các maps
-    contracts.forEach(contract => {
-      // Tạo bản sao để tránh các vấn đề tham chiếu và đảm bảo children array được khởi tạo
-      const contractCopy = { ...contract, children: [] };
-      
-      // Lưu vào map theo ID nếu có
-      if (contract.oracleData?.ID) {
-        idMap.set(contract.oracleData.ID, contractCopy);
-      }
-      
-      // Chỉ thêm liability contracts vào kết quả cấp cao nhất
-      if (contract.type === 'liability') {
-        liabMap.set(contract.id, contractCopy);
-        result.push(contractCopy);
-        processedContracts.add(contract.id);
-      } else if (contract.type === 'issue') {
-        issueMap.set(contract.id, contractCopy);
-      }
-    });
-    
-    // Bước 2: Gán các issue contracts vào LIAB cha
-    contracts.forEach(contract => {
-      if (contract.type === 'issue') {
-        // Tìm bản sao đã được tạo
-        const issueCopy = issueMap.get(contract.id);
-        if (!issueCopy) return;
-        
-        let parentFound = false;
-        
-        if (contract.oracleData?.LIAB_CONTRACT) {
-          const liabId = contract.oracleData.LIAB_CONTRACT;
-          
-          // Tìm LIAB contract dựa trên ID
-          for (const [id, liabContract] of liabMap.entries()) {
-            if (liabContract.oracleData?.ID === liabId) {
-              liabContract.children = liabContract.children || [];
-              liabContract.children.push(issueCopy);
-              parentFound = true;
-              processedContracts.add(contract.id);
-              break;
-            }
-          }
-        }
-        
-        // Bỏ qua issues mồ côi, không thêm vào cấp cao nhất
-      }
-    });
-    
-    // Bước 3: Gán các card contracts vào issue hoặc LIAB cha
-    contracts.forEach(contract => {
-      if (contract.type === 'card') {
-        let parentFound = false;
-        
-        // Nếu có ACNT_CONTRACT__OID, đây là card thuộc về issue
-        if (contract.oracleData?.ACNT_CONTRACT__OID) {
-          const issueId = contract.oracleData.ACNT_CONTRACT__OID;
-          const parentIssue = idMap.get(issueId);
-          
-          if (parentIssue) {
-            parentIssue.children = parentIssue.children || [];
-            parentIssue.children.push({ ...contract, children: [] });
-            parentFound = true;
-            processedContracts.add(contract.id);
-          }
-        } 
-        // Nếu có LIAB_CONTRACT, đây là card thuộc về LIAB
-        else if (contract.oracleData?.LIAB_CONTRACT) {
-          const liabId = contract.oracleData.LIAB_CONTRACT;
-          
-          // Tìm LIAB contract dựa trên ID
-          for (const [id, liabContract] of liabMap.entries()) {
-            if (liabContract.oracleData?.ID === liabId) {
-              liabContract.children = liabContract.children || [];
-              liabContract.children.push({ ...contract, children: [] });
-              parentFound = true;
-              processedContracts.add(contract.id);
-              break;
-            }
-          }
-        }
-        
-        // Bỏ qua cards mồ côi, không thêm vào cấp cao nhất
-      }
-    });
-    
-    // Không thêm các contract mồ côi vào cấp cao nhất
-    
-    return result;
-  };
-
   const handleContractSelect = (contract: ContractNode) => {
-    setSelectedContract(contract);
+    dispatch(selectContract(contract));
     if (isMobile) {
       setShowDetailPanel(true);
     }
@@ -229,76 +156,121 @@ export default function CustomerContractsPage() {
   // Đóng panel chi tiết
   const handleCloseDetailPanel = () => {
     setShowDetailPanel(false);
-  };
-
-  // Handle adding a new contract
-  const handleAddContract = async (contractData: any) => {
-    setIsLoading(true);
-    try {
-      // Call API to add new contract
-      const response = await fetch(`http://localhost:5000/api/clients/${clientId}/contracts`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(contractData),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to add contract: ${response.status}`);
-      }
-
-      // Refresh contracts
-      const contractsResponse = await fetch(`http://localhost:5000/api/clients/${clientId}/contracts`);
-      const contractsData = await contractsResponse.json();
-
-      if (contractsData.data && Array.isArray(contractsData.data)) {
-        const contractNodes = contractsData.data.map(mapOracleContractToContractNode);
-        setContracts(organizeContractsHierarchy(contractNodes));
-      }
-
-      // Close modal
-      setIsAddModalOpen(false);
-    } catch (err) {
-      console.error("Error adding contract:", err);
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
-    } finally {
-      setIsLoading(false);
+    if (isMobile) {
+      dispatch(selectContract(null));
     }
   };
 
-  if (!client && isLoading) {
+  // Xử lý thay đổi trang
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    dispatch(setTreeCurrentPage(page));
+  };
+
+  // Handle adding a new contract
+  const handleAddContract = () => {
+    setIsAddModalOpen(true);
+  };
+
+  // Xử lý lưu contract mới từ modal
+  const handleSaveContract = async (contractData: any) => {
+    try {
+      console.log("handleSaveContract called with clientId:", clientId);
+      console.log("Contract data received:", contractData);
+
+      // Refresh contracts sau khi thêm mới bằng cách dispatch lại action fetchContractsByClient
+      dispatch(
+        fetchContractsByClient({
+          clientId,
+          page: currentPage,
+        })
+      );
+
+      dispatch(
+        showToast({
+          message: "Contract added successfully",
+          type: "success",
+          duration: 3000,
+        })
+      );
+    } catch (err) {
+      console.error("Error refreshing contracts:", err);
+      dispatch(
+        showToast({
+          message:
+            err instanceof Error
+              ? err.message
+              : "Unable to update contract list",
+          type: "error",
+          duration: 3000,
+        })
+      );
+    }
+  };
+
+  // Trở về trang chi tiết khách hàng
+  const handleBackToClient = () => {
+    router.push(`/clients/${clientId}`);
+  };
+
+  if (isLoading && contracts.length === 0) {
     return (
-      <div className="p-4 pt-20 min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+      <div className="p-4 pt-20 min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+          <p className="mt-4 text-gray-500 dark:text-gray-400">
+            Loading contracts...
+          </p>
+        </div>
       </div>
     );
   }
 
-  if (!client && !isLoading) {
+  if (error && contracts.length === 0) {
     return (
-      <div className="p-4 pt-20 min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="text-red-500 dark:text-red-400 text-xl font-semibold p-8 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-red-200 dark:border-red-800">
-          {error || "Client not found"}
+      <div className="p-4 pt-20 min-h-screen flex items-center justify-center">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-xl max-w-md w-full text-center">
+          <RiInformationLine className="mx-auto text-red-500 w-16 h-16 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+            Error loading data
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
+          <div className="flex justify-center space-x-4">
+            <Button
+              onClick={handleBackToClient}
+              variant="secondary"
+              icon={RiArrowLeftLine}
+            >
+              Back
+            </Button>
+            <Button onClick={() => window.location.reload()} variant="primary">
+              Try again
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 pt-20 min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Decorative background elements */}
+    <div className="p-4 pt-20 min-h-screen relative overflow-hidden">
+      <ToastContainer />
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-purple-300/10 to-indigo-400/10 rounded-full blur-3xl -z-10"></div>
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-indigo-300/10 to-purple-400/10 rounded-full blur-3xl -z-10"></div>
       <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-gradient-to-br from-primary-300/10 to-indigo-400/10 rounded-full blur-3xl -z-10"></div>
 
       <div className="max-w-7xl mx-auto relative z-10">
-        {/* Header with gradient background */}
+        {/* Header */}
         <div className="mb-6 overflow-visible">
-          {/* Enhanced 3D background with gradient from dark to light (left to right) */}
-          <div className={`bg-gradient-to-r from-primary-700 via-primary-600 to-primary-400 dark:from-primary-900 dark:via-primary-800 dark:to-primary-600 
+          <div
+            className={`bg-gradient-to-r from-primary-700 via-primary-600 to-primary-400 dark:from-primary-900 dark:via-primary-800 dark:to-primary-600 
             rounded-3xl p-6 relative overflow-hidden shadow-xl transition-all duration-700 ease-out
-            ${animateBackground ? 'opacity-100 transform-none' : 'opacity-0 transform -translate-y-4'}`}>
+            ${
+              animateBackground
+                ? "opacity-100 transform-none"
+                : "opacity-0 transform -translate-y-4"
+            }`}
+          >
             {/* Animated background elements */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl animate-pulse-slow"></div>
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24 blur-3xl animate-float"></div>
@@ -310,38 +282,40 @@ export default function CustomerContractsPage() {
 
             <div className="flex flex-col md:flex-row md:items-center md:justify-between relative z-10">
               <div className="flex items-center">
-                {/* Back button integrated in the header */}
+                {/* Back button */}
                 <button
-                  onClick={() => router.back()}
-                  className="bg-white/20 backdrop-blur-sm p-3 rounded-xl mr-4 shadow-lg transform transition-transform hover:scale-110 duration-300 hover:bg-white/30"
-                  aria-label="Back to client"
+                  onClick={handleBackToClient}
+                  className="bg-white/20 backdrop-blur-sm p-3 rounded-xl mr-4 shadow-lg transform transition-transform hover:scale-105 duration-300"
                 >
-                  <RiArrowLeftLine className="h-7 w-7 text-white" />
+                  <RiArrowLeftLine className="h-6 w-6 text-white" />
                 </button>
-                <div className="bg-white/20 backdrop-blur-sm p-3 rounded-xl mr-4 shadow-lg transform transition-transform hover:scale-105 duration-300">
-                  <RiFileTextLine className="h-7 w-7 text-white" />
-                </div>
+
                 <div>
                   <h1 className="text-3xl font-bold text-white drop-shadow-md">
                     Client Contracts
                   </h1>
                   <p className="text-primary-100 dark:text-primary-200">
-                    {client ? `Manage contracts for ${client.shortName}` : 'Loading client details...'}
+                    {client
+                      ? `Manage contracts of client ${client.shortName}`
+                      : "Loading client information..."}
                   </p>
+
+                  <div className="flex mt-2 space-x-3">
+                    <span className="inline-flex items-center bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg text-sm text-white">
+                      ID: {clientId}
+                    </span>
+                    {client && client.clientNumber && (
+                      <span className="inline-flex items-center bg-white/20 backdrop-blur-sm px-3 py-1 rounded-lg text-sm text-white">
+                        {client.clientNumber}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center mt-4 md:mt-0 space-x-3">
-                {/* Client filter badge */}
-                <div className="flex items-center">
-                  <span className="bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-sm">
-                    <span className="mr-2">👤</span>
-                    Client: {client?.shortName || 'Loading...'}
-                  </span>
-                </div>
-
+              <div className="mt-4 md:mt-0">
                 <Button
-                  onClick={() => setIsAddModalOpen(true)}
+                  onClick={handleAddContract}
                   variant="primary"
                   className="px-5 py-3 text-base shadow-lg hover:shadow-xl bg-primary-800 text-white hover:bg-primary-700 dark:bg-primary-900 dark:hover:bg-primary-800 transition-all duration-300 transform hover:-translate-y-1 border-2 border-primary-300/20"
                   icon={RiAddLine}
@@ -353,105 +327,183 @@ export default function CustomerContractsPage() {
           </div>
         </div>
 
-        {/* Contracts Content - Responsive Layout */}
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
-          </div>
-        ) : contracts.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800/90 dark:border dark:border-indigo-900/30 rounded-xl shadow-soft dark:shadow-indigo-900/10 p-6 text-center text-gray-500 dark:text-gray-400">
-            <RiInformationLine className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-2">No contracts found for this client</p>
-            <Button
-              variant="primary"
-              icon={RiAddLine}
-              onClick={() => setIsAddModalOpen(true)}
-              className="mt-4 bg-primary-600 hover:bg-primary-700 text-white"
-            >
-              Add New Contract
-            </Button>
+        {/* Main Content */}
+        {contracts.length === 0 && !isLoading ? (
+          <div className="overflow-hidden rounded-2xl shadow-xl border-2 border-purple-200/60 dark:border-purple-700/30 bg-white/80 backdrop-blur-sm dark:bg-gray-800/90 transition-all duration-300 h-[750px] flex flex-col items-center justify-center text-center p-6 animate-fadeIn">
+            <div className="p-6 bg-indigo-100/50 dark:bg-indigo-900/30 rounded-full mb-6">
+              <RiFileTextLine className="w-16 h-16 text-indigo-500 dark:text-indigo-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+              No contracts found
+            </h3>
+            <p className="text-base text-gray-500 dark:text-gray-400 max-w-md">
+              There are currently no contracts for this client. You can add a
+              new contract.
+            </p>
+            <div className="mt-8">
+              <Button
+                variant="primary"
+                icon={RiAddLine}
+                onClick={handleAddContract}
+              >
+                Add New Contract
+              </Button>
+            </div>
           </div>
         ) : (
-          <div className={`relative ${isMobile ? 'flex flex-col' : 'flex flex-row gap-6'}`}>
-            {/* Left Sidebar - Contract Tree */}
-            <div className={`${isMobile ? 'w-full' : 'w-1/3'} ${isMobile && showDetailPanel ? 'hidden md:block' : 'block'}`}>
-              <ContractTree
-                contracts={contracts}
-                selectedId={selectedContract?.id || null}
-                onSelect={handleContractSelect}
-              />
-            </div>
-
-            {/* Right Content - Contract Detail (Desktop) */}
-            {!isMobile && (
-              <div className="flex-1">
-                {selectedContract ? (
-                  <ContractDetail contract={selectedContract} />
-                ) : (
-                  <div className="overflow-hidden rounded-2xl shadow-xl border-2 border-purple-200/60 dark:border-purple-700/30 bg-white/80 backdrop-blur-sm dark:bg-gray-800/90 transition-all duration-300 h-[calc(100vh-180px)] flex flex-col items-center justify-center text-center p-6">
-                    <div className="p-6 bg-indigo-100/50 dark:bg-indigo-900/30 rounded-full mb-6">
-                      <RiFileTextLine className="w-16 h-16 text-indigo-500 dark:text-indigo-400" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">No Contract Selected</h3>
-                    <p className="text-base text-gray-500 dark:text-gray-400 max-w-md">
-                      Select a contract from the list to view its details and manage its information
-                    </p>
-                    <div className="mt-8">
-                      <button
-                        className="px-5 py-2.5 bg-primary-600 text-white rounded-lg shadow-sm hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition-colors duration-200"
-                        onClick={() => setIsAddModalOpen(true)}
-                      >
-                        Create New Contract
-                      </button>
-                    </div>
+          <>
+            <div
+              className={`relative ${
+                isMobile ? "flex flex-col" : "flex flex-row gap-6"
+              }`}
+            >
+              <div
+                className={`${isMobile ? "w-full" : "w-1/3"} ${
+                  isMobile && showDetailPanel ? "hidden md:block" : "block"
+                } transition-all duration-300 ease-in-out`}
+              >
+                {isLoading ? (
+                  <div className="space-y-4">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
                   </div>
+                ) : (
+                  <ContractTree
+                    contracts={contracts}
+                    selectedId={selectedContract?.id || null}
+                    onSelect={handleContractSelect}
+                  />
                 )}
               </div>
-            )}
 
-            {/* Sliding Panel for Contract Detail (Mobile) */}
-            {isMobile && (
-              <div
-                className={`fixed inset-0 bg-gray-900/50 z-40 transition-opacity duration-300 ${showDetailPanel ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                  }`}
-                onClick={handleCloseDetailPanel}
-              >
+              {!isMobile && (
+                <div className="flex-1 transition-all duration-300 ease-in-out">
+                  {selectedContract ? (
+                    <div className="animate-fadeIn">
+                      <ContractDetail contract={selectedContract} />
+                    </div>
+                  ) : (
+                    <div className="overflow-hidden rounded-2xl shadow-xl border-2 border-purple-200/60 dark:border-purple-700/30 bg-white/80 backdrop-blur-sm dark:bg-gray-800/90 transition-all duration-300 h-[750px] flex flex-col items-center justify-center text-center p-6 animate-fadeIn">
+                      <div className="p-6 bg-indigo-100/50 dark:bg-indigo-900/30 rounded-full mb-6">
+                        <RiFileTextLine className="w-16 h-16 text-indigo-500 dark:text-indigo-400" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                        Select a contract to view details
+                      </h3>
+                      <p className="text-base text-gray-500 dark:text-gray-400 max-w-md">
+                        Choose a contract from the list on the left to view
+                        detailed information.
+                      </p>
+                      <div className="mt-8 flex space-x-4">
+                        <button
+                          className="px-5 py-2.5 bg-primary-600 text-white rounded-lg shadow-sm hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition-colors duration-200"
+                          onClick={handleAddContract}
+                        >
+                          Create New Contract
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {isMobile && (
                 <div
-                  className={`absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-800 rounded-t-2xl shadow-xl transition-transform duration-300 transform ${showDetailPanel ? 'translate-y-0' : 'translate-y-full'
-                    } h-[90vh] overflow-hidden`}
-                  onClick={(e) => e.stopPropagation()}
+                  className={`fixed inset-0 bg-gray-900/50 z-40 transition-opacity duration-300 ${
+                    showDetailPanel
+                      ? "opacity-100"
+                      : "opacity-0 pointer-events-none"
+                  }`}
+                  onClick={handleCloseDetailPanel}
                 >
-                  {/* Panel Header with Close Button */}
-                  <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {selectedContract?.title || 'Contract Details'}
-                    </h3>
-                    <button
-                      onClick={handleCloseDetailPanel}
-                      className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <RiArrowLeftLine className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                    </button>
-                  </div>
-
-                  {/* Panel Content */}
-                  <div className="p-4 overflow-y-auto h-[calc(100%-60px)]">
-                    {selectedContract && <ContractDetail contract={selectedContract} />}
+                  <div
+                    className={`absolute bottom-0 left-0 right-0 bg-white dark:bg-gray-800 rounded-t-2xl shadow-xl transition-transform duration-300 transform ${
+                      showDetailPanel ? "translate-y-0" : "translate-y-full"
+                    } h-[90vh] overflow-hidden`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {selectedContract?.title || "Contract Details"}
+                      </h3>
+                      <button
+                        onClick={handleCloseDetailPanel}
+                        className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <RiCloseLine className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                      </button>
+                    </div>
+                    <div className="h-[calc(90vh-60px)] overflow-auto">
+                      {selectedContract ? (
+                        <div className="animate-fadeIn">
+                          <ContractDetail contract={selectedContract} />
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-full p-6 text-center animate-fadeIn">
+                          <div className="p-6 bg-indigo-100/50 dark:bg-indigo-900/30 rounded-full mb-6">
+                            <RiFileTextLine className="w-16 h-16 text-indigo-500 dark:text-indigo-400" />
+                          </div>
+                          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+                            No contract selected
+                          </h3>
+                          <p className="text-base text-gray-500 dark:text-gray-400 max-w-md">
+                            Select a contract from the list to view details
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
+              )}
+
+              {isMobile && selectedContract && !showDetailPanel && (
+                <button
+                  onClick={() => setShowDetailPanel(true)}
+                  className="fixed bottom-20 right-4 z-30 bg-primary-600 text-white p-4 rounded-full shadow-lg"
+                >
+                  <RiArrowRightLine className="w-6 h-6" />
+                </button>
+              )}
+            </div>
+
+            {/* Pagination */}
+            {contracts.length > 0 && totalPages > 1 && (
+              <div className="mt-6 flex justify-center items-center space-x-2">
+                <Button
+                  variant="secondary"
+                  icon={RiArrowLeftLine}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-gray-600 dark:text-gray-300">
+                  Page {currentPage} / {totalPages}
+                </span>
+                <Button
+                  variant="secondary"
+                  icon={RiArrowRightLine}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
 
-      {/* Add Contract Modal */}
       {isAddModalOpen && (
         <AddContractModal
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
+          onSave={handleSaveContract}
+          clientId={clientId}
+          clientNumber={client?.clientNumber}
         />
       )}
     </div>
   );
-} 
+}

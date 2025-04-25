@@ -4,6 +4,7 @@ import { ContractNode, mapOracleContractToContractNode, OracleContract } from '@
 import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api/oracle/contracts/full-hierarchy';
+const CLIENT_API_URL = 'http://localhost:5000/api/oracle/contracts'; // API base cho client-specific contracts
 
 interface ContractTreeState {
   expandedContracts: Record<string, boolean>;
@@ -69,15 +70,16 @@ export const fetchContracts = createAsyncThunk(
       const { itemsPerPage } = state.contracts.tree;
       
       const response = await axios.get(`${API_URL}?page=${page}&itemsPerPage=${itemsPerPage}&search=${encodeURIComponent(searchQuery)}`);
-      console.log('API Response:', response.data); // Debug dữ liệu trả về
-      const contractsArray = response.data.data.contracts || [];
-      const totalPages = response.data.data.pagination.totalPages || 1;
-      const totalItems = response.data.data.pagination.total || 0;
+      const data = response.data?.data;
+      if (!data) {
+        throw new Error('Invalid API response: Missing data field');
+      }
+      const contractsArray = data.contracts || [];
+      const totalPages = data.pagination?.totalPages || 1;
+      const totalItems = data.pagination?.total || 0;
       const contractNodes = contractsArray.map((contract: OracleContract) => mapOracleContractToContractNode(contract));
-      console.log('Mapped Contracts:', contractNodes); // Debug dữ liệu sau ánh xạ
       return { contracts: contractNodes, totalPages, totalItems, page };
     } catch (error: any) {
-      console.error('Error fetching contracts:', error);
       return rejectWithValue(error.message || 'Không thể tải danh sách hợp đồng');
     }
   }
@@ -90,16 +92,17 @@ export const fetchContractsByClient = createAsyncThunk(
       const state = getState() as RootState;
       const { itemsPerPage } = state.contracts.tree;
       
-      const response = await axios.get(`${API_URL}/client/${clientId}?page=${page}&itemsPerPage=${itemsPerPage}&search=${encodeURIComponent(searchQuery)}`);
-      console.log('API Response (by client):', response.data); // Debug dữ liệu trả về
-      const contractsArray = response.data.data.contracts || [];
-      const totalPages = response.data.data.totalPages || 1;
-      const totalItems = response.data.data.totalItems || 0;
+      const response = await axios.get(`${CLIENT_API_URL}/client/${clientId}?page=${page}&itemsPerPage=${itemsPerPage}&search=${encodeURIComponent(searchQuery)}`);
+      const data = response.data?.data;
+      if (!data) {
+        throw new Error('Invalid API response: Missing data field');
+      }
+      const contractsArray = data.contracts || [];
+      const totalPages = data.pagination?.totalPages || 1;
+      const totalItems = data.pagination?.total || 0;
       const contractNodes = contractsArray.map((contract: OracleContract) => mapOracleContractToContractNode(contract));
-      console.log('Mapped Contracts (by client):', contractNodes); // Debug dữ liệu sau ánh xạ
       return { contracts: contractNodes, totalPages, totalItems, page };
     } catch (error: any) {
-      console.error('Error fetching contracts by client:', error);
       return rejectWithValue(error.message || 'Không thể tải hợp đồng cho khách hàng này');
     }
   }
@@ -140,6 +143,9 @@ export const contractSlice = createSlice({
       state.tree.itemsPerPage = action.payload;
       state.tree.currentPage = 1;
     },
+    resetState: (state) => {
+      return initialState;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -153,6 +159,7 @@ export const contractSlice = createSlice({
         state.tree.totalPages = action.payload.totalPages;
         state.tree.totalItems = action.payload.totalItems;
         state.tree.currentPage = action.payload.page;
+        state.tree.expandedContracts = {}; // Reset expandedContracts
         state.error = null;
       })
       .addCase(fetchContracts.rejected, (state, action) => {
@@ -169,6 +176,7 @@ export const contractSlice = createSlice({
         state.tree.totalPages = action.payload.totalPages;
         state.tree.totalItems = action.payload.totalItems;
         state.tree.currentPage = action.payload.page;
+        state.tree.expandedContracts = {}; // Reset expandedContracts
         state.error = null;
       })
       .addCase(fetchContractsByClient.rejected, (state, action) => {
@@ -186,6 +194,7 @@ export const {
   setTreeCurrentPage,
   setTreeSearchQuery,
   setTreeItemsPerPage,
+  resetState,
 } = contractSlice.actions;
 
 export const selectContracts = (state: RootState) => state.contracts.contracts;

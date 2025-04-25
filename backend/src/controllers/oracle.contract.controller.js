@@ -8,6 +8,7 @@ exports.getContractsByClientId = async (req, res) => {
     const { clientId } = req.params;
     const page = parseInt(req.query.page) || 1;
     const itemsPerPage = parseInt(req.query.itemsPerPage) || 10;
+    const search = req.query.search || '';
 
     if (!clientId) {
       return res.status(400).json(
@@ -15,9 +16,9 @@ exports.getContractsByClientId = async (req, res) => {
       );
     }
 
-    console.log(`Processing request for contract hierarchy with client ID: ${clientId}`);
+    console.log(`Processing request for contract hierarchy with client ID: ${clientId}, search: ${search}`);
 
-    const result = await contractModel.getFullContractHierarchyByClientId(clientId, page, itemsPerPage);
+    const result = await contractModel.getFullContractHierarchyByClientId(clientId, page, itemsPerPage, search);
 
     return res.status(200).json(
       new ApiResponse(

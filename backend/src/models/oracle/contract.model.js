@@ -68,7 +68,7 @@ async function getTopLevelContracts(page = 1, itemsPerPage = 10) {
 }
 
 // Lấy các hợp đồng cấp cao nhất (Liability) theo clientId có phân trang
-async function getTopLevelContractsByClientId(clientId, page = 1, itemsPerPage = 10) {
+async function getTopLevelContractsByClientId(clientId, page = 1, itemsPerPage = 10, search = '') {
   let connection;
   try {
     connection = await getConnection();
@@ -76,13 +76,19 @@ async function getTopLevelContractsByClientId(clientId, page = 1, itemsPerPage =
     // Tính offset
     const offset = (page - 1) * itemsPerPage;
 
-    // Đếm tổng số hợp đồng liability của clientId
+    // Điều kiện tìm kiếm nếu có search
+    const searchCondition = search 
+      ? `AND (UPPER(CONTRACT_NAME) LIKE UPPER('%${search}%') OR UPPER(CONTRACT_NUMBER) LIKE UPPER('%${search}%'))` 
+      : '';
+
+    // Đếm tổng số hợp đồng liability của clientId với điều kiện tìm kiếm
     const countQuery = `
       SELECT COUNT(*) AS total_count FROM ACNT_CONTRACT
       WHERE LIAB_CONTRACT IS NULL 
       AND ACNT_CONTRACT__OID IS NULL 
       AND AMND_STATE = 'A'
       AND CLIENT__ID = :clientId
+      ${searchCondition}
     `;
 
     const countResult = await connection.execute(countQuery, { clientId });
@@ -96,6 +102,7 @@ async function getTopLevelContractsByClientId(clientId, page = 1, itemsPerPage =
         AND ACNT_CONTRACT__OID IS NULL 
         AND AMND_STATE = 'A'
         AND TO_CHAR(CLIENT__ID) = TO_CHAR(:clientId)
+        ${searchCondition}
       `;
       const countCharResult = await connection.execute(countCharQuery, { clientId });
       const totalCharCount = formatOracleResult(countCharResult)[0].TOTAL_COUNT;
@@ -119,6 +126,7 @@ async function getTopLevelContractsByClientId(clientId, page = 1, itemsPerPage =
         AND ACNT_CONTRACT__OID IS NULL 
         AND AMND_STATE = 'A'
         AND TO_CHAR(CLIENT__ID) = TO_CHAR(:clientId)
+        ${searchCondition}
         ORDER BY AMND_DATE DESC
         OFFSET :offset ROWS FETCH NEXT :itemsPerPage ROWS ONLY
       `;
@@ -144,6 +152,7 @@ async function getTopLevelContractsByClientId(clientId, page = 1, itemsPerPage =
       AND ACNT_CONTRACT__OID IS NULL 
       AND AMND_STATE = 'A'
       AND CLIENT__ID = :clientId
+      ${searchCondition}
       ORDER BY AMND_DATE DESC
       OFFSET :offset ROWS FETCH NEXT :itemsPerPage ROWS ONLY
     `;
@@ -293,9 +302,9 @@ async function getFullContractHierarchy(page = 1, itemsPerPage = 10) {
 }
 
 // Lấy cây hợp đồng đầy đủ theo clientId (bao gồm cả Issue và Card Contracts)
-async function getFullContractHierarchyByClientId(clientId, page = 1, itemsPerPage = 10) {
+async function getFullContractHierarchyByClientId(clientId, page = 1, itemsPerPage = 10, search = '') {
   // Step 1: Lấy các hợp đồng liability (cấp cao nhất) theo clientId
-  const topLevelResult = await getTopLevelContractsByClientId(clientId, page, itemsPerPage);
+  const topLevelResult = await getTopLevelContractsByClientId(clientId, page, itemsPerPage, search);
   const liabilityContracts = topLevelResult.data;
 
   // Step 2: Tạo cấu trúc cây đầy đủ
